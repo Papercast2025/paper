@@ -41,7 +41,7 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* For sections that should be centered */
+    /* For sections to be centered */
     .centered .section-content {
       align-items: center;
       text-align: center;
@@ -95,6 +95,16 @@
     Chatham County
   </div>
   <div class="container">
+    <!-- Heat Risk Section (top card) -->
+    <div class="section centered" id="heat-risk-section">
+      <div class="card-title">Heat Risk</div>
+      <div class="section-content">
+        <div class="value" id="heat-index">--</div>
+        <div class="label" id="heat-risk-level">--</div>
+      </div>
+      <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
+    </div>
+
     <!-- Weather Conditions Section (centered) -->
     <div class="section centered" id="weather-section">
       <div class="card-title">Weather Conditions</div>
@@ -118,6 +128,7 @@
       </div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
         <div class="value" id="river-stage">Loading...</div>
+        <!-- Dynamic flood status text -->
         <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
@@ -178,6 +189,29 @@
     
     // Global flood threshold (default 5.0 ft)
     let floodThreshold = 5.0;
+    
+    // --- Heat Index Calculation ---
+    // Uses the standard NOAA heat index formula.
+    // T = temperature in Fahrenheit, RH = relative humidity in percent.
+    function computeHeatIndex(T, RH) {
+      if (T < 80) {
+        return T; // No significant heat risk below 80°F
+      }
+      const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
+      const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
+      const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
+      const HI = c1 + c2*T + c3*RH + c4*T*RH + c5*T*T + c6*RH*RH +
+                 c7*T*T*RH + c8*T*RH*RH + c9*T*T*RH*RH;
+      return HI;
+    }
+    
+    // Determine Heat Risk Level based on heat index value
+    function getHeatRiskLevel(HI) {
+      if (HI < 80) return "Minimal Heat Risk";
+      if (HI < 90) return "Moderate Heat Risk";
+      if (HI < 105) return "High Heat Risk";
+      return "Extreme Heat Risk";
+    }
     
     // --- Helper functions for dynamic icons (black & white, thicker strokes) ---
     function getWeatherIcon(forecast) {
@@ -267,6 +301,26 @@
                    </svg>`;
       }
       return iconSVG;
+    }
+    
+    // --- Heat Risk Card Update ---
+    // Compute heat index based on temperature (F) and relative humidity (RH in percent)
+    function updateHeatRisk(tempF, RH) {
+      let HI = tempF;
+      if (tempF >= 80) {
+        const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
+        const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
+        const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
+        HI = c1 + c2*tempF + c3*RH + c4*tempF*RH + c5*(tempF*tempF) + c6*(RH*RH) +
+             c7*(tempF*tempF)*RH + c8*tempF*(RH*RH) + c9*(tempF*tempF)*(RH*RH);
+      }
+      const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
+                        (HI < 90) ? "Moderate Heat Risk" :
+                        (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
+      document.getElementById('heat-index').textContent = `${Math.round(HI)}°F`;
+      document.getElementById('heat-risk-level').textContent = riskLevel;
+      const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+      document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
     }
     
     // --- River Data & Graph ---
@@ -363,7 +417,7 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis tick marks at half-foot increments (font size increased to 22px)
+      // Y-axis tick marks at half-foot increments (font size 22px)
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -400,7 +454,6 @@
         const y = scaleY(pt.stage);
         return (i === 0 ? 'M' : 'L') + x + ',' + y;
       }).join(' ');
-      // Increase line weight on USGS graph to 6
       const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       polyline.setAttribute("d", pathData);
       polyline.setAttribute("stroke", "black");
@@ -408,7 +461,6 @@
       polyline.setAttribute("stroke-width", "6");
       svg.appendChild(polyline);
       
-      // Draw Flood Stage dashed line (stroke width 4)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -420,7 +472,6 @@
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
       
-      // X-axis label "Date" with font size 26px
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -430,7 +481,6 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
       
-      // Draw circles for each point and add one day marker per day (skip first day, font size 30px)
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
@@ -467,7 +517,6 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // Combine AQI value and category on one line: "symbol 42 Good"
             document.getElementById('aqi-value').textContent = main.AQI;
             document.getElementById('aqi-category').textContent = main.Category.Name;
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
@@ -529,6 +578,8 @@
                   document.getElementById('precip-value').textContent = "0.00 in";
                 }
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
+                // Update Heat Risk card using temperature and humidity values
+                updateHeatRisk(tempF, humidity);
               }
             })
             .catch(err => console.error('Error fetching weather observations:', err));
