@@ -41,7 +41,7 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* For sections to be centered */
+    /* For sections that should be centered */
     .centered .section-content {
       align-items: center;
       text-align: center;
@@ -91,16 +91,18 @@
   </style>
 </head>
 <body>
+  <!-- Header now includes site latitude/longitude and a link -->
   <div style="background-color: black; color: white; padding: 20px; text-align: center; font-size: 48px; font-weight: bold;">
-    Chatham County
+    Chatham County (35.77659 / -79.14597) | 
+    <a href="https://www.chathamcountync.gov/" target="_blank" style="color: white; text-decoration: underline;">chathamcountync.gov</a>
   </div>
   <div class="container">
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
+      <!-- Now only shows the risk level in large text -->
       <div class="section-content">
-        <div class="value" id="heat-index">--</div>
-        <div class="label" id="heat-risk-level">--</div>
+        <div class="value" id="heat-risk-level">--</div>
       </div>
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
     </div>
@@ -128,7 +130,6 @@
       </div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
         <div class="value" id="river-stage">Loading...</div>
-        <!-- Dynamic flood status text -->
         <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
@@ -190,27 +191,25 @@
     // Global flood threshold (default 5.0 ft)
     let floodThreshold = 5.0;
     
-    // --- Heat Index Calculation ---
-    // Uses the standard NOAA heat index formula.
-    // T = temperature in Fahrenheit, RH = relative humidity in percent.
-    function computeHeatIndex(T, RH) {
-      if (T < 80) {
-        return T; // No significant heat risk below 80°F
+    // --- Heat Risk Card Update ---
+    // Compute heat index based on temperature (F) and relative humidity (RH in percent)
+    // Then update the Heat Risk card to show only the risk level in large text.
+    function updateHeatRisk(tempF, RH) {
+      let HI = tempF;
+      if (tempF >= 80) {
+        const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
+        const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
+        const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
+        HI = c1 + c2*tempF + c3*RH + c4*tempF*RH + c5*(tempF*tempF) + c6*(RH*RH) +
+             c7*(tempF*tempF)*RH + c8*tempF*(RH*RH) + c9*(tempF*tempF)*(RH*RH);
       }
-      const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
-      const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
-      const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
-      const HI = c1 + c2*T + c3*RH + c4*T*RH + c5*T*T + c6*RH*RH +
-                 c7*T*T*RH + c8*T*RH*RH + c9*T*T*RH*RH;
-      return HI;
-    }
-    
-    // Determine Heat Risk Level based on heat index value
-    function getHeatRiskLevel(HI) {
-      if (HI < 80) return "Minimal Heat Risk";
-      if (HI < 90) return "Moderate Heat Risk";
-      if (HI < 105) return "High Heat Risk";
-      return "Extreme Heat Risk";
+      const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
+                        (HI < 90) ? "Moderate Heat Risk" :
+                        (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
+      // Now update only the heat risk level element (using the "value" class for large text)
+      document.getElementById('heat-risk-level').textContent = riskLevel;
+      const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+      document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
     }
     
     // --- Helper functions for dynamic icons (black & white, thicker strokes) ---
@@ -264,63 +263,44 @@
     function getAQIIcon(category) {
       category = category.toLowerCase();
       let iconSVG = "";
+      // Updated to produce a 100x100 SVG so the icon height matches the numeric reading.
       if (category.includes("good")) {
-        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">G</text>
+                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">G</text>
                    </svg>`;
       } else if (category.includes("moderate")) {
-        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">M</text>
+                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">M</text>
                    </svg>`;
       } else if (category.includes("unhealthy for sensitive groups")) {
-        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">USG</text>
+                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">USG</text>
                    </svg>`;
       } else if (category.includes("unhealthy")) {
-        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">U</text>
+                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">U</text>
                    </svg>`;
       } else if (category.includes("very unhealthy")) {
-        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">VU</text>
+                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">VU</text>
                    </svg>`;
       } else if (category.includes("hazardous")) {
-        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">H</text>
+                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">H</text>
                    </svg>`;
       } else {
-        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">N/A</text>
+                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">N/A</text>
                    </svg>`;
       }
       return iconSVG;
-    }
-    
-    // --- Heat Risk Card Update ---
-    // Compute heat index based on temperature (F) and relative humidity (RH in percent)
-    function updateHeatRisk(tempF, RH) {
-      let HI = tempF;
-      if (tempF >= 80) {
-        const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
-        const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
-        const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
-        HI = c1 + c2*tempF + c3*RH + c4*tempF*RH + c5*(tempF*tempF) + c6*(RH*RH) +
-             c7*(tempF*tempF)*RH + c8*tempF*(RH*RH) + c9*(tempF*tempF)*(RH*RH);
-      }
-      const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
-                        (HI < 90) ? "Moderate Heat Risk" :
-                        (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
-      document.getElementById('heat-index').textContent = `${Math.round(HI)}°F`;
-      document.getElementById('heat-risk-level').textContent = riskLevel;
-      const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
     }
     
     // --- River Data & Graph ---
