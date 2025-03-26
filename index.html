@@ -30,14 +30,14 @@
       flex-direction: column;
       position: relative;
     }
-    .section h2 {
-      margin-top: 0;
-      font-size: 48px;
-      background-color: #000;
-      color: #fff;
-      padding: 10px;
-      border-radius: 4px;
-      flex: 1;
+    /* Card title style: white text on black background */
+    .card-title {
+      font-size: 36px;
+      font-weight: bold;
+      background-color: black;
+      color: white;
+      padding: 4px 8px;
+      margin-bottom: 8px;
     }
     .section-content {
       display: flex;
@@ -90,23 +90,21 @@
   <div class="container">
     <!-- River & Water Levels Section -->
     <div class="section" id="river-section">
-      <div style="position: absolute; top: 16px; left: 16px; font-size: 36px; font-weight: bold;">
+      <div class="card-title" style="position: absolute; top: 16px; left: 16px;">
         River & Water Levels
       </div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
         <div class="value" id="river-stage">Loading...</div>
-        <!-- Dynamic flood status text -->
+        <!-- Dynamic flood status text (will be bolded and centered in the card) -->
         <div class="label" id="flood-status"></div>
       </div>
-      <!-- The river graph is rendered here -->
       <div id="river-graph"></div>
-      <!-- USGS site info moved to bottom of the card, right aligned -->
       <div id="usgs-site-info">USGS Site #02096960 (Live)</div>
     </div>
 
     <!-- Alerts Section -->
     <div class="section" id="alerts-section">
-      <div style="font-size: 36px; font-weight: bold;">Alerts</div>
+      <div class="card-title">Alerts</div>
       <div class="section-content">
         <div class="label" id="alert-message">No alerts at this time.</div>
       </div>
@@ -114,7 +112,7 @@
 
     <!-- Weather Conditions Section -->
     <div class="section" id="weather-section">
-      <div style="font-size: 36px; font-weight: bold;">Weather Conditions</div>
+      <div class="card-title">Weather Conditions</div>
       <div class="section-content">
         <div class="value" id="weather-temp">--</div>
         <div class="label" id="weather-forecast">--</div>
@@ -125,7 +123,7 @@
 
     <!-- Rainfall Forecast Section -->
     <div class="section" id="rainfall-forecast">
-      <div style="font-size: 36px; font-weight: bold;">Rainfall Forecast</div>
+      <div class="card-title">Rainfall Forecast</div>
       <div class="section-content">
         <div class="label" id="rainfall-forecast-1">--</div>
         <div class="label" id="rainfall-forecast-2">--</div>
@@ -135,7 +133,7 @@
 
     <!-- Precipitation Section -->
     <div class="section" id="precipitation-section">
-      <div style="font-size: 36px; font-weight: bold;">Precipitation (24h)</div>
+      <div class="card-title">Precipitation (24h)</div>
       <div class="section-content">
         <div class="value" id="precip-value">--</div>
         <div class="label">Last 24 Hours</div>
@@ -144,7 +142,7 @@
 
     <!-- Air Quality Index (AQI) Section -->
     <div class="section" id="aqi-section">
-      <div style="font-size: 36px; font-weight: bold;">Air Quality Index</div>
+      <div class="card-title">Air Quality Index</div>
       <div class="section-content">
         <div class="value" id="aqi-value">--</div>
         <div class="label" id="aqi-category">Loading...</div>
@@ -185,7 +183,7 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          // Try to extract flood stage from the API metadata (if available)
+          // Attempt to extract flood stage from API metadata (if available)
           const siteProps = data.value.timeSeries[0].sourceInfo.siteProperty;
           if (siteProps) {
             siteProps.forEach(prop => {
@@ -194,7 +192,7 @@
               }
             });
           }
-          // Convert raw data to an array of { dateTime, stage }
+          // Convert raw data to array of { dateTime, stage }
           const rawValues = data.value.timeSeries[0].values[0].value || [];
           const floatValues = rawValues
             .map(v => ({
@@ -216,7 +214,7 @@
             timeStyle: 'short'
           });
 
-          // Update flood status label (bold and centered)
+          // Update flood status label based on current stage vs. flood threshold
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
@@ -224,7 +222,7 @@
             statusEl.textContent = "Below Flood Stage";
           }
 
-          // Group into 3‑hour blocks
+          // Group data into 3-hour blocks
           const groupedValues = groupBy3HourBlocks(floatValues);
           renderRiverGraph(groupedValues, floodThreshold);
         })
@@ -234,7 +232,7 @@
         });
     }
 
-    // Group measurements into 3‑hour blocks and average each block
+    // Group measurements into 3-hour blocks and average each block
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
       dataArray.forEach(pt => {
@@ -271,21 +269,21 @@
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
 
-      // Increase horizontal space by 20%
-      const svgWidth = 1152; // 1152 px wide (20% more than 960)
+      // Dimensions: Increase width by 20% -> 1152px wide, height remains 280px
+      const svgWidth = 1152;
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
       const graphWidth = svgWidth - graphOffsetX - 20;
-      const axisLabelY = 260; // "Date" axis label y-coordinate remains unchanged
-      const dateLabelY = 240; // once-per-day labels
+      const axisLabelY = 260; // "Date" label Y coordinate
+      const dateLabelY = 240; // Y coordinate for one day marker
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Draw Y-axis tick marks at half-foot increments
+      // Y-axis tick marks at half-foot increments
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -331,7 +329,7 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Flood Stage line and centered label (flood label font size increased by ~30% to 24px)
+      // Flood Stage line and left-aligned label with padding
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -343,15 +341,16 @@
       floodLine.setAttribute("stroke-width", "2");
       svg.appendChild(floodLine);
       const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      floodLabel.setAttribute("x", graphOffsetX + graphWidth / 2);
+      // Left align with a little left padding (e.g., 10px inside the graph)
+      floodLabel.setAttribute("x", graphOffsetX + 10);
       floodLabel.setAttribute("y", floodY - 5);
       floodLabel.setAttribute("font-size", "24");
       floodLabel.setAttribute("fill", "black");
-      floodLabel.setAttribute("text-anchor", "middle");
+      floodLabel.setAttribute("text-anchor", "start");
       floodLabel.textContent = "Flood Stage";
       svg.appendChild(floodLabel);
 
-      // X-axis label "Date" remains at 21px (unchanged)
+      // X-axis label "Date" with increased font size (21px)
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -361,7 +360,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw circles at each data point and add one day marker per day (font size increased to 24px)
+      // Draw a small circle for each data point and add one day marker per day (font size increased to 24px)
       let lastDay = "";
       dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
@@ -372,8 +371,6 @@
         circle.setAttribute("r", 3);
         circle.setAttribute("fill", "black");
         svg.appendChild(circle);
-
-        // Only show the day marker once per day
         const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         if (dayLabel !== lastDay) {
           lastDay = dayLabel;
