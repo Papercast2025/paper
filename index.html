@@ -41,7 +41,7 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* For centered sections override section-content */
+    /* For sections to be centered, override section-content */
     .centered .section-content {
       align-items: center;
       text-align: center;
@@ -95,6 +95,21 @@
     Chatham County
   </div>
   <div class="container">
+    <!-- Weather Conditions Section (centered) -->
+    <div class="section centered" id="weather-section">
+      <div class="card-title">Weather Conditions</div>
+      <!-- Inline container for weather icon and temperature -->
+      <div class="section-content">
+        <div style="display: flex; align-items: center; justify-content: center;">
+          <div id="weather-icon" style="margin-right: 8px;"></div>
+          <div class="value" id="weather-temp">--</div>
+        </div>
+        <div class="label" id="weather-forecast">--</div>
+        <div class="label" id="weather-wind">--</div>
+        <div class="label" id="weather-humidity">--</div>
+      </div>
+    </div>
+
     <!-- River & Water Levels Section (left aligned) -->
     <div class="section" id="river-section">
       <div class="card-title" style="position: absolute; top: 16px; left: 16px;">
@@ -114,21 +129,6 @@
       <div class="card-title">Alerts</div>
       <div class="section-content">
         <div class="label" id="alert-message">No alerts at this time.</div>
-      </div>
-    </div>
-
-    <!-- Weather Conditions Section (centered) -->
-    <div class="section centered" id="weather-section">
-      <div class="card-title">Weather Conditions</div>
-      <!-- Inline container for weather icon and temperature -->
-      <div class="section-content">
-        <div style="display: flex; align-items: center; justify-content: center;">
-          <div id="weather-icon" style="margin-right: 8px;"></div>
-          <div class="value" id="weather-temp">--</div>
-        </div>
-        <div class="label" id="weather-forecast">--</div>
-        <div class="label" id="weather-wind">--</div>
-        <div class="label" id="weather-humidity">--</div>
       </div>
     </div>
 
@@ -154,7 +154,7 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- Inline container for AQI icon and reading combined -->
+      <!-- Inline container for AQI icon and reading -->
       <div style="display: flex; align-items: center; justify-content: center;">
         <div id="aqi-icon" style="margin-right: 8px;"></div>
         <div id="aqi-reading" style="display: flex; align-items: center; font-size: 100px;">
@@ -189,7 +189,6 @@
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
-      // Increase stroke width to 3 for icons and remove color fills (white fill, black stroke)
       if (forecast.includes("sunny") || forecast.includes("clear")) {
         iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="12" fill="white" stroke="black" stroke-width="3"/>
@@ -281,7 +280,6 @@
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
-      // 4 days of data
       start.setDate(end.getDate() - 4);
       const format = d => d.toISOString().split('.')[0];
       const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
@@ -325,7 +323,7 @@
           document.getElementById('river-stage').textContent = 'Error fetching data';
         });
     }
-
+    
     // Group measurements into 3-hour blocks and average each block
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
@@ -347,7 +345,7 @@
         .map(item => ({ dateObj: item.dateObj, stage: item.sum / item.count }))
         .sort((a, b) => a.dateObj - b.dateObj);
     }
-
+    
     function renderRiverGraph(dataPoints, floodThreshold) {
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
@@ -370,8 +368,8 @@
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-
-      // Y-axis tick marks at half-foot increments (font size increased from 18px to 22px)
+      
+      // Y-axis tick marks at half-foot increments (font size increased to 22px)
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -394,7 +392,7 @@
         tickLabel.textContent = tickVal.toFixed(1) + " ft";
         svg.appendChild(tickLabel);
       }
-
+      
       const scaleX = dateObj => {
         const currentMillis = dateObj - minDate;
         return graphOffsetX + (currentMillis / totalMillis) * graphWidth;
@@ -402,7 +400,7 @@
       const scaleY = stage => {
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       };
-
+      
       const pathData = dataPoints.map((pt, i) => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
@@ -415,7 +413,7 @@
       polyline.setAttribute("fill", "none");
       polyline.setAttribute("stroke-width", "6");
       svg.appendChild(polyline);
-
+      
       // Draw Flood Stage dashed line; increase stroke weight by 2 (from 2 to 4)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -427,7 +425,7 @@
       floodLine.setAttribute("stroke-dasharray", "6,3");
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
-
+      
       // X-axis label "Date" with increased font size (from 21 to 26)
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
@@ -437,8 +435,8 @@
       xAxisLabel.setAttribute("text-anchor", "middle");
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
-
-      // Draw circles for each point and add one day marker per day (skip first day, font size increased from 24 to 30)
+      
+      // Draw circles for each point and add one day marker per day (skip first day)
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
@@ -463,9 +461,10 @@
           svg.appendChild(label);
         }
       });
+      
       container.appendChild(svg);
     }
-
+    
     // --- AQI Data ---
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
@@ -474,7 +473,7 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // Combine the AQI value and category on one line
+            // Combine AQI value and category on one line: "symbol 42 Good"
             document.getElementById('aqi-value').textContent = main.AQI;
             document.getElementById('aqi-category').textContent = main.Category.Name;
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
@@ -497,7 +496,7 @@
           document.getElementById('aqi-icon').innerHTML = getAQIIcon("Good");
         });
     }
-
+    
     // --- Weather, Rainfall Forecast & Alerts from NWS ---
     function fetchNWSData() {
       document.getElementById('last-nws-update').textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
@@ -531,7 +530,7 @@
               }
             })
             .catch(err => console.error('Error fetching weather observations:', err));
-
+          
           // Rainfall Forecast
           fetch(gridUrl)
             .then(res => res.json())
@@ -544,7 +543,7 @@
               }
             })
             .catch(err => console.error('Error fetching rainfall forecast:', err));
-
+          
           // Alerts
           if (alertZone) {
             const zoneId = alertZone.split('/').pop();
@@ -564,13 +563,11 @@
         })
         .catch(err => console.error('Error fetching NWS points data:', err));
     }
-
+    
     // --- Initial Fetch & Refresh ---
     fetchRiverData();
     fetchAQIData();
     fetchNWSData();
-
-    // Refresh every 10 minutes
     setInterval(() => {
       fetchRiverData();
       fetchAQIData();
