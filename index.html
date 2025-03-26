@@ -88,14 +88,14 @@
   </div>
     </div>
 
-    <div class="section">
+    <div class="section" id="alerts-section">
   <div style="font-size: 36px; font-weight: bold;">Alerts</div>
   <div class="section-content">
     <div class="label">No alerts at this time.</div>
   </div>
 </div>
 
-<div class="section">
+<div class="section" id="weather-section">
   <div style="font-size: 36px; font-weight: bold;">Weather Conditions</div>
   <div class="section-content">
     <div class="value">66°F</div>
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<div class="section">
+<div class="section" id="rainfall-forecast">
   <div style="font-size: 36px; font-weight: bold;">Rainfall Forecast</div>
   <div class="section-content">
     <div class="label">Tue: Light Rain (0.12 in)</div>
@@ -114,10 +114,10 @@
   </div>
 </div>
 
-<div class="section">
+<div class="section" id="precipitation-section">
   <div style="font-size: 36px; font-weight: bold;">Precipitation (24h)</div>
   <div class="section-content">
-    <div class="value">0.12 in</div>
+    <div class="value" id="precip-value">--</div>
     <div class="label">Last 24 Hours</div>
   </div>
 </div>
@@ -411,10 +411,15 @@ document.getElementById("river-graph").appendChild(svg);
         .then(res => res.json())
         .then(obs => {
           const now = obs.properties.periods[0];
-          document.querySelector('.section:nth-of-type(3) .value').textContent = `${now.temperature}°F`;
-          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(1)').textContent = now.shortForecast;
-          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(2)').textContent = `Wind: ${now.windSpeed}`;
-          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(3)').textContent = `Humidity: ${now.relativeHumidity?.value ?? '--'}%`;
+          document.querySelector('#weather-section .value').textContent = `${now.temperature}°F`;
+          document.querySelector('#weather-section .label:nth-of-type(1)').textContent = now.shortForecast;
+          document.querySelector('#weather-section .label:nth-of-type(2)').textContent = `Wind: ${now.windSpeed}`;
+          document.querySelector('#weather-section .label:nth-of-type(3)').textContent = `Humidity: ${now.relativeHumidity?.value ?? '--'}%`;
+
+          const precipVal = now.quantitativePrecipitation?.value;
+          if (precipVal != null && !isNaN(precipVal)) {
+            document.getElementById('precip-value').textContent = `${precipVal.toFixed(2)} in`;
+          }
         });
 
       // Rainfall Forecast
@@ -422,7 +427,7 @@ document.getElementById("river-graph").appendChild(svg);
         .then(res => res.json())
         .then(grid => {
           const days = grid.properties.periods.slice(0, 3);
-          const forecastEls = document.querySelectorAll('.section:nth-of-type(4) .label');
+          const forecastEls = document.querySelectorAll('#rainfall-forecast .label');
           days.forEach((day, i) => {
             if (forecastEls[i]) {
               forecastEls[i].textContent = `${day.name}: ${day.shortForecast} (${day.probabilityOfPrecipitation.value || 0}% chance)`;
@@ -434,7 +439,7 @@ document.getElementById("river-graph").appendChild(svg);
       fetch(`https://api.weather.gov/alerts/active/zone/${alertUrl.split('/').pop()}`)
         .then(res => res.json())
         .then(data => {
-          const alertBox = document.querySelector('.section:nth-of-type(2) .label');
+          const alertBox = document.querySelector('#alerts-section .label');
           if (data.features.length === 0) {
             alertBox.textContent = 'No alerts at this time.';
           } else {
