@@ -119,9 +119,12 @@
     <!-- Weather Conditions Section (centered) -->
     <div class="section centered" id="weather-section">
       <div class="card-title">Weather Conditions</div>
-      <div id="weather-icon"></div>
+      <!-- Inline container for icon and temperature -->
       <div class="section-content">
-        <div class="value" id="weather-temp">--</div>
+        <div class="weather-temp-container" style="display: flex; align-items: center; justify-content: center;">
+          <div id="weather-icon" style="margin-right: 8px;"></div>
+          <div class="value" id="weather-temp">--</div>
+        </div>
         <div class="label" id="weather-forecast">--</div>
         <div class="label" id="weather-wind">--</div>
         <div class="label" id="weather-humidity">--</div>
@@ -150,9 +153,12 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <div id="aqi-icon"></div>
+      <!-- Inline container for icon and AQI reading -->
       <div class="section-content">
-        <div class="value" id="aqi-value">--</div>
+        <div class="aqi-value-container" style="display: flex; align-items: center; justify-content: center;">
+          <div id="aqi-icon" style="margin-right: 8px;"></div>
+          <div class="value" id="aqi-value">--</div>
+        </div>
         <div class="label" id="aqi-category">Loading...</div>
         <div class="label" id="aqi-pollutant">Primary Pollutant: --</div>
       </div>
@@ -178,14 +184,11 @@
     // Global flood threshold (default 5.0 ft)
     let floodThreshold = 5.0;
 
-    // --- Helper functions for icons ---
-
-    // Returns an inline SVG for weather conditions based on the forecast string
+    // --- Helper functions for dynamic icons ---
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
       if (forecast.includes("sunny") || forecast.includes("clear")) {
-        // Sun icon
         iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="12" fill="orange"/>
                      <g stroke="orange" stroke-width="2">
@@ -200,12 +203,10 @@
                      </g>
                    </svg>`;
       } else if (forecast.includes("cloud")) {
-        // Cloud icon
         iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
                    </svg>`;
       } else if (forecast.includes("rain")) {
-        // Rain icon
         iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
                      <g stroke="blue" stroke-width="2">
@@ -215,7 +216,6 @@
                      </g>
                    </svg>`;
       } else if (forecast.includes("snow")) {
-        // Snow icon
         iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="lightblue"/>
                      <g stroke="blue" stroke-width="2">
@@ -224,7 +224,6 @@
                      </g>
                    </svg>`;
       } else {
-        // Default: partly cloudy
         iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="22" cy="22" r="10" fill="orange"/>
                      <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
@@ -233,7 +232,6 @@
       return iconSVG;
     }
 
-    // Returns an inline SVG for AQI based on the category name
     function getAQIIcon(category) {
       category = category.toLowerCase();
       let iconSVG = "";
@@ -364,7 +362,6 @@
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
 
-      // Ensure floodThreshold is included in min/max calculations
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
       minStage = Math.min(minStage, floodThreshold);
@@ -375,21 +372,20 @@
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
 
-      // Dimensions: 1152 x 280
       const svgWidth = 1152;
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
       const graphWidth = svgWidth - graphOffsetX - 20;
-      const axisLabelY = 260; // "Date" axis label y-coordinate
-      const dateLabelY = 240; // Y coordinate for one day marker; first day skipped
+      const axisLabelY = 260;
+      const dateLabelY = 240;
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Y-axis tick marks at half-foot increments (font size increased to 18px)
+      // Y-axis tick marks at half-foot increments with larger font (18px)
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -413,7 +409,6 @@
         svg.appendChild(tickLabel);
       }
 
-      // Scale functions
       const scaleX = dateObj => {
         const currentMillis = dateObj - minDate;
         return graphOffsetX + (currentMillis / totalMillis) * graphWidth;
@@ -422,7 +417,6 @@
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       };
 
-      // Build polyline path
       const pathData = dataPoints.map((pt, i) => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
@@ -447,7 +441,7 @@
       floodLine.setAttribute("stroke-width", "2");
       svg.appendChild(floodLine);
 
-      // X-axis label "Date" (font size 21px)
+      // X-axis label "Date"
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -457,7 +451,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw circles for each point and add one day marker per day (skip first day label)
+      // Draw circles for each point and add one day marker per day, skipping the first day's label
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
@@ -498,7 +492,6 @@
             document.getElementById('aqi-category').textContent = main.Category.Name;
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
-            // Update AQI icon based on category
             document.getElementById('aqi-icon').innerHTML = getAQIIcon(main.Category.Name);
           } else {
             document.getElementById('aqi-value').textContent = "42";
@@ -547,7 +540,6 @@
                 } else {
                   document.getElementById('precip-value').textContent = "0.00 in";
                 }
-                // Update weather icon based on shortForecast
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
               }
             })
@@ -597,97 +589,6 @@
       fetchAQIData();
       fetchNWSData();
     }, 10 * 60 * 1000);
-
-    // --- Icon Helper Functions ---
-    function getWeatherIcon(forecast) {
-      forecast = forecast.toLowerCase();
-      let iconSVG = "";
-      if (forecast.includes("sunny") || forecast.includes("clear")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="12" fill="orange"/>
-                     <g stroke="orange" stroke-width="2">
-                       <line x1="32" y1="4" x2="32" y2="14"/>
-                       <line x1="32" y1="50" x2="32" y2="60"/>
-                       <line x1="4" y1="32" x2="14" y2="32"/>
-                       <line x1="50" y1="32" x2="60" y2="32"/>
-                       <line x1="12" y1="12" x2="18" y2="18"/>
-                       <line x1="46" y1="46" x2="52" y2="52"/>
-                       <line x1="12" y1="52" x2="18" y2="46"/>
-                       <line x1="46" y1="18" x2="52" y2="12"/>
-                     </g>
-                   </svg>`;
-      } else if (forecast.includes("cloud")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
-                   </svg>`;
-      } else if (forecast.includes("rain")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
-                     <g stroke="blue" stroke-width="2">
-                       <line x1="22" y1="48" x2="22" y2="58"/>
-                       <line x1="32" y1="48" x2="32" y2="58"/>
-                       <line x1="42" y1="48" x2="42" y2="58"/>
-                     </g>
-                   </svg>`;
-      } else if (forecast.includes("snow")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="lightblue"/>
-                     <g stroke="blue" stroke-width="2">
-                       <line x1="32" y1="48" x2="32" y2="60"/>
-                       <line x1="26" y1="52" x2="38" y2="52"/>
-                     </g>
-                   </svg>`;
-      } else {
-        // Default: partly cloudy
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="22" cy="22" r="10" fill="orange"/>
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
-                   </svg>`;
-      }
-      return iconSVG;
-    }
-
-    function getAQIIcon(category) {
-      category = category.toLowerCase();
-      let iconSVG = "";
-      if (category.includes("good")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="green"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">G</text>
-                   </svg>`;
-      } else if (category.includes("moderate")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="yellow"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">M</text>
-                   </svg>`;
-      } else if (category.includes("unhealthy for sensitive groups")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="orange"/>
-                     <text x="32" y="42" font-size="20" fill="black" text-anchor="middle" font-family="Arial">USG</text>
-                   </svg>`;
-      } else if (category.includes("unhealthy")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="red"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">U</text>
-                   </svg>`;
-      } else if (category.includes("very unhealthy")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="purple"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">VU</text>
-                   </svg>`;
-      } else if (category.includes("hazardous")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="maroon"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">H</text>
-                   </svg>`;
-      } else {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="gray"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">N/A</text>
-                   </svg>`;
-      }
-      return iconSVG;
-    }
   </script>
 </body>
 </html>
