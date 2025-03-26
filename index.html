@@ -159,16 +159,30 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          const values = data.value.timeSeries[0].values[0].value
-                          .map(v => parseFloat(v.value))
-                          .filter(v => !isNaN(v));
-          if (values.length > 0) {
-            document.getElementById('river-stage').textContent = `${values[values.length - 1]} ft`;
-            document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-            renderRiverGraph(values);
-          } else {
+          // Convert raw data to array of { dateTime, stage }
+          const rawValues = data.value.timeSeries[0].values[0].value || [];
+          const floatValues = rawValues
+            .map(v => ({
+              dateTime: v.dateTime,
+              stage: parseFloat(v.value)
+            }))
+            .filter(pt => !isNaN(pt.stage));
+
+          if (floatValues.length === 0) {
             document.getElementById('river-stage').textContent = 'No data available';
+            return;
           }
+
+          // Update "current" stage (last reading)
+          document.getElementById('river-stage').textContent = `${floatValues[floatValues.length - 1].stage.toFixed(2)} ft`;
+          document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, {
+            dateStyle: 'short',
+            timeStyle: 'short'
+          });
+
+          // Group by day and create daily average
+          const dailyValues = groupDailyValues(floatValues);
+          renderRiverGraph(dailyValues);
         })
         .catch(err => {
           console.error('USGS River Data fetch error:', err);
@@ -176,63 +190,115 @@
         });
     }
 
-    function renderRiverGraph(values) {
+    // Groups multiple measurements per day into a single average
+    function groupDailyValues(dataArray) {
+      // dataArray is an array of { dateTime, stage }
+      const dailyMap = {};
+
+      dataArray.forEach(pt => {
+        const dateObj = new Date(pt.dateTime);
+        // Extract YYYY-MM-DD as the grouping key
+        const dayKey = dateObj.toISOString().slice(0, 10);
+
+        if (!dailyMap[dayKey]) {
+          dailyMap[dayKey] = [];
+        }
+        dailyMap[dayKey].push(pt.stage);
+      });
+
+      // Convert dailyMap into a sorted array of { dateObj, stage }
+      const result = [];
+      Object.keys(dailyMap).sort().forEach(dayKey => {
+        const stages = dailyMap[dayKey];
+        const avg = stages.reduce((a, b) => a + b, 0) / stages.length;
+        // Reconstruct a Date from dayKey
+        const dateObj = new Date(dayKey);
+        result.push({ dateObj, stage: avg });
+      });
+
+      return result;
+    }
+
+    function renderRiverGraph(dailyValues) {
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
-      
-      // Increase viewBox height to allow room for labels.
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("width", "440");
-      svg.setAttribute("height", "220");
-      svg.setAttribute("viewBox", "0 0 440 220");
 
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      // Use fallback range if all values are equal.
-      const range = (max - min) || 1;
-      const floodStage = 5.0;
+      // We have one point per day in dailyValues: { dateObj, stage }
+      // Sort by date
+      dailyValues.sort((a, b) => a.dateObj - b.dateObj);
+
+      // Get min/max for date & stage
+      const minStage = Math.min(...dailyValues.map(d => d.stage));
+      const maxStage = Math.max(...dailyValues.map(d => d.stage));
+      const minDate = dailyValues[0].dateObj;
+      const maxDate = dailyValues[dailyValues.length - 1].dateObj;
+      // If all stages are the same, fallback range
+      const stageRange = (maxStage - minStage) || 1;
+
+      // Dimensions
+      const svgWidth = 440;
+      const svgHeight = 220;
+      const graphHeight = 160; // area for the line
       const graphOffsetX = 40;
       const graphWidth = 360;
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const floodStage = 5.0;
 
-      // Compute the polyline path within a 160-pixel high graph area.
-      const path = values.map((v, i) => {
-        const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
-        const y = 160 - ((v - min) / range) * 160;
+      // Create SVG
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", svgWidth);
+      svg.setAttribute("height", svgHeight);
+      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+
+      // Scale functions
+      const scaleX = dateObj => {
+        const totalMillis = maxDate - minDate;
+        const currentMillis = dateObj - minDate;
+        return graphOffsetX + (currentMillis / totalMillis) * graphWidth;
+      };
+      const scaleY = stage => {
+        return graphHeight - ((stage - minStage) / stageRange) * graphHeight;
+      };
+
+      // Build the path
+      const pathData = dailyValues.map((pt, i) => {
+        const x = scaleX(pt.dateObj);
+        const y = scaleY(pt.stage);
         return `${i === 0 ? 'M' : 'L'}${x},${y}`;
       }).join(' ');
 
+      // Draw the line
       const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      polyline.setAttribute("d", path);
+      polyline.setAttribute("d", pathData);
       polyline.setAttribute("stroke", "black");
       polyline.setAttribute("fill", "none");
-      polyline.setAttribute("stroke-width", "4");
+      polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Draw Flood Stage line if within range.
-      if (floodStage >= min && floodStage <= max) {
-        const y = 160 - ((floodStage - min) / range) * 160;
+      // Flood Stage line (if in range)
+      if (floodStage >= minStage && floodStage <= maxStage) {
+        const floodY = scaleY(floodStage);
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", graphOffsetX);
         line.setAttribute("x2", graphOffsetX + graphWidth);
-        line.setAttribute("y1", y);
-        line.setAttribute("y2", y);
+        line.setAttribute("y1", floodY);
+        line.setAttribute("y2", floodY);
         line.setAttribute("stroke", "black");
         line.setAttribute("stroke-dasharray", "6,3");
-        line.setAttribute("stroke-width", "3");
+        line.setAttribute("stroke-width", "2");
         svg.appendChild(line);
 
+        // Label the flood line
         const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
         floodLabel.setAttribute("x", graphOffsetX + graphWidth - 5);
-        floodLabel.setAttribute("y", y - 4);
-        floodLabel.setAttribute("font-size", "16");
+        floodLabel.setAttribute("y", floodY - 4);
+        floodLabel.setAttribute("font-size", "14");
         floodLabel.setAttribute("fill", "black");
         floodLabel.setAttribute("text-anchor", "end");
         floodLabel.textContent = "Flood Stage";
         svg.appendChild(floodLabel);
       }
 
-      // Y-axis Label with the closing parenthesis.
+      // Y-axis label
       const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       yAxisLabel.setAttribute("x", "5");
       yAxisLabel.setAttribute("y", "100");
@@ -242,30 +308,36 @@
       yAxisLabel.textContent = "Stage (ft)";
       svg.appendChild(yAxisLabel);
 
-      // X-axis Label positioned a bit higher to avoid clipping.
+      // X-axis label
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      xAxisLabel.setAttribute("x", "240");
-      xAxisLabel.setAttribute("y", "205");
+      xAxisLabel.setAttribute("x", "220");
+      xAxisLabel.setAttribute("y", "210");
       xAxisLabel.setAttribute("font-size", "16");
       xAxisLabel.setAttribute("fill", "black");
       xAxisLabel.setAttribute("text-anchor", "middle");
-      xAxisLabel.textContent = "Day";
+      xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Day Labels along the x-axis.
-      days.forEach((day, i) => {
-        const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
+      // Draw date labels for each daily point
+      dailyValues.forEach(pt => {
+        const x = scaleX(pt.dateObj);
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
         label.setAttribute("x", x);
-        label.setAttribute("y", "215");
+        label.setAttribute("y", "200");
         label.setAttribute("font-size", "14");
         label.setAttribute("fill", "black");
         label.setAttribute("text-anchor", "middle");
-        label.textContent = day;
+        label.textContent = formatDateLabel(pt.dateObj); // e.g., "Mar 20"
         svg.appendChild(label);
       });
 
       container.appendChild(svg);
+    }
+
+    // Format date as "Mar 20" or "Mar 21"
+    function formatDateLabel(dateObj) {
+      const options = { month: 'short', day: 'numeric' };
+      return dateObj.toLocaleDateString(undefined, options);
     }
 
     // --- AQI Data ---
