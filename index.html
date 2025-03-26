@@ -91,7 +91,7 @@
   </style>
 </head>
 <body>
-  <!-- Header now includes site latitude/longitude and a link -->
+  <!-- Header includes county info, lat/lon, and a link -->
   <div style="background-color: black; color: white; padding: 20px; text-align: center; font-size: 48px; font-weight: bold;">
     Chatham County (35.77659 / -79.14597) | 
     <a href="https://www.chathamcountync.gov/" target="_blank" style="color: white; text-decoration: underline;">chathamcountync.gov</a>
@@ -100,7 +100,7 @@
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- Now only shows the risk level in large text -->
+      <!-- Only shows the risk level in large text -->
       <div class="section-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
@@ -169,15 +169,10 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- Inline container for AQI icon and reading -->
-      <div style="display: flex; align-items: center; justify-content: center;">
-        <div id="aqi-icon" style="margin-right: 8px;"></div>
-        <div id="aqi-reading" style="display: flex; align-items: center; font-size: 100px;">
-          <span id="aqi-value">--</span>
-          <span id="aqi-category" style="margin-left: 8px;">--</span>
-        </div>
+      <!-- AQI card now only shows the category (e.g., "Good") in large text -->
+      <div class="section-content">
+        <div class="value" id="aqi-category">--</div>
       </div>
-      <div class="label" id="aqi-pollutant" style="text-align: center;">Primary Pollutant: --</div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
     </div>
   </div>
@@ -205,7 +200,6 @@
       const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
                         (HI < 90) ? "Moderate Heat Risk" :
                         (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
-      // Now update only the heat risk level element (using the "value" class for large text)
       document.getElementById('heat-risk-level').textContent = riskLevel;
       const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
@@ -260,46 +254,26 @@
     }
     
     function getAQIIcon(category) {
-      category = category.toLowerCase();
-      let iconSVG = "";
-      // Return a 100x100 icon so that its height matches the AQI numeric value.
-      if (category.includes("good")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">G</text>
-                   </svg>`;
-      } else if (category.includes("moderate")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">M</text>
-                   </svg>`;
-      } else if (category.includes("unhealthy for sensitive groups")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">USG</text>
-                   </svg>`;
-      } else if (category.includes("unhealthy")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">U</text>
-                   </svg>`;
-      } else if (category.includes("very unhealthy")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">VU</text>
-                   </svg>`;
-      } else if (category.includes("hazardous")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">H</text>
-                   </svg>`;
-      } else {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="50" fill="black" text-anchor="middle" font-family="Arial">N/A</text>
-                   </svg>`;
+      // This function is no longer used since we removed icons from the AQI card.
+      return "";
+    }
+    
+    // --- Heat Risk Card Update ---
+    function updateHeatRisk(tempF, RH) {
+      let HI = tempF;
+      if (tempF >= 80) {
+        const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
+        const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
+        const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
+        HI = c1 + c2*tempF + c3*RH + c4*tempF*RH + c5*(tempF*tempF) + c6*(RH*RH) +
+             c7*(tempF*tempF)*RH + c8*tempF*(RH*RH) + c9*(tempF*tempF)*(RH*RH);
       }
-      return iconSVG;
+      const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
+                        (HI < 90) ? "Moderate Heat Risk" :
+                        (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
+      document.getElementById('heat-risk-level').textContent = riskLevel;
+      const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+      document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
     }
     
     // --- River Data & Graph ---
@@ -351,7 +325,6 @@
         });
     }
     
-    // Group measurements into 3-hour blocks and average each block
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
       dataArray.forEach(pt => {
@@ -396,7 +369,6 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis tick marks at half-foot increments (font size 22px)
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -496,29 +468,21 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            document.getElementById('aqi-value').textContent = main.AQI;
+            // Only show the AQI category (e.g., "Good")
             document.getElementById('aqi-category').textContent = main.Category.Name;
-            document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
-            document.getElementById('aqi-icon').innerHTML = getAQIIcon(main.Category.Name);
           } else {
-            document.getElementById('aqi-value').textContent = "42";
             document.getElementById('aqi-category').textContent = "Good";
-            document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
-            document.getElementById('aqi-icon').innerHTML = getAQIIcon("Good");
           }
         })
         .catch(err => {
           console.error('Error fetching AQI data:', err);
-          document.getElementById('aqi-value').textContent = "42";
           document.getElementById('aqi-category').textContent = "Good";
-          document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
           const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
-          document.getElementById('aqi-icon').innerHTML = getAQIIcon("Good");
         });
     }
     
