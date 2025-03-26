@@ -236,7 +236,205 @@ document.getElementById("river-graph").appendChild(svg);
     }
 
     fetchAQIData();
-  </script>
+    fetchNWSData();
+  window.onload = () => {
+    fetchAQIData();
+    document.getElementById("river-graph").innerHTML = "";
+    try {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", "440");
+      svg.setAttribute("height", "220");
+      svg.setAttribute("viewBox", "0 0 440 200");
+
+      const values = [4.1, 4.3, 4.5, 4.8, 5.1, 4.9, 4.7];
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const floodStage = 5.0;
+      const graphOffsetX = 40;
+      const graphWidth = 360;
+
+      const path = values.map((v, i) => {
+        const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
+        const y = 160 - ((v - min) / (max - min)) * 160;
+        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+      }).join(' ');
+
+      const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      polyline.setAttribute("d", path);
+      polyline.setAttribute("stroke", "black");
+      polyline.setAttribute("fill", "none");
+      polyline.setAttribute("stroke-width", "4");
+      svg.appendChild(polyline);
+
+      if (floodStage >= min && floodStage <= max) {
+        const y = 160 - ((floodStage - min) / (max - min)) * 160;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", graphOffsetX);
+        line.setAttribute("x2", graphOffsetX + graphWidth);
+        line.setAttribute("y1", y);
+        line.setAttribute("y2", y);
+        line.setAttribute("stroke", "black");
+        line.setAttribute("stroke-dasharray", "6,3");
+        line.setAttribute("stroke-width", "3");
+        svg.appendChild(line);
+
+        const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        floodLabel.setAttribute("x", graphOffsetX + graphWidth - 5);
+        floodLabel.setAttribute("y", y - 4);
+        floodLabel.setAttribute("font-size", "16");
+        floodLabel.setAttribute("fill", "black");
+        floodLabel.setAttribute("text-anchor", "end");
+        floodLabel.textContent = "Flood Stage";
+        svg.appendChild(floodLabel);
+      }
+
+      const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      yAxisLabel.setAttribute("x", "5");
+      yAxisLabel.setAttribute("y", "100");
+      yAxisLabel.setAttribute("font-size", "16");
+      yAxisLabel.setAttribute("fill", "black");
+      yAxisLabel.setAttribute("transform", "rotate(-90 5,50)");
+      yAxisLabel.textContent = "Stage (ft)";
+      svg.appendChild(yAxisLabel);
+
+      const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      xAxisLabel.setAttribute("x", "240");
+      xAxisLabel.setAttribute("y", "195");
+      xAxisLabel.setAttribute("font-size", "16");
+      xAxisLabel.setAttribute("fill", "black");
+      xAxisLabel.setAttribute("text-anchor", "middle");
+      xAxisLabel.textContent = "Day";
+      svg.appendChild(xAxisLabel);
+
+      document.getElementById("river-graph").appendChild(svg);
+    } catch (err) {
+      console.error('River graph error:', err);
+    }
+    setInterval(() => {
+      fetchNWSData();
+      fetchAQIData();
+      document.getElementById("river-graph").innerHTML = "";
+      try {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "440");
+        svg.setAttribute("height", "220");
+        svg.setAttribute("viewBox", "0 0 440 200");
+
+        const values = [4.1, 4.3, 4.5, 4.8, 5.1, 4.9, 4.7];
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const floodStage = 5.0;
+        const graphOffsetX = 40;
+        const graphWidth = 360;
+
+        const path = values.map((v, i) => {
+          const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
+          const y = 160 - ((v - min) / (max - min)) * 160;
+          return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+        }).join(' ');
+
+        const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        polyline.setAttribute("d", path);
+        polyline.setAttribute("stroke", "black");
+        polyline.setAttribute("fill", "none");
+        polyline.setAttribute("stroke-width", "4");
+        svg.appendChild(polyline);
+
+        if (floodStage >= min && floodStage <= max) {
+          const y = 160 - ((floodStage - min) / (max - min)) * 160;
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", graphOffsetX);
+          line.setAttribute("x2", graphOffsetX + graphWidth);
+          line.setAttribute("y1", y);
+          line.setAttribute("y2", y);
+          line.setAttribute("stroke", "black");
+          line.setAttribute("stroke-dasharray", "6,3");
+          line.setAttribute("stroke-width", "3");
+          svg.appendChild(line);
+
+          const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          floodLabel.setAttribute("x", graphOffsetX + graphWidth - 5);
+          floodLabel.setAttribute("y", y - 4);
+          floodLabel.setAttribute("font-size", "16");
+          floodLabel.setAttribute("fill", "black");
+          floodLabel.setAttribute("text-anchor", "end");
+          floodLabel.textContent = "Flood Stage";
+          svg.appendChild(floodLabel);
+        }
+
+        const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        yAxisLabel.setAttribute("x", "5");
+        yAxisLabel.setAttribute("y", "100");
+        yAxisLabel.setAttribute("font-size", "16");
+        yAxisLabel.setAttribute("fill", "black");
+        yAxisLabel.setAttribute("transform", "rotate(-90 5,50)");
+        yAxisLabel.textContent = "Stage (ft)";
+        svg.appendChild(yAxisLabel);
+
+        const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        xAxisLabel.setAttribute("x", "240");
+        xAxisLabel.setAttribute("y", "195");
+        xAxisLabel.setAttribute("font-size", "16");
+        xAxisLabel.setAttribute("fill", "black");
+        xAxisLabel.setAttribute("text-anchor", "middle");
+        xAxisLabel.textContent = "Day";
+        svg.appendChild(xAxisLabel);
+
+        document.getElementById("river-graph").appendChild(svg);
+      } catch (err) {
+        console.error('River graph error:', err);
+      }
+    }, 10 * 60 * 1000);
+  };
+  function fetchNWSData() {
+  const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
+
+  fetch(pointUrl)
+    .then(res => res.json())
+    .then(pointData => {
+      const gridUrl = pointData.properties.forecast;
+      const obsUrl = pointData.properties.forecastHourly;
+      const alertUrl = pointData.properties.forecastZone;
+
+      // Weather Summary
+      fetch(obsUrl)
+        .then(res => res.json())
+        .then(obs => {
+          const now = obs.properties.periods[0];
+          document.querySelector('.section:nth-of-type(3) .value').textContent = `${now.temperature}°F`;
+          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(1)').textContent = now.shortForecast;
+          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(2)').textContent = `Wind: ${now.windSpeed}`;
+          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(3)').textContent = `Humidity: --`;
+        });
+
+      // Rainfall Forecast
+      fetch(gridUrl)
+        .then(res => res.json())
+        .then(grid => {
+          const days = grid.properties.periods.slice(0, 3);
+          const forecastEls = document.querySelectorAll('.section:nth-of-type(4) .label');
+          days.forEach((day, i) => {
+            if (forecastEls[i]) {
+              forecastEls[i].textContent = `${day.name}: ${day.shortForecast} (${day.probabilityOfPrecipitation.value || 0}% chance)`;
+            }
+          });
+        });
+
+      // Alerts
+      fetch(`https://api.weather.gov/alerts/active/zone/${alertUrl.split('/').pop()}`)
+        .then(res => res.json())
+        .then(data => {
+          const alertBox = document.querySelector('.section:nth-of-type(2) .label');
+          if (data.features.length === 0) {
+            alertBox.textContent = 'No alerts at this time.';
+          } else {
+            alertBox.textContent = data.features.map(a => a.properties.headline).join(' | ');
+          }
+        });
+    })
+    .catch(err => console.error('NWS data error:', err));
+}
+</script>
 
 </body>
 </html>
