@@ -161,9 +161,11 @@
           const values = data.value.timeSeries[0].values[0].value.map(v => parseFloat(v.value)).filter(v => !isNaN(v));
           if (values.length > 0) {
             window.usgsRiverData = values;
-            document.getElementById('river-stage').textContent = `${values[values.length - 1]} ft`;
+            document.getElementById('river-stage').textContent = `${values[values.length - 1]} ft`; // Update river stage value
             document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             renderRiverGraph(values);
+          } else {
+            document.getElementById('river-stage').textContent = 'No data available';
           }
         })
         .catch((err) => console.error('USGS River Data fetch error:', err));
