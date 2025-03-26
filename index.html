@@ -83,7 +83,8 @@
       <div style="margin-top: 56px; padding: 0 16px; display: flex; flex-direction: column; align-items: flex-end;">
         <div class="value" id="river-stage">Loading...</div>
         <div class="label" style="font-size: 20px; color: #666;">USGS Site #02096960 (Live)</div>
-        <div class="label">AT OR ABOVE FLOOD STAGE</div>
+        <!-- The flood status label will be updated dynamically -->
+        <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
     </div>
@@ -152,6 +153,9 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     const LAT = 35.77659;
     const LON = -79.14597;
+    
+    // Global variable for flood threshold (in ft)
+    let floodThreshold = 5.0; // default
 
     // --- River Data & Graph ---
     function fetchRiverData() {
@@ -166,8 +170,17 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          const rawValues = data.value.timeSeries[0].values[0].value || [];
+          // Attempt to extract flood stage from the API metadata (if available)
+          const siteProps = data.value.timeSeries[0].sourceInfo.siteProperty;
+          if (siteProps) {
+            siteProps.forEach(prop => {
+              if (prop.propertyName === "floodStage") {
+                floodThreshold = parseFloat(prop.value);
+              }
+            });
+          }
           // Convert raw data to array of { dateTime, stage }
+          const rawValues = data.value.timeSeries[0].values[0].value || [];
           const floatValues = rawValues
             .map(v => ({
               dateTime: v.dateTime,
@@ -180,17 +193,25 @@
             return;
           }
 
-          // Current stage = last reading
+          // Update current stage from last reading
           const lastReading = floatValues[floatValues.length - 1].stage;
           document.getElementById('river-stage').textContent = `${lastReading.toFixed(2)} ft`;
           document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, {
             dateStyle: 'short',
             timeStyle: 'short'
           });
+          
+          // Update flood status label based on current stage vs flood threshold
+          const statusEl = document.getElementById("flood-status");
+          if (lastReading >= floodThreshold) {
+            statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
+          } else {
+            statusEl.textContent = "Below Flood Stage";
+          }
 
-          // Group into 3-hour blocks
+          // Group measurements into 3-hour blocks and render graph using floodThreshold
           const groupedValues = groupBy3HourBlocks(floatValues);
-          renderRiverGraph(groupedValues);
+          renderRiverGraph(groupedValues, floodThreshold);
         })
         .catch(err => {
           console.error('USGS River Data fetch error:', err);
@@ -198,7 +219,7 @@
         });
     }
 
-    // Group data into 3-hour blocks and average each block
+    // Group data into 3-hour blocks (average each block)
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
       dataArray.forEach(pt => {
@@ -215,26 +236,23 @@
         blockMap[key].sum += pt.stage;
         blockMap[key].count += 1;
       });
-      const result = Object.values(blockMap).map(item => ({
-        dateObj: item.dateObj,
-        stage: item.sum / item.count
-      })).sort((a, b) => a.dateObj - b.dateObj);
-      return result;
+      return Object.values(blockMap)
+        .map(item => ({ dateObj: item.dateObj, stage: item.sum / item.count }))
+        .sort((a, b) => a.dateObj - b.dateObj);
     }
 
-    function renderRiverGraph(dataPoints) {
+    // Render river graph using the grouped 3-hour block data and dynamic floodThreshold
+    function renderRiverGraph(dataPoints, floodThreshold) {
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
 
-      // Compute min & max; always include flood stage (5.0 ft)
+      // Ensure floodThreshold is included in min/max calculations
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
-      const floodStage = 5.0;
-      minStage = Math.min(minStage, floodStage);
-      maxStage = Math.max(maxStage, floodStage);
+      minStage = Math.min(minStage, floodThreshold);
+      maxStage = Math.max(maxStage, floodThreshold);
       const stageRange = (maxStage - minStage) || 1;
 
-      // X scale from earliest to latest date
       const minDate = dataPoints[0].dateObj;
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
@@ -243,17 +261,17 @@
       const svgWidth = 960;
       const svgHeight = 280;
       const graphHeight = 180;
-      const graphOffsetX = 60; 
+      const graphOffsetX = 60;
       const graphWidth = svgWidth - graphOffsetX - 20;
-      const axisLabelY = 260; // "Date" axis label
-      const dateLabelY = 240; // once-per-day labels
+      const axisLabelY = 260; // "Date" label Y coordinate (increased font size later)
+      const dateLabelY = 240; // Y coordinate for one day marker per day
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Y-axis tick marks and labels
+      // Y-axis tick marks and labels (we draw 5 ticks)
       const numTicks = 5;
       for (let i = 0; i <= numTicks; i++) {
         const fraction = i / numTicks;
@@ -299,8 +317,8 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Flood Stage line (always visible)
-      const floodY = scaleY(floodStage);
+      // Flood Stage line and centered label
+      const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
       floodLine.setAttribute("x2", graphOffsetX + graphWidth);
@@ -310,12 +328,10 @@
       floodLine.setAttribute("stroke-dasharray", "6,3");
       floodLine.setAttribute("stroke-width", "2");
       svg.appendChild(floodLine);
-      
-      // Centered "Flood Stage" label with increased font size (18px)
       const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       floodLabel.setAttribute("x", graphOffsetX + graphWidth / 2);
       floodLabel.setAttribute("y", floodY - 5);
-      floodLabel.setAttribute("font-size", "18");
+      floodLabel.setAttribute("font-size", "18"); // increased by ~30%
       floodLabel.setAttribute("fill", "black");
       floodLabel.setAttribute("text-anchor", "middle");
       floodLabel.textContent = "Flood Stage";
@@ -331,7 +347,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw a circle for each point and add one day marker per day (with font size 18)
+      // Draw a small circle at each data point and add one day marker (font size 18)
       let lastDay = "";
       dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
@@ -343,7 +359,7 @@
         circle.setAttribute("fill", "black");
         svg.appendChild(circle);
 
-        // Show day marker only once per day
+        // Only show the day marker once per day
         const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         if (dayLabel !== lastDay) {
           lastDay = dayLabel;
