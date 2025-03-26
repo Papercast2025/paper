@@ -33,7 +33,7 @@
     }
     .section h2 {
       margin-top: 0;
-      font-size: 40px;
+      font-size: 48px;
       background-color: #000;
       color: #fff;
       padding: 10px;
@@ -68,6 +68,14 @@
       font-size: 32px;
       text-align: right;
     }
+    .alert {
+      background-color: #ffcccc;
+      border: 2px solid red;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 4px;
+      font-size: 28px;
+    }
   </style>
 </head>
 <body>
@@ -76,10 +84,10 @@
     <div class="section">
       <h2>Weather</h2>
       <div class="section-content">
-        <div class="value">66°F</div>
-        <div class="label">Partly Cloudy</div>
-        <div class="label">Wind: 5 mph NW</div>
-        <div class="label">Humidity: 62%</div>
+        <div class="value" id="weather-temp">--</div>
+        <div class="label" id="weather-description">Loading...</div>
+        <div class="label" id="weather-wind">--</div>
+        <div class="label" id="weather-humidity">--</div>
       </div>
     </div>
 
@@ -93,62 +101,24 @@
     </div>
 
     <div class="section">
-      <h2>UV Index</h2>
-      <div class="section-content">
-        <div class="value">6</div>
-        <div class="label">High (Wear protection)</div>
-      </div>
-    </div>
-
-    <div class="section">
       <h2>Heat Index</h2>
       <div class="section-content">
-        <div class="value">70°F</div>
+        <div class="value" id="heat-index">--</div>
         <div class="label">Feels Like</div>
       </div>
     </div>
 
     <div class="section">
-      <h2>Flood Risk Level</h2>
-      <div class="section-content">
-        <div class="value">Moderate</div>
-        <div class="label">Localized flooding possible in low-lying areas</div>
+      <h2>Forecast</h2>
+      <div class="section-content" id="forecast">
+        <div class="label">Loading...</div>
       </div>
     </div>
 
     <div class="section">
-      <h2>River & Water Levels</h2>
-      <div class="section-content">
-        <div class="value">2.83 ft</div>
-        <div class="label">USGS Site #02096960</div>
-        <div class="label">Status: Below flood stage</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Precipitation (24h)</h2>
-      <div class="section-content">
-        <div class="value">0.12 in</div>
-        <div class="label">Light Rainfall</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Rainfall Outlook (Next 3 Days)</h2>
-      <div class="section-content">
-        <div class="forecast-day">Tuesday: 0.08 in (Scattered Showers)</div>
-        <div class="forecast-day">Wednesday: 0.25 in (Rain Likely)</div>
-        <div class="forecast-day">Thursday: 0.00 in (Clear)</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Heat Illness Risk</h2>
-      <div class="section-content">
-        <div class="value">Elevated</div>
-        <div class="label">Caution advised for outdoor workers and vulnerable groups</div>
-        <div class="label">Hydration and shaded rest breaks recommended</div>
-        <div class="label">Peak risk period: 12 PM – 5 PM</div>
+      <h2>Alerts</h2>
+      <div class="section-content" id="alerts">
+        <div class="label">Loading...</div>
       </div>
     </div>
 
@@ -159,16 +129,13 @@
 
   <script>
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
-    const LAT = 35.7796;  // Raleigh, NC as fallback for no data in target coords
+    const LAT = 35.7796;
     const LON = -78.6382;
 
     function setAQIContent(aqi, category, pollutant, fallback = false) {
       document.getElementById('aqi-value').textContent = aqi;
       document.getElementById('aqi-category').textContent = category + (fallback ? ' (fallback)' : '');
       document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${pollutant}`;
-
-      const now = new Date();
-      document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}\nSource: AirNow API${fallback ? ' (using fallback location)' : ''}`;
     }
 
     function fetchAQIData() {
@@ -181,17 +148,84 @@
             const main = data[0];
             setAQIContent(main.AQI, main.Category.Name, main.ParameterName);
           } else {
-            console.warn('AirNow returned no data, using fallback values.');
             setAQIContent(42, 'Good', 'PM2.5', true);
           }
         })
-        .catch(err => {
-          console.error('Error fetching AQI data:', err);
-          setAQIContent(42, 'Good', 'PM2.5', true);
+        .catch(() => setAQIContent(42, 'Good', 'PM2.5', true));
+    }
+
+    function fetchWeatherAndAlerts() {
+      fetch(`https://api.weather.gov/points/${LAT},${LON}`)
+        .then(res => res.json())
+        .then(meta => {
+          const forecastUrl = meta.properties.forecast;
+          const obsUrl = meta.properties.observationStations;
+          const alertUrl = `https://api.weather.gov/alerts/active?point=${LAT},${LON}`;
+
+          fetch(obsUrl)
+            .then(res => res.json())
+            .then(obsData => {
+              const station = obsData.features[0].properties.stationIdentifier;
+              return fetch(`https://api.weather.gov/stations/${station}/observations/latest`);
+            })
+            .then(res => res.json())
+            .then(obs => {
+              const temp = obs.properties.temperature.value;
+              const desc = obs.properties.textDescription;
+              const wind = obs.properties.windSpeed.value;
+              const humidity = obs.properties.relativeHumidity.value;
+              const heat = obs.properties.heatIndex.value;
+
+              document.getElementById('weather-temp').textContent = temp ? `${Math.round(temp * 9/5 + 32)}°F` : '--';
+              document.getElementById('weather-description').textContent = desc || '--';
+              document.getElementById('weather-wind').textContent = wind ? `Wind: ${Math.round(wind * 0.621371)} mph` : '--';
+              document.getElementById('weather-humidity').textContent = humidity ? `Humidity: ${Math.round(humidity)}%` : '--';
+              document.getElementById('heat-index').textContent = heat ? `${Math.round(heat * 9/5 + 32)}°F` : '--';
+            });
+
+          fetch(alertUrl)
+            .then(res => res.json())
+            .then(alerts => {
+              const alertContainer = document.getElementById('alerts');
+              alertContainer.innerHTML = '';
+              if (alerts.features.length > 0) {
+                alerts.features.forEach(a => {
+                  const div = document.createElement('div');
+                  div.className = 'alert';
+                  div.textContent = a.properties.headline;
+                  alertContainer.appendChild(div);
+                });
+              } else {
+                const noAlert = document.createElement('div');
+                noAlert.className = 'label';
+                noAlert.textContent = 'No active alerts';
+                alertContainer.appendChild(noAlert);
+              }
+            });
+
+          fetch(forecastUrl)
+            .then(res => res.json())
+            .then(data => {
+              const periods = data.properties.periods.slice(0, 3);
+              const forecastEl = document.getElementById('forecast');
+              forecastEl.innerHTML = '';
+              periods.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'forecast-day';
+                div.textContent = `${p.name}: ${p.shortForecast} (${p.temperature}°F)`;
+                forecastEl.appendChild(div);
+              });
+            });
         });
     }
 
-    window.onload = fetchAQIData;
+    window.onload = () => {
+      fetchAQIData();
+      fetchWeatherAndAlerts();
+
+      const now = new Date();
+      document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+    }
   </script>
 </body>
 </html>
