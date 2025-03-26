@@ -77,6 +77,7 @@
     Chatham County
   </div>
   <div class="container">
+    <!-- River Section -->
     <div class="section" style="position: relative; flex-direction: column; align-items: stretch;">
       <div style="position: absolute; top: 16px; left: 16px; font-size: 36px; font-weight: bold;">River & Water Levels</div>
       <div style="margin-top: 56px; padding-left: 16px; padding-right: 16px; display: flex; flex-direction: column; align-items: flex-end;">
@@ -87,6 +88,7 @@
       <div id="river-graph" style="align-self: flex-start; margin-top: 12px; width: 100%; max-width: 100%; display: flex; justify-content: flex-start;"></div>
     </div>
 
+    <!-- Alerts Section -->
     <div class="section" id="alerts-section">
       <div style="font-size: 36px; font-weight: bold;">Alerts</div>
       <div class="section-content">
@@ -94,6 +96,7 @@
       </div>
     </div>
 
+    <!-- Weather Section -->
     <div class="section" id="weather-section">
       <div style="font-size: 36px; font-weight: bold;">Weather Conditions</div>
       <div class="section-content">
@@ -104,6 +107,7 @@
       </div>
     </div>
 
+    <!-- Rainfall Forecast Section -->
     <div class="section" id="rainfall-forecast">
       <div style="font-size: 36px; font-weight: bold;">Rainfall Forecast</div>
       <div class="section-content">
@@ -113,6 +117,7 @@
       </div>
     </div>
 
+    <!-- Precipitation Section -->
     <div class="section" id="precipitation-section">
       <div style="font-size: 36px; font-weight: bold;">Precipitation (24h)</div>
       <div class="section-content">
@@ -121,6 +126,7 @@
       </div>
     </div>
 
+    <!-- AQI Section -->
     <div class="section" id="aqi-section">
       <div style="font-size: 36px; font-weight: bold;">Air Quality Index</div>
       <div class="section-content">
@@ -130,6 +136,7 @@
       </div>
     </div>
 
+    <!-- Timestamp Section -->
     <div class="timestamp" style="font-size: 24px; text-align: center; margin-top: 20px;">
       Last updated:<br>
       AQI: <span id="last-aqi-update">Loading...</span> |
@@ -278,7 +285,7 @@
         .catch(err => console.error('Error fetching AQI data:', err));
     }
 
-    // Fetch Data for All Sections
+    // Fetch All Data
     fetchRiverData();
     fetchAQIData();
 
