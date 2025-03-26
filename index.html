@@ -17,30 +17,41 @@
     }
     .container {
       padding: 32px;
-      display: -webkit-flex;
-      -webkit-flex-direction: column;
-      -webkit-justify-content: flex-start;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
       gap: 28px;
     }
     .section {
       border: 2px solid #000;
       padding: 16px;
-      -webkit-border-radius: 8px;
+      border-radius: 8px;
       background-color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .section h2 {
       margin-top: 0;
       font-size: 40px;
       border-bottom: 2px solid #000;
       padding-bottom: 10px;
+      flex: 1;
+    }
+    .section-content {
+      flex: 2;
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .value {
-      font-size: 64px;
+      font-size: 100px;
       font-weight: bold;
       margin: 10px 0;
     }
     .label {
-      font-size: 28px;
+      font-size: 32px;
       color: #444;
     }
     .timestamp {
@@ -59,64 +70,82 @@
   <div class="container">
 
     <div class="section">
-      <h2> Weather</h2>
-      <div class="value">66°F</div>
-      <div class="label">Partly Cloudy</div>
-      <div class="label">Wind: 5 mph NW</div>
-      <div class="label">Humidity: 62%</div>
+      <h2>Weather</h2>
+      <div class="section-content">
+        <div class="value">66°F</div>
+        <div class="label">Partly Cloudy</div>
+        <div class="label">Wind: 5 mph NW</div>
+        <div class="label">Humidity: 62%</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2>🌫️ Air Quality Index (AQI)</h2>
-      <div class="value" id="aqi-value">--</div>
-      <div class="label" id="aqi-category">Loading...</div>
-      <div class="label" id="aqi-pollutant">Primary Pollutant: --</div>
+      <h2>Air Quality Index (AQI)</h2>
+      <div class="section-content">
+        <div class="value" id="aqi-value">--</div>
+        <div class="label" id="aqi-category">Loading...</div>
+        <div class="label" id="aqi-pollutant">Primary Pollutant: --</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2> UV Index</h2>
-      <div class="value">6</div>
-      <div class="label">High (Wear protection)</div>
+      <h2>UV Index</h2>
+      <div class="section-content">
+        <div class="value">6</div>
+        <div class="label">High (Wear protection)</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2> Heat Index</h2>
-      <div class="value">70°F</div>
-      <div class="label">Feels Like</div>
+      <h2>Heat Index</h2>
+      <div class="section-content">
+        <div class="value">70°F</div>
+        <div class="label">Feels Like</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2>🌊 Flood Risk Level</h2>
-      <div class="value">Moderate</div>
-      <div class="label">Localized flooding possible in low-lying areas</div>
+      <h2>Flood Risk Level</h2>
+      <div class="section-content">
+        <div class="value">Moderate</div>
+        <div class="label">Localized flooding possible in low-lying areas</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2> River & Water Levels</h2>
-      <div class="value">2.83 ft</div>
-      <div class="label">USGS Site #02096960</div>
-      <div class="label">Status: Below flood stage</div>
+      <h2>River & Water Levels</h2>
+      <div class="section-content">
+        <div class="value">2.83 ft</div>
+        <div class="label">USGS Site #02096960</div>
+        <div class="label">Status: Below flood stage</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2> Precipitation (24h)</h2>
-      <div class="value">0.12 in</div>
-      <div class="label">Light Rainfall</div>
+      <h2>Precipitation (24h)</h2>
+      <div class="section-content">
+        <div class="value">0.12 in</div>
+        <div class="label">Light Rainfall</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2> Rainfall Outlook (Next 3 Days)</h2>
-      <div class="forecast-day">Tuesday: 0.08 in (Scattered Showers)</div>
-      <div class="forecast-day">Wednesday: 0.25 in (Rain Likely)</div>
-      <div class="forecast-day">Thursday: 0.00 in (Clear)</div>
+      <h2>Rainfall Outlook (Next 3 Days)</h2>
+      <div class="section-content">
+        <div class="forecast-day">Tuesday: 0.08 in (Scattered Showers)</div>
+        <div class="forecast-day">Wednesday: 0.25 in (Rain Likely)</div>
+        <div class="forecast-day">Thursday: 0.00 in (Clear)</div>
+      </div>
     </div>
 
     <div class="section">
-      <h2> Heat Illness Risk</h2>
-      <div class="value">Elevated</div>
-      <div class="label">Caution advised for outdoor workers and vulnerable groups</div>
-      <div class="label">Hydration and shaded rest breaks recommended</div>
-      <div class="label">Peak risk period: 12 PM – 5 PM</div>
+      <h2>Heat Illness Risk</h2>
+      <div class="section-content">
+        <div class="value">Elevated</div>
+        <div class="label">Caution advised for outdoor workers and vulnerable groups</div>
+        <div class="label">Hydration and shaded rest breaks recommended</div>
+        <div class="label">Peak risk period: 12 PM – 5 PM</div>
+      </div>
     </div>
 
     <div class="timestamp" id="last-updated">
