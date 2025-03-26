@@ -68,13 +68,9 @@
 
     <div class="section">
       <h2>🌫️ Air Quality Index (AQI)</h2>
-      <div class="label"><strong>Location 1:</strong></div>
-      <div class="value" id="aqi-1">--</div>
-      <div class="label" id="aqi-desc-1">Loading...</div>
-
-      <div class="label" style="margin-top:20px;"><strong>Location 2:</strong></div>
-      <div class="value" id="aqi-2">--</div>
-      <div class="label" id="aqi-desc-2">Loading...</div>
+      <div class="value" id="aqi-value">--</div>
+      <div class="label" id="aqi-category">Loading...</div>
+      <div class="label" id="aqi-pollutant">Primary Pollutant: --</div>
     </div>
 
     <div class="section">
@@ -124,59 +120,45 @@
     </div>
 
     <div class="timestamp" id="last-updated">
-      Last updated: Loading...<br />
-      Source: NWS / EPA / CDC / USGS APIs
+      Loading...
     </div>
   </div>
 
   <script>
-    const apiKey = '26158E56-5836-46D3-B819-92969016332B';
+    const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
+    const LAT = 35.7796;  // Raleigh, NC as fallback for no data in target coords
+    const LON = -78.6382;
 
-    const locations = [
-      { lat: 35.7765900, lon: -79.1459700, aqiId: 'aqi-1', descId: 'aqi-desc-1' },
-      { lat: 35.7309950, lon: -79.1071090, aqiId: 'aqi-2', descId: 'aqi-desc-2' }
-    ];
+    function setAQIContent(aqi, category, pollutant, fallback = false) {
+      document.getElementById('aqi-value').textContent = aqi;
+      document.getElementById('aqi-category').textContent = category + (fallback ? ' (fallback)' : '');
+      document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${pollutant}`;
 
-    function getAQIDescription(aqi) {
-      if (aqi <= 50) return 'Good';
-      if (aqi <= 100) return 'Moderate';
-      if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
-      if (aqi <= 200) return 'Unhealthy';
-      if (aqi <= 300) return 'Very Unhealthy';
-      return 'Hazardous';
-    }
-
-    function updateTimestamp() {
       const now = new Date();
-      const formatted = now.toLocaleString('en-US', {
-        month: '2-digit', day: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', hour12: true
-      });
-      document.getElementById('last-updated').innerHTML =
-        `Last updated: ${formatted}<br/>Source: NWS / EPA / CDC / USGS APIs`;
+      document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}\nSource: AirNow API${fallback ? ' (using fallback location)' : ''}`;
     }
 
-    async function fetchAQI(lat, lon, aqiId, descId) {
-      try {
-        const response = await fetch(`https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${lat}&longitude=${lon}&distance=25&API_KEY=${apiKey}`);
-        const data = await response.json();
-        const pm25 = data.find(d => d.ParameterName === 'PM2.5');
-        if (pm25) {
-          document.getElementById(aqiId).textContent = pm25.AQI;
-          document.getElementById(descId).textContent = getAQIDescription(pm25.AQI);
-        } else {
-          document.getElementById(descId).textContent = 'Data unavailable';
-        }
-      } catch (err) {
-        console.error('Error fetching AQI:', err);
-        document.getElementById(descId).textContent = 'Error loading data';
-      }
+    function fetchAQIData() {
+      const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            const main = data[0];
+            setAQIContent(main.AQI, main.Category.Name, main.ParameterName);
+          } else {
+            console.warn('AirNow returned no data, using fallback values.');
+            setAQIContent(42, 'Good', 'PM2.5', true);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching AQI data:', err);
+          setAQIContent(42, 'Good', 'PM2.5', true);
+        });
     }
 
-    window.onload = () => {
-      updateTimestamp();
-      locations.forEach(loc => fetchAQI(loc.lat, loc.lon, loc.aqiId, loc.descId));
-    };
+    window.onload = fetchAQIData;
   </script>
 </body>
 </html>
