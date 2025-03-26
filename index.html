@@ -91,7 +91,7 @@
   </style>
 </head>
 <body>
-  <!-- Header includes county info, lat/lon, and a link -->
+  <!-- Header now includes county info, lat/lon, and a link -->
   <div style="background-color: black; color: white; padding: 20px; text-align: center; font-size: 48px; font-weight: bold;">
     Chatham County (35.77659 / -79.14597) | 
     <a href="https://www.chathamcountync.gov/" target="_blank" style="color: white; text-decoration: underline;">chathamcountync.gov</a>
@@ -105,6 +105,15 @@
         <div class="value" id="heat-risk-level">--</div>
       </div>
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
+    </div>
+
+    <!-- Alerts Section (centered) placed immediately under Heat Risk -->
+    <div class="section centered" id="alerts-section">
+      <div class="card-title">Alerts</div>
+      <div class="section-content">
+        <div class="label" id="alert-message">No alerts at this time.</div>
+      </div>
+      <div class="card-timestamp" id="alerts-timestamp">Last updated: --</div>
     </div>
 
     <!-- Weather Conditions Section (centered) -->
@@ -137,15 +146,6 @@
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Alerts Section (centered) -->
-    <div class="section centered" id="alerts-section">
-      <div class="card-title">Alerts</div>
-      <div class="section-content">
-        <div class="label" id="alert-message">No alerts at this time.</div>
-      </div>
-      <div class="card-timestamp" id="alerts-timestamp">Last updated: --</div>
-    </div>
-
     <!-- Rainfall Forecast Section (centered) -->
     <div class="section centered" id="rainfall-forecast">
       <div class="card-title">Rainfall Forecast</div>
@@ -157,19 +157,10 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Precipitation Section (centered) -->
-    <div class="section centered" id="precipitation-section">
-      <div class="card-title">Precipitation (24h)</div>
-      <div class="section-content">
-        <div class="value" id="precip-value">--</div>
-      </div>
-      <div class="card-timestamp" id="precipitation-timestamp">Last updated: --</div>
-    </div>
-
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- AQI card now only shows the category (e.g., "Good") in large text -->
+      <!-- Instead of an icon and numeric value, we now show only the AQI category -->
       <div class="section-content">
         <div class="value" id="aqi-category">--</div>
       </div>
@@ -251,29 +242,6 @@
                    </svg>`;
       }
       return iconSVG;
-    }
-    
-    function getAQIIcon(category) {
-      // This function is no longer used since we removed icons from the AQI card.
-      return "";
-    }
-    
-    // --- Heat Risk Card Update ---
-    function updateHeatRisk(tempF, RH) {
-      let HI = tempF;
-      if (tempF >= 80) {
-        const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
-        const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
-        const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
-        HI = c1 + c2*tempF + c3*RH + c4*tempF*RH + c5*(tempF*tempF) + c6*(RH*RH) +
-             c7*(tempF*tempF)*RH + c8*tempF*(RH*RH) + c9*(tempF*tempF)*(RH*RH);
-      }
-      const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
-                        (HI < 90) ? "Moderate Heat Risk" :
-                        (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
-      document.getElementById('heat-risk-level').textContent = riskLevel;
-      const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
     }
     
     // --- River Data & Graph ---
@@ -468,7 +436,7 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // Only show the AQI category (e.g., "Good")
+            // Now only show the AQI category (e.g., "Good") in large text.
             document.getElementById('aqi-category').textContent = main.Category.Name;
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
@@ -492,7 +460,6 @@
       document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
       document.getElementById('alerts-timestamp').textContent = "Last updated: " + nwsTime;
       document.getElementById('rainfall-timestamp').textContent = "Last updated: " + nwsTime;
-      document.getElementById('precipitation-timestamp').textContent = "Last updated: " + nwsTime;
       
       const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
       fetch(pointUrl)
@@ -516,9 +483,7 @@
                 const humidity = now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--';
                 document.getElementById('weather-humidity').textContent = `Humidity: ${humidity}%`;
                 if (now.quantitativePrecipitation && typeof now.quantitativePrecipitation.value === 'number') {
-                  document.getElementById('precip-value').textContent = `${now.quantitativePrecipitation.value.toFixed(2)} in`;
-                } else {
-                  document.getElementById('precip-value').textContent = "0.00 in";
+                  document.getElementById('precip-value') && (document.getElementById('precip-value').textContent = `${now.quantitativePrecipitation.value.toFixed(2)} in`);
                 }
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 // Update Heat Risk card using temperature and humidity values
