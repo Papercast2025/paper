@@ -72,7 +72,9 @@
   <div class="container">
     <!-- River & Water Levels Section -->
     <div class="section" style="flex-direction: column; align-items: stretch;">
-      <div style="position: absolute; top: 16px; left: 16px; font-size: 36px; font-weight: bold;">River & Water Levels</div>
+      <div style="position: absolute; top: 16px; left: 16px; font-size: 36px; font-weight: bold;">
+        River & Water Levels
+      </div>
       <div style="margin-top: 56px; padding: 0 16px; display: flex; flex-direction: column; align-items: flex-end;">
         <div class="value" id="river-stage">Loading...</div>
         <div class="label" style="font-size: 20px; color: #666;">USGS Site #02096960 (Live)</div>
@@ -178,20 +180,22 @@
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
       
+      // Increase viewBox height to allow room for labels.
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", "440");
       svg.setAttribute("height", "220");
-      svg.setAttribute("viewBox", "0 0 440 200");
+      svg.setAttribute("viewBox", "0 0 440 220");
 
       const min = Math.min(...values);
       const max = Math.max(...values);
-      // If all values are equal, use 1 as a fallback range.
+      // Use fallback range if all values are equal.
       const range = (max - min) || 1;
       const floodStage = 5.0;
       const graphOffsetX = 40;
       const graphWidth = 360;
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+      // Compute the polyline path within a 160-pixel high graph area.
       const path = values.map((v, i) => {
         const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
         const y = 160 - ((v - min) / range) * 160;
@@ -205,7 +209,7 @@
       polyline.setAttribute("stroke-width", "4");
       svg.appendChild(polyline);
 
-      // Flood Stage Line
+      // Draw Flood Stage line if within range.
       if (floodStage >= min && floodStage <= max) {
         const y = 160 - ((floodStage - min) / range) * 160;
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -228,7 +232,7 @@
         svg.appendChild(floodLabel);
       }
 
-      // Axis Labels
+      // Y-axis Label with the closing parenthesis.
       const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       yAxisLabel.setAttribute("x", "5");
       yAxisLabel.setAttribute("y", "100");
@@ -238,21 +242,22 @@
       yAxisLabel.textContent = "Stage (ft)";
       svg.appendChild(yAxisLabel);
 
+      // X-axis Label positioned a bit higher to avoid clipping.
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", "240");
-      xAxisLabel.setAttribute("y", "195");
+      xAxisLabel.setAttribute("y", "205");
       xAxisLabel.setAttribute("font-size", "16");
       xAxisLabel.setAttribute("fill", "black");
       xAxisLabel.setAttribute("text-anchor", "middle");
       xAxisLabel.textContent = "Day";
       svg.appendChild(xAxisLabel);
 
-      // Day Labels
+      // Day Labels along the x-axis.
       days.forEach((day, i) => {
         const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
         label.setAttribute("x", x);
-        label.setAttribute("y", "210");
+        label.setAttribute("y", "215");
         label.setAttribute("font-size", "14");
         label.setAttribute("fill", "black");
         label.setAttribute("text-anchor", "middle");
@@ -276,7 +281,7 @@
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
           } else {
-            // Fallback if no data is returned
+            // Fallback values if no data is returned
             document.getElementById('aqi-value').textContent = "42";
             document.getElementById('aqi-category').textContent = "Good";
             document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
