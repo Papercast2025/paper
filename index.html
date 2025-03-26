@@ -27,8 +27,7 @@
       border-radius: 8px;
       background-color: #ffffff;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
       position: relative;
     }
     .section h2 {
@@ -41,11 +40,9 @@
       flex: 1;
     }
     .section-content {
-      flex: 2;
-      padding-left: 20px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      align-items: flex-end;
       text-align: right;
     }
     .value {
@@ -68,6 +65,22 @@
       display: block;
       margin: 12px auto 0 auto;
     }
+    /* USGS site info styling (bottom of card, right aligned) */
+    #usgs-site-info {
+      width: 100%;
+      text-align: right;
+      font-size: 20px;
+      color: #666;
+      margin-top: 8px;
+    }
+    /* Flood status text styling */
+    #flood-status {
+      font-weight: bold;
+      text-align: center;
+      width: 100%;
+      font-size: 32px;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -76,17 +89,19 @@
   </div>
   <div class="container">
     <!-- River & Water Levels Section -->
-    <div class="section" style="flex-direction: column; align-items: stretch;">
+    <div class="section" id="river-section">
       <div style="position: absolute; top: 16px; left: 16px; font-size: 36px; font-weight: bold;">
         River & Water Levels
       </div>
-      <div style="margin-top: 56px; padding: 0 16px; display: flex; flex-direction: column; align-items: flex-end;">
+      <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
         <div class="value" id="river-stage">Loading...</div>
-        <div class="label" style="font-size: 20px; color: #666;">USGS Site #02096960 (Live)</div>
-        <!-- The flood status label will be updated dynamically -->
+        <!-- Dynamic flood status text -->
         <div class="label" id="flood-status"></div>
       </div>
+      <!-- The river graph is rendered here -->
       <div id="river-graph"></div>
+      <!-- USGS site info moved to bottom of the card, right aligned -->
+      <div id="usgs-site-info">USGS Site #02096960 (Live)</div>
     </div>
 
     <!-- Alerts Section -->
@@ -154,8 +169,8 @@
     const LAT = 35.77659;
     const LON = -79.14597;
     
-    // Global variable for flood threshold (in ft)
-    let floodThreshold = 5.0; // default
+    // Global flood threshold (default 5.0 ft)
+    let floodThreshold = 5.0;
 
     // --- River Data & Graph ---
     function fetchRiverData() {
@@ -170,7 +185,7 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          // Attempt to extract flood stage from the API metadata (if available)
+          // Try to extract flood stage from the API metadata (if available)
           const siteProps = data.value.timeSeries[0].sourceInfo.siteProperty;
           if (siteProps) {
             siteProps.forEach(prop => {
@@ -179,7 +194,7 @@
               }
             });
           }
-          // Convert raw data to array of { dateTime, stage }
+          // Convert raw data to an array of { dateTime, stage }
           const rawValues = data.value.timeSeries[0].values[0].value || [];
           const floatValues = rawValues
             .map(v => ({
@@ -193,15 +208,15 @@
             return;
           }
 
-          // Update current stage from last reading
+          // Current stage = last reading
           const lastReading = floatValues[floatValues.length - 1].stage;
           document.getElementById('river-stage').textContent = `${lastReading.toFixed(2)} ft`;
           document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, {
             dateStyle: 'short',
             timeStyle: 'short'
           });
-          
-          // Update flood status label based on current stage vs flood threshold
+
+          // Update flood status label (bold and centered)
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
@@ -209,7 +224,7 @@
             statusEl.textContent = "Below Flood Stage";
           }
 
-          // Group measurements into 3-hour blocks and render graph using floodThreshold
+          // Group into 3‑hour blocks
           const groupedValues = groupBy3HourBlocks(floatValues);
           renderRiverGraph(groupedValues, floodThreshold);
         })
@@ -219,7 +234,7 @@
         });
     }
 
-    // Group data into 3-hour blocks (average each block)
+    // Group measurements into 3‑hour blocks and average each block
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
       dataArray.forEach(pt => {
@@ -241,12 +256,11 @@
         .sort((a, b) => a.dateObj - b.dateObj);
     }
 
-    // Render river graph using the grouped 3-hour block data and dynamic floodThreshold
     function renderRiverGraph(dataPoints, floodThreshold) {
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
 
-      // Ensure floodThreshold is included in min/max calculations
+      // Ensure floodThreshold is included in min/max
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
       minStage = Math.min(minStage, floodThreshold);
@@ -257,26 +271,26 @@
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
 
-      // Dimensions: 960x280
-      const svgWidth = 960;
+      // Increase horizontal space by 20%
+      const svgWidth = 1152; // 1152 px wide (20% more than 960)
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
       const graphWidth = svgWidth - graphOffsetX - 20;
-      const axisLabelY = 260; // "Date" label Y coordinate (increased font size later)
-      const dateLabelY = 240; // Y coordinate for one day marker per day
+      const axisLabelY = 260; // "Date" axis label y-coordinate remains unchanged
+      const dateLabelY = 240; // once-per-day labels
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Y-axis tick marks and labels (we draw 5 ticks)
-      const numTicks = 5;
-      for (let i = 0; i <= numTicks; i++) {
-        const fraction = i / numTicks;
+      // Draw Y-axis tick marks at half-foot increments
+      const startTick = Math.floor(minStage * 2) / 2;
+      const endTick = Math.ceil(maxStage * 2) / 2;
+      for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
+        const fraction = (maxStage - tickVal) / stageRange;
         const tickY = 20 + fraction * graphHeight;
-        const tickValue = (maxStage - fraction * stageRange).toFixed(1);
         const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
         tick.setAttribute("x1", graphOffsetX - 5);
         tick.setAttribute("x2", graphOffsetX);
@@ -291,7 +305,7 @@
         tickLabel.setAttribute("font-size", "12");
         tickLabel.setAttribute("fill", "black");
         tickLabel.setAttribute("text-anchor", "end");
-        tickLabel.textContent = tickValue;
+        tickLabel.textContent = tickVal.toFixed(1) + " ft";
         svg.appendChild(tickLabel);
       }
 
@@ -317,7 +331,7 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Flood Stage line and centered label
+      // Flood Stage line and centered label (flood label font size increased by ~30% to 24px)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -331,13 +345,13 @@
       const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       floodLabel.setAttribute("x", graphOffsetX + graphWidth / 2);
       floodLabel.setAttribute("y", floodY - 5);
-      floodLabel.setAttribute("font-size", "18"); // increased by ~30%
+      floodLabel.setAttribute("font-size", "24");
       floodLabel.setAttribute("fill", "black");
       floodLabel.setAttribute("text-anchor", "middle");
       floodLabel.textContent = "Flood Stage";
       svg.appendChild(floodLabel);
 
-      // X-axis label "Date" with increased font size (21px)
+      // X-axis label "Date" remains at 21px (unchanged)
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -347,7 +361,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw a small circle at each data point and add one day marker (font size 18)
+      // Draw circles at each data point and add one day marker per day (font size increased to 24px)
       let lastDay = "";
       dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
@@ -366,7 +380,7 @@
           const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
           label.setAttribute("x", x);
           label.setAttribute("y", dateLabelY);
-          label.setAttribute("font-size", "18");
+          label.setAttribute("font-size", "24");
           label.setAttribute("fill", "black");
           label.setAttribute("text-anchor", "middle");
           label.textContent = dayLabel;
