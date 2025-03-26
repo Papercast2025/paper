@@ -162,7 +162,6 @@
       <div class="card-title">Precipitation (24h)</div>
       <div class="section-content">
         <div class="value" id="precip-value">--</div>
-        <div class="label">Last 24 Hours</div>
       </div>
       <div class="card-timestamp" id="precipitation-timestamp">Last updated: --</div>
     </div>
@@ -263,7 +262,7 @@
     function getAQIIcon(category) {
       category = category.toLowerCase();
       let iconSVG = "";
-      // Updated to produce a 100x100 SVG so the icon height matches the numeric reading.
+      // Return a 100x100 icon so that its height matches the AQI numeric value.
       if (category.includes("good")) {
         iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
