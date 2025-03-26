@@ -152,15 +152,17 @@
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
-      start.setDate(end.getDate() - 7);
+      // 4 days of data
+      start.setDate(end.getDate() - 4);
+
       const format = d => d.toISOString().split('.')[0];
       const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
       
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          // Convert raw data to array of { dateTime, stage }
           const rawValues = data.value.timeSeries[0].values[0].value || [];
+          // Convert raw data to array of { dateTime, stage }
           const floatValues = rawValues
             .map(v => ({
               dateTime: v.dateTime,
@@ -173,16 +175,17 @@
             return;
           }
 
-          // Update "current" stage (last reading)
-          document.getElementById('river-stage').textContent = `${floatValues[floatValues.length - 1].stage.toFixed(2)} ft`;
+          // Current stage = last reading
+          const lastReading = floatValues[floatValues.length - 1].stage;
+          document.getElementById('river-stage').textContent = `${lastReading.toFixed(2)} ft`;
           document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, {
             dateStyle: 'short',
             timeStyle: 'short'
           });
 
-          // Group by day and create daily average
-          const dailyValues = groupDailyValues(floatValues);
-          renderRiverGraph(dailyValues);
+          // Group into 3-hour blocks
+          const groupedValues = groupBy3HourBlocks(floatValues);
+          renderRiverGraph(groupedValues);
         })
         .catch(err => {
           console.error('USGS River Data fetch error:', err);
@@ -190,58 +193,73 @@
         });
     }
 
-    // Groups multiple measurements per day into a single average
-    function groupDailyValues(dataArray) {
-      // dataArray is an array of { dateTime, stage }
-      const dailyMap = {};
+    // Group the data into 3-hour blocks and average each block
+    function groupBy3HourBlocks(dataArray) {
+      // Key format: "YYYY-MM-DD HH-block"
+      const blockMap = {};
 
       dataArray.forEach(pt => {
-        const dateObj = new Date(pt.dateTime);
-        // Extract YYYY-MM-DD as the grouping key
-        const dayKey = dateObj.toISOString().slice(0, 10);
+        const date = new Date(pt.dateTime);
+        const y = date.getFullYear();
+        const m = date.getMonth();
+        const d = date.getDate();
+        // Each block is 3 hours, e.g. 0-2 => 0, 3-5 => 3, 6-8 => 6, etc.
+        const hBlock = Math.floor(date.getHours() / 3) * 3;
 
-        if (!dailyMap[dayKey]) {
-          dailyMap[dayKey] = [];
+        // Build a consistent date/time for the block
+        const blockDate = new Date(y, m, d, hBlock, 0, 0, 0);
+        const key = blockDate.toISOString();
+
+        if (!blockMap[key]) {
+          blockMap[key] = { dateObj: blockDate, sum: 0, count: 0 };
         }
-        dailyMap[dayKey].push(pt.stage);
+        blockMap[key].sum += pt.stage;
+        blockMap[key].count += 1;
       });
 
-      // Convert dailyMap into a sorted array of { dateObj, stage }
-      const result = [];
-      Object.keys(dailyMap).sort().forEach(dayKey => {
-        const stages = dailyMap[dayKey];
-        const avg = stages.reduce((a, b) => a + b, 0) / stages.length;
-        // Reconstruct a Date from dayKey
-        const dateObj = new Date(dayKey);
-        result.push({ dateObj, stage: avg });
-      });
+      // Convert blockMap to an array
+      const result = Object.values(blockMap).map(item => ({
+        dateObj: item.dateObj,
+        stage: item.sum / item.count
+      }));
 
+      // Sort by date/time
+      result.sort((a, b) => a.dateObj - b.dateObj);
       return result;
     }
 
-    function renderRiverGraph(dailyValues) {
+    function renderRiverGraph(dataPoints) {
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
 
-      // We have one point per day in dailyValues: { dateObj, stage }
-      // Sort by date
-      dailyValues.sort((a, b) => a.dateObj - b.dateObj);
+      // If no data, exit
+      if (!dataPoints.length) return;
 
-      // Get min/max for date & stage
-      const minStage = Math.min(...dailyValues.map(d => d.stage));
-      const maxStage = Math.max(...dailyValues.map(d => d.stage));
-      const minDate = dailyValues[0].dateObj;
-      const maxDate = dailyValues[dailyValues.length - 1].dateObj;
+      // Compute min & max
+      let minStage = Math.min(...dataPoints.map(d => d.stage));
+      let maxStage = Math.max(...dataPoints.map(d => d.stage));
+
+      // Always show flood line => expand min/max if needed
+      const floodStage = 5.0;
+      minStage = Math.min(minStage, floodStage);
+      maxStage = Math.max(maxStage, floodStage);
+
       // If all stages are the same, fallback range
       const stageRange = (maxStage - minStage) || 1;
 
+      // X scale: from earliest date to latest date
+      const minDate = dataPoints[0].dateObj;
+      const maxDate = dataPoints[dataPoints.length - 1].dateObj;
+      const totalMillis = maxDate - minDate;
+
       // Dimensions
-      const svgWidth = 440;
-      const svgHeight = 220;
-      const graphHeight = 160; // area for the line
-      const graphOffsetX = 40;
-      const graphWidth = 360;
-      const floodStage = 5.0;
+      const svgWidth = 480;  // a bit wider
+      const svgHeight = 280; // taller to allow more space
+      const graphHeight = 180; 
+      const graphOffsetX = 60; // a bit more left margin
+      const graphWidth = svgWidth - graphOffsetX - 20; // 20 px right margin
+      const axisLabelY = 250; // place "Date" label lower
+      const dateLabelY = 230; // place each 3-hour label above the axis label
 
       // Create SVG
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -249,24 +267,23 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Scale functions
+      // X & Y scale functions
       const scaleX = dateObj => {
-        const totalMillis = maxDate - minDate;
         const currentMillis = dateObj - minDate;
         return graphOffsetX + (currentMillis / totalMillis) * graphWidth;
       };
       const scaleY = stage => {
-        return graphHeight - ((stage - minStage) / stageRange) * graphHeight;
+        return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       };
 
-      // Build the path
-      const pathData = dailyValues.map((pt, i) => {
+      // Build path data
+      const pathData = dataPoints.map((pt, i) => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
-        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+        return (i === 0 ? 'M' : 'L') + x + ',' + y;
       }).join(' ');
 
-      // Draw the line
+      // Main line
       const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       polyline.setAttribute("d", pathData);
       polyline.setAttribute("stroke", "black");
@@ -274,70 +291,85 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Flood Stage line (if in range)
-      if (floodStage >= minStage && floodStage <= maxStage) {
-        const floodY = scaleY(floodStage);
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", graphOffsetX);
-        line.setAttribute("x2", graphOffsetX + graphWidth);
-        line.setAttribute("y1", floodY);
-        line.setAttribute("y2", floodY);
-        line.setAttribute("stroke", "black");
-        line.setAttribute("stroke-dasharray", "6,3");
-        line.setAttribute("stroke-width", "2");
-        svg.appendChild(line);
+      // Flood Stage line
+      const floodY = scaleY(floodStage);
+      const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      floodLine.setAttribute("x1", graphOffsetX);
+      floodLine.setAttribute("x2", graphOffsetX + graphWidth);
+      floodLine.setAttribute("y1", floodY);
+      floodLine.setAttribute("y2", floodY);
+      floodLine.setAttribute("stroke", "black");
+      floodLine.setAttribute("stroke-dasharray", "6,3");
+      floodLine.setAttribute("stroke-width", "2");
+      svg.appendChild(floodLine);
 
-        // Label the flood line
-        const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        floodLabel.setAttribute("x", graphOffsetX + graphWidth - 5);
-        floodLabel.setAttribute("y", floodY - 4);
-        floodLabel.setAttribute("font-size", "14");
-        floodLabel.setAttribute("fill", "black");
-        floodLabel.setAttribute("text-anchor", "end");
-        floodLabel.textContent = "Flood Stage";
-        svg.appendChild(floodLabel);
-      }
+      const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      floodLabel.setAttribute("x", graphOffsetX + graphWidth - 5);
+      floodLabel.setAttribute("y", floodY - 5);
+      floodLabel.setAttribute("font-size", "14");
+      floodLabel.setAttribute("fill", "black");
+      floodLabel.setAttribute("text-anchor", "end");
+      floodLabel.textContent = "Flood Stage";
+      svg.appendChild(floodLabel);
 
-      // Y-axis label
+      // Left-aligned "Stage (ft)" near the top
       const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      yAxisLabel.setAttribute("x", "5");
-      yAxisLabel.setAttribute("y", "100");
-      yAxisLabel.setAttribute("font-size", "16");
+      yAxisLabel.setAttribute("x", "10");
+      yAxisLabel.setAttribute("y", "20");
+      yAxisLabel.setAttribute("font-size", "14");
       yAxisLabel.setAttribute("fill", "black");
-      yAxisLabel.setAttribute("transform", "rotate(-90 5,50)");
+      yAxisLabel.setAttribute("text-anchor", "start");
       yAxisLabel.textContent = "Stage (ft)";
       svg.appendChild(yAxisLabel);
 
       // X-axis label
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      xAxisLabel.setAttribute("x", "220");
-      xAxisLabel.setAttribute("y", "210");
+      xAxisLabel.setAttribute("x", svgWidth / 2);
+      xAxisLabel.setAttribute("y", axisLabelY);
       xAxisLabel.setAttribute("font-size", "16");
       xAxisLabel.setAttribute("fill", "black");
       xAxisLabel.setAttribute("text-anchor", "middle");
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw date labels for each daily point
-      dailyValues.forEach(pt => {
+      // Draw a small label for each data point (3-hour block)
+      dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
-        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        label.setAttribute("x", x);
-        label.setAttribute("y", "200");
-        label.setAttribute("font-size", "14");
-        label.setAttribute("fill", "black");
-        label.setAttribute("text-anchor", "middle");
-        label.textContent = formatDateLabel(pt.dateObj); // e.g., "Mar 20"
-        svg.appendChild(label);
+        const y = scaleY(pt.stage);
+        // Circle or small dot at each point
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", 3);
+        circle.setAttribute("fill", "black");
+        svg.appendChild(circle);
+
+        // X-axis text label
+        const dateLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        dateLabel.setAttribute("x", x);
+        dateLabel.setAttribute("y", dateLabelY);
+        dateLabel.setAttribute("font-size", "12");
+        dateLabel.setAttribute("fill", "black");
+        dateLabel.setAttribute("text-anchor", "middle");
+        dateLabel.textContent = format3HourLabel(pt.dateObj);
+        svg.appendChild(dateLabel);
       });
 
       container.appendChild(svg);
     }
 
-    // Format date as "Mar 20" or "Mar 21"
-    function formatDateLabel(dateObj) {
-      const options = { month: 'short', day: 'numeric' };
-      return dateObj.toLocaleDateString(undefined, options);
+    // Format a 3-hour block label, e.g. "Mar 23 3 AM"
+    function format3HourLabel(dateObj) {
+      const monthDay = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      let hour = dateObj.getHours();
+      let ampm = 'AM';
+      if (hour === 0) {
+        hour = 12; // midnight is 12 AM
+      } else if (hour >= 12) {
+        if (hour > 12) hour -= 12;
+        ampm = 'PM';
+      }
+      return `${monthDay} ${hour} ${ampm}`;
     }
 
     // --- AQI Data ---
@@ -353,7 +385,7 @@
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
           } else {
-            // Fallback values if no data is returned
+            // Fallback if no data is returned
             document.getElementById('aqi-value').textContent = "42";
             document.getElementById('aqi-category').textContent = "Good";
             document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
@@ -439,6 +471,7 @@
     fetchAQIData();
     fetchNWSData();
 
+    // Refresh every 10 minutes
     setInterval(() => {
       fetchRiverData();
       fetchAQIData();
