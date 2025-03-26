@@ -119,7 +119,7 @@
       </div>
     </div>
 
-    <!-- Air Quality Index (AQI) Section -->
+    <!-- AQI Section -->
     <div class="section" id="aqi-section">
       <div style="font-size: 36px; font-weight: bold;">Air Quality Index</div>
       <div class="section-content">
@@ -175,7 +175,6 @@
     }
 
     function renderRiverGraph(values) {
-      // Clear any previous graph
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
       
@@ -274,9 +273,22 @@
             document.getElementById('aqi-category').textContent = main.Category.Name;
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
+          } else {
+            // Fallback values if no data is returned
+            document.getElementById('aqi-value').textContent = "42";
+            document.getElementById('aqi-category').textContent = "Good";
+            document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
+            document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
           }
         })
-        .catch(err => console.error('Error fetching AQI data:', err));
+        .catch(err => {
+          console.error('Error fetching AQI data:', err);
+          // Fallback on error
+          document.getElementById('aqi-value').textContent = "42";
+          document.getElementById('aqi-category').textContent = "Good";
+          document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
+          document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
+        });
     }
 
     // --- Weather, Rainfall Forecast & Alerts from NWS ---
