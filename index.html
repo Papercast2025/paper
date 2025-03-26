@@ -261,11 +261,30 @@
       document.getElementById("river-graph").appendChild(svg);
     }
 
-    // Fetch River Data
+    // AQI Data Fetching
+    function fetchAQIData() {
+      const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            const main = data[0];
+            document.getElementById('aqi-value').textContent = main.AQI;
+            document.getElementById('aqi-category').textContent = main.Category.Name;
+            document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
+            document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
+          }
+        })
+        .catch(err => console.error('Error fetching AQI data:', err));
+    }
+
+    // Fetch Data for All Sections
     fetchRiverData();
+    fetchAQIData();
 
     setInterval(() => {
       fetchRiverData();
+      fetchAQIData();
     }, 10 * 60 * 1000); // Refresh every 10 minutes
   </script>
 </body>
