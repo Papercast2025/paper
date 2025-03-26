@@ -151,25 +151,25 @@
       svg.setAttribute("height", "220");
       svg.setAttribute("viewBox", "0 0 440 200");
 
-      const values = [4.1, 4.3, 4.5, 4.8, 5.1, 4.9, 4.7];
+      const values = (window.usgsRiverData && window.usgsRiverData.length) ? window.usgsRiverData : [4.1, 4.3, 4.5, 4.8, 5.1, 4.9, 4.7];
       const min = Math.min(...values);
       const max = Math.max(...values);
       const floodStage = 5.0;
       const graphOffsetX = 40;
       const graphWidth = 360;
 
-      const path = values.map((v, i) => {
-        const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
-        const y = 160 - ((v - min) / (max - min)) * 160;
-        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
-      }).join(' ');
+      const path = values.length > 0 ? values.map((v, i) => {
+  const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
+  const y = 160 - ((v - min) / (max - min)) * 160;
+  return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+}).join(' ') : '';
 
       const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       polyline.setAttribute("d", path);
       polyline.setAttribute("stroke", "black");
       polyline.setAttribute("fill", "none");
       polyline.setAttribute("stroke-width", "4");
-      svg.appendChild(polyline);
+      if (path) svg.appendChild(polyline);
 
       if (floodStage >= min && floodStage <= max) {
         const y = 160 - ((floodStage - min) / (max - min)) * 160;
@@ -211,7 +211,13 @@ xAxisLabel.setAttribute("text-anchor", "middle");
 xAxisLabel.textContent = "Day";
 svg.appendChild(xAxisLabel);
 
-document.getElementById("river-graph").appendChild(svg);
+if (path) {
+  document.getElementById("river-graph").appendChild(svg);
+  document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+} else {
+  document.getElementById("river-graph").textContent = "No river data available.";
+  document.getElementById("last-river-update").textContent = "N/A";
+}
       document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
     } catch (err) {
       console.error('River graph error:', err);
@@ -224,9 +230,9 @@ document.getElementById("river-graph").appendChild(svg);
 
     function setAQIContent(aqi, category, pollutant, fallback = false) {
       document.getElementById('last-aqi-update').textContent = new Date().toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
-      document.getElementById('aqi-value').textContent = aqi;
-      document.getElementById('aqi-category').textContent = category + (fallback ? ' (fallback)' : '');
-      document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${pollutant}`;
+      document.getElementById('aqi-value').textContent = (aqi != null && !isNaN(aqi)) ? aqi : '--';
+      document.getElementById('aqi-category').textContent = category ? category + (fallback ? ' (fallback)' : '') : 'N/A';
+      document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${pollutant || 'N/A'}`;
     }
 
     function fetchAQIData() {
@@ -411,10 +417,11 @@ document.getElementById("river-graph").appendChild(svg);
         .then(res => res.json())
         .then(obs => {
           const now = obs.properties.periods[0];
-          document.querySelector('#weather-section .value').textContent = `${now.temperature}°F`;
-          document.querySelector('#weather-section .label:nth-of-type(1)').textContent = now.shortForecast;
-          document.querySelector('#weather-section .label:nth-of-type(2)').textContent = `Wind: ${now.windSpeed}`;
-          document.querySelector('#weather-section .label:nth-of-type(3)').textContent = `Humidity: ${now.relativeHumidity?.value ?? '--'}%`;
+          document.querySelector('#weather-section .value').textContent = `${now.temperature ?? '--'}°F`;
+          document.querySelector('#weather-section .label:nth-of-type(1)').textContent = now.shortForecast ?? 'N/A';
+          document.querySelector('#weather-section .label:nth-of-type(2)').textContent = `Wind: ${now.windSpeed ?? '--'}`;
+          const rh = now.relativeHumidity?.value;
+document.querySelector('#weather-section .label:nth-of-type(3)').textContent = `Humidity: ${rh != null && !isNaN(rh) ? rh : '--'}%`;
 
           const precipVal = now.quantitativePrecipitation?.value;
           if (precipVal != null && !isNaN(precipVal)) {
@@ -430,7 +437,12 @@ document.getElementById("river-graph").appendChild(svg);
           const forecastEls = document.querySelectorAll('#rainfall-forecast .label');
           days.forEach((day, i) => {
             if (forecastEls[i]) {
-              forecastEls[i].textContent = `${day.name}: ${day.shortForecast} (${day.probabilityOfPrecipitation.value || 0}% chance)`;
+              const name = day.name || `Day ${i + 1}`;
+              const forecast = day.shortForecast || 'N/A';
+              const chance = (day.probabilityOfPrecipitation?.value != null) ? `${day.probabilityOfPrecipitation.value}% chance` : 'N/A';
+              forecastEls[i].textContent = `${name}: ${forecast} (${chance})`;
+            } else {
+              forecastEls[i].textContent = `N/A`;
             }
           });
         });
@@ -449,6 +461,26 @@ document.getElementById("river-graph").appendChild(svg);
     })
     .catch(err => console.error('NWS data error:', err));
 }
+function fetchRiverData() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 7);
+
+  const format = (d) => d.toISOString().split('.')[0];
+  const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
+
+  fetch(url)
+    .then((res) => res.json())
+    .then((data) => {
+      const values = data.value.timeSeries[0].values[0].value.map(v => parseFloat(v.value)).filter(v => !isNaN(v));
+      window.usgsRiverData = values;
+      document.getElementById("river-graph").innerHTML = "";
+      window.onload();
+    })
+    .catch(err => console.error('USGS fetch error:', err));
+}
+
+fetchRiverData();
 </script>
 
 </body>
