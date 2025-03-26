@@ -168,7 +168,10 @@
             document.getElementById('river-stage').textContent = 'No data available';
           }
         })
-        .catch((err) => console.error('USGS River Data fetch error:', err));
+        .catch((err) => {
+          console.error('USGS River Data fetch error:', err);
+          document.getElementById('river-stage').textContent = 'Error fetching data';
+        });
     }
 
     // River Graph Rendering
