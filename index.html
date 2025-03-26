@@ -79,7 +79,7 @@
       color: #666;
       margin-top: 8px;
     }
-    /* Flood status text styling remains unchanged */
+    /* Flood status text styling */
     #flood-status {
       font-weight: bold;
       text-align: center;
@@ -94,7 +94,7 @@
     Chatham County
   </div>
   <div class="container">
-    <!-- River & Water Levels Section (content remains left aligned) -->
+    <!-- River & Water Levels Section (left aligned) -->
     <div class="section" id="river-section">
       <div class="card-title" style="position: absolute; top: 16px; left: 16px;">
         River & Water Levels
@@ -119,9 +119,9 @@
     <!-- Weather Conditions Section (centered) -->
     <div class="section centered" id="weather-section">
       <div class="card-title">Weather Conditions</div>
-      <!-- Inline container for icon and temperature -->
+      <!-- Inline container for weather icon and temperature -->
       <div class="section-content">
-        <div class="weather-temp-container" style="display: flex; align-items: center; justify-content: center;">
+        <div style="display: flex; align-items: center; justify-content: center;">
           <div id="weather-icon" style="margin-right: 8px;"></div>
           <div class="value" id="weather-temp">--</div>
         </div>
@@ -153,9 +153,9 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- Inline container for icon and AQI reading -->
+      <!-- Inline container for AQI icon and reading -->
       <div class="section-content">
-        <div class="aqi-value-container" style="display: flex; align-items: center; justify-content: center;">
+        <div style="display: flex; align-items: center; justify-content: center;">
           <div id="aqi-icon" style="margin-right: 8px;"></div>
           <div class="value" id="aqi-value">--</div>
         </div>
@@ -183,15 +183,15 @@
     
     // Global flood threshold (default 5.0 ft)
     let floodThreshold = 5.0;
-
-    // --- Helper functions for dynamic icons ---
+    
+    // --- Helper functions for dynamic icons (black & white) ---
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
       if (forecast.includes("sunny") || forecast.includes("clear")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="12" fill="orange"/>
-                     <g stroke="orange" stroke-width="2">
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="12" fill="white" stroke="black" stroke-width="2"/>
+                     <g stroke="black" stroke-width="2">
                        <line x1="32" y1="4" x2="32" y2="14"/>
                        <line x1="32" y1="50" x2="32" y2="60"/>
                        <line x1="4" y1="32" x2="14" y2="32"/>
@@ -203,30 +203,31 @@
                      </g>
                    </svg>`;
       } else if (forecast.includes("cloud")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="white" stroke="black" stroke-width="2"/>
                    </svg>`;
       } else if (forecast.includes("rain")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
-                     <g stroke="blue" stroke-width="2">
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="white" stroke="black" stroke-width="2"/>
+                     <g stroke="black" stroke-width="2">
                        <line x1="22" y1="48" x2="22" y2="58"/>
                        <line x1="32" y1="48" x2="32" y2="58"/>
                        <line x1="42" y1="48" x2="42" y2="58"/>
                      </g>
                    </svg>`;
       } else if (forecast.includes("snow")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="lightblue"/>
-                     <g stroke="blue" stroke-width="2">
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="white" stroke="black" stroke-width="2"/>
+                     <g stroke="black" stroke-width="2">
                        <line x1="32" y1="48" x2="32" y2="60"/>
                        <line x1="26" y1="52" x2="38" y2="52"/>
                      </g>
                    </svg>`;
       } else {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="22" cy="22" r="10" fill="orange"/>
-                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="gray"/>
+        // Default: partly cloudy
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="22" cy="22" r="10" fill="white" stroke="black" stroke-width="2"/>
+                     <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="white" stroke="black" stroke-width="2"/>
                    </svg>`;
       }
       return iconSVG;
@@ -236,39 +237,39 @@
       category = category.toLowerCase();
       let iconSVG = "";
       if (category.includes("good")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="green"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">G</text>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="2"/>
+                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">G</text>
                    </svg>`;
       } else if (category.includes("moderate")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="yellow"/>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="2"/>
                      <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">M</text>
                    </svg>`;
       } else if (category.includes("unhealthy for sensitive groups")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="orange"/>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="2"/>
                      <text x="32" y="42" font-size="20" fill="black" text-anchor="middle" font-family="Arial">USG</text>
                    </svg>`;
       } else if (category.includes("unhealthy")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="red"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">U</text>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="2"/>
+                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">U</text>
                    </svg>`;
       } else if (category.includes("very unhealthy")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="purple"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">VU</text>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="2"/>
+                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">VU</text>
                    </svg>`;
       } else if (category.includes("hazardous")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="maroon"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">H</text>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="2"/>
+                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">H</text>
                    </svg>`;
       } else {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
-                     <circle cx="32" cy="32" r="30" fill="gray"/>
-                     <text x="32" y="42" font-size="24" fill="white" text-anchor="middle" font-family="Arial">N/A</text>
+        iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
+                     <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="2"/>
+                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">N/A</text>
                    </svg>`;
       }
       return iconSVG;
@@ -280,14 +281,12 @@
       const start = new Date();
       // 4 days of data
       start.setDate(end.getDate() - 4);
-
       const format = d => d.toISOString().split('.')[0];
       const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
       
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          // Try to extract flood stage from API metadata (if available)
           const siteProps = data.value.timeSeries[0].sourceInfo.siteProperty;
           if (siteProps) {
             siteProps.forEach(prop => {
@@ -296,7 +295,6 @@
               }
             });
           }
-          // Convert raw data to array of { dateTime, stage }
           const rawValues = data.value.timeSeries[0].values[0].value || [];
           const floatValues = rawValues
             .map(v => ({
@@ -304,29 +302,19 @@
               stage: parseFloat(v.value)
             }))
             .filter(pt => !isNaN(pt.stage));
-
           if (floatValues.length === 0) {
             document.getElementById('river-stage').textContent = 'No data available';
             return;
           }
-
-          // Current stage = last reading
           const lastReading = floatValues[floatValues.length - 1].stage;
           document.getElementById('river-stage').textContent = `${lastReading.toFixed(2)} ft`;
-          document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, {
-            dateStyle: 'short',
-            timeStyle: 'short'
-          });
-
-          // Update flood status label based on current stage vs flood threshold
+          document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
           } else {
             statusEl.textContent = "Below Flood Stage";
           }
-
-          // Group measurements into 3-hour blocks and render graph
           const groupedValues = groupBy3HourBlocks(floatValues);
           renderRiverGraph(groupedValues, floodThreshold);
         })
@@ -336,7 +324,7 @@
         });
     }
 
-    // Group measurements into 3-hour blocks and average each block
+    // Group data into 3-hour blocks and average each block
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
       dataArray.forEach(pt => {
@@ -361,17 +349,14 @@
     function renderRiverGraph(dataPoints, floodThreshold) {
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
-
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
       minStage = Math.min(minStage, floodThreshold);
       maxStage = Math.max(maxStage, floodThreshold);
       const stageRange = (maxStage - minStage) || 1;
-
       const minDate = dataPoints[0].dateObj;
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
-
       const svgWidth = 1152;
       const svgHeight = 280;
       const graphHeight = 180;
@@ -379,13 +364,12 @@
       const graphWidth = svgWidth - graphOffsetX - 20;
       const axisLabelY = 260;
       const dateLabelY = 240;
-
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Y-axis tick marks at half-foot increments with larger font (18px)
+      // Y-axis tick marks at half-foot increments with 18px font
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -429,7 +413,7 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Draw Flood Stage dashed line (no label)
+      // Flood Stage dashed line (no label)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -451,7 +435,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw circles for each point and add one day marker per day, skipping the first day's label
+      // Draw circles for each point and add one day marker per day (skip first day)
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
@@ -491,13 +475,13 @@
             document.getElementById('aqi-value').textContent = main.AQI;
             document.getElementById('aqi-category').textContent = main.Category.Name;
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
-            document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
+            document.getElementById('last-aqi-update').textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-icon').innerHTML = getAQIIcon(main.Category.Name);
           } else {
             document.getElementById('aqi-value').textContent = "42";
             document.getElementById('aqi-category').textContent = "Good";
             document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
-            document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
+            document.getElementById('last-aqi-update').textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-icon').innerHTML = getAQIIcon("Good");
           }
         })
@@ -506,14 +490,14 @@
           document.getElementById('aqi-value').textContent = "42";
           document.getElementById('aqi-category').textContent = "Good";
           document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
-          document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
+          document.getElementById('last-aqi-update').textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           document.getElementById('aqi-icon').innerHTML = getAQIIcon("Good");
         });
     }
 
     // --- Weather, Rainfall Forecast & Alerts from NWS ---
     function fetchNWSData() {
-      document.getElementById('last-nws-update').textContent = new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+      document.getElementById('last-nws-update').textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
       fetch(pointUrl)
         .then(res => res.json())
@@ -582,8 +566,6 @@
     fetchRiverData();
     fetchAQIData();
     fetchNWSData();
-
-    // Refresh every 10 minutes
     setInterval(() => {
       fetchRiverData();
       fetchAQIData();
