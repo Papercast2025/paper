@@ -88,13 +88,27 @@
       font-size: 32px;
       margin-top: 8px;
     }
+    /* Header styling */
+    #header {
+      background-color: black;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 48px;
+      font-weight: bold;
+    }
+    #header a {
+      color: white;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <!-- Header now includes county info, lat/lon, and a link -->
-  <div style="background-color: black; color: white; padding: 20px; text-align: center; font-size: 48px; font-weight: bold;">
-    Chatham County (35.77659 / -79.14597) | 
-    <a href="https://www.chathamcountync.gov/" target="_blank" style="color: white; text-decoration: underline;">chathamcountync.gov</a>
+  <!-- Header displays county info with coordinates and a website link.
+       To change the location, update the LAT and LON values in the script below. -->
+  <div id="header">
+    Chatham County (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>) | 
+    <a href="https://www.chathamcountync.gov/" target="_blank">chathamcountync.gov</a>
   </div>
   <div class="container">
     <!-- Heat Risk Section (top card) -->
@@ -160,7 +174,7 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- Instead of an icon and numeric value, we now show only the AQI category -->
+      <!-- AQI card now only shows the AQI category in large text -->
       <div class="section-content">
         <div class="value" id="aqi-category">--</div>
       </div>
@@ -169,16 +183,20 @@
   </div>
 
   <script>
+    // Set location by modifying these global variables.
+    let LAT = 35.77659;
+    let LON = -79.14597;
+    
+    // Update the header display with the current latitude and longitude.
+    document.getElementById('header-lat').textContent = LAT;
+    document.getElementById('header-lon').textContent = LON;
+    
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
-    const LAT = 35.77659;
-    const LON = -79.14597;
     
     // Global flood threshold (default 5.0 ft)
     let floodThreshold = 5.0;
     
     // --- Heat Risk Card Update ---
-    // Compute heat index based on temperature (F) and relative humidity (RH in percent)
-    // Then update the Heat Risk card to show only the risk level in large text.
     function updateHeatRisk(tempF, RH) {
       let HI = tempF;
       if (tempF >= 80) {
@@ -196,7 +214,7 @@
       document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
     }
     
-    // --- Helper functions for dynamic icons (black & white, thicker strokes) ---
+    // --- Helper functions for dynamic icons (black & white) ---
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
@@ -436,7 +454,7 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // Now only show the AQI category (e.g., "Good") in large text.
+            // Only show the AQI category (e.g., "Good") in large text.
             document.getElementById('aqi-category').textContent = main.Category.Name;
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
@@ -482,9 +500,6 @@
                 document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed || '--'}`;
                 const humidity = now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--';
                 document.getElementById('weather-humidity').textContent = `Humidity: ${humidity}%`;
-                if (now.quantitativePrecipitation && typeof now.quantitativePrecipitation.value === 'number') {
-                  document.getElementById('precip-value') && (document.getElementById('precip-value').textContent = `${now.quantitativePrecipitation.value.toFixed(2)} in`);
-                }
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 // Update Heat Risk card using temperature and humidity values
                 updateHeatRisk(tempF, humidity);
