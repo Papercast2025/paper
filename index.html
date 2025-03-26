@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1440, initial-scale=1.0">
-  <title>Chatham County Trail Display</title>
+  <title>Environmental Snapshot</title>
   <style>
     body {
       background-color: #ffffff;
@@ -16,117 +16,167 @@
       -webkit-text-size-adjust: none;
     }
     .container {
-      display: flex;
-      flex-direction: column;
-      padding: 0;
-    }
-    .header {
-      background-color: #000;
-      color: #fff;
-      font-size: 56px;
-      font-weight: bold;
       padding: 32px;
-      text-align: center;
+      display: -webkit-flex;
+      -webkit-flex-direction: column;
+      -webkit-justify-content: flex-start;
+      gap: 28px;
     }
-    .row {
-      display: flex;
-      border-bottom: 3px solid #000;
-      padding: 24px 32px;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 36px;
+    .section {
+      border: 2px solid #000;
+      padding: 16px;
+      -webkit-border-radius: 8px;
+      background-color: #ffffff;
     }
-    .row-title {
+    .section h2 {
+      margin-top: 0;
+      font-size: 40px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+    }
+    .value {
+      font-size: 64px;
       font-weight: bold;
-      font-size: 38px;
-      width: 40%;
+      margin: 10px 0;
     }
-    .row-value {
-      font-size: 36px;
-      text-align: right;
-      width: 55%;
+    .label {
+      font-size: 28px;
+      color: #444;
     }
     .timestamp {
-      text-align: center;
-      padding: 28px;
       font-size: 28px;
-      border-top: 4px solid #000;
+      color: #222;
+      margin-top: 40px;
+      text-align: center;
+    }
+    .forecast-day {
+      margin-top: 10px;
+      font-size: 32px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">Trail Conditions & Safety</div>
 
-    <div class="row">
-      <div class="row-title">🌤 Weather</div>
-      <div class="row-value">66°F, Partly Cloudy</div>
+    <div class="section">
+      <h2>⛅ Weather</h2>
+      <div class="value">66°F</div>
+      <div class="label">Partly Cloudy</div>
+      <div class="label">Wind: 5 mph NW</div>
+      <div class="label">Humidity: 62%</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">💨 Wind / Humidity</div>
-      <div class="row-value">5 mph NW / 62%</div>
+    <div class="section">
+      <h2>🌫️ Air Quality Index (AQI)</h2>
+      <div class="label"><strong>Location 1:</strong></div>
+      <div class="value" id="aqi-1">--</div>
+      <div class="label" id="aqi-desc-1">Loading...</div>
+
+      <div class="label" style="margin-top:20px;"><strong>Location 2:</strong></div>
+      <div class="value" id="aqi-2">--</div>
+      <div class="label" id="aqi-desc-2">Loading...</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">🌫 Air Quality</div>
-      <div class="row-value">42 (Good) – PM2.5</div>
+    <div class="section">
+      <h2>🌞 UV Index</h2>
+      <div class="value">6</div>
+      <div class="label">High (Wear protection)</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">🔆 UV Index</div>
-      <div class="row-value">6 (High – Use Sunscreen)</div>
+    <div class="section">
+      <h2>🔥 Heat Index</h2>
+      <div class="value">70°F</div>
+      <div class="label">Feels Like</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">🔥 Heat Index</div>
-      <div class="row-value">70°F – Feels Like</div>
+    <div class="section">
+      <h2>🌊 Flood Risk Level</h2>
+      <div class="value">Moderate</div>
+      <div class="label">Localized flooding possible in low-lying areas</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">🚨 Heat Illness Risk</div>
-      <div class="row-value">Elevated – 12 PM to 5 PM</div>
+    <div class="section">
+      <h2>🏞️ River & Water Levels</h2>
+      <div class="value">2.83 ft</div>
+      <div class="label">USGS Site #02096960</div>
+      <div class="label">Status: Below flood stage</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">🌊 Flood Risk</div>
-      <div class="row-value">Moderate – Low areas wet</div>
+    <div class="section">
+      <h2>🌧️ Precipitation (24h)</h2>
+      <div class="value">0.12 in</div>
+      <div class="label">Light Rainfall</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">🏞 River Level</div>
-      <div class="row-value">2.83 ft – Below flood stage</div>
+    <div class="section">
+      <h2>📅 Rainfall Outlook (Next 3 Days)</h2>
+      <div class="forecast-day">Tuesday: 0.08 in (Scattered Showers)</div>
+      <div class="forecast-day">Wednesday: 0.25 in (Rain Likely)</div>
+      <div class="forecast-day">Thursday: 0.00 in (Clear)</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">🌧 Rain (24h)</div>
-      <div class="row-value">0.12 in – Light</div>
+    <div class="section">
+      <h2>🚨 Heat Illness Risk</h2>
+      <div class="value">Elevated</div>
+      <div class="label">Caution advised for outdoor workers and vulnerable groups</div>
+      <div class="label">Hydration and shaded rest breaks recommended</div>
+      <div class="label">Peak risk period: 12 PM – 5 PM</div>
     </div>
 
-    <div class="row">
-      <div class="row-title">📅 Rain Outlook</div>
-      <div class="row-value">Tue: 0.08 in<br>Wed: 0.25 in<br>Thu: 0.00 in</div>
-    </div>
-
-    <div class="row">
-      <div class="row-title">🥾 Trail Status</div>
-      <div class="row-value">Open – Use caution at crossings</div>
-    </div>
-
-    <div class="row">
-      <div class="row-title">🌅 Sunrise / Sunset</div>
-      <div class="row-value">6:52 AM / 7:15 PM</div>
-    </div>
-
-    <div class="row">
-      <div class="row-title">📈 Temperature Trend</div>
-      <div class="row-value">58° → 72° → 64° → 54°</div>
-    </div>
-
-    <div class="timestamp">
-      Last updated: 2025-03-25 07:00 AM<br>
-      Source: NWS, EPA, CDC, USGS
+    <div class="timestamp" id="last-updated">
+      Last updated: Loading...<br />
+      Source: NWS / EPA / CDC / USGS APIs
     </div>
   </div>
+
+  <script>
+    const apiKey = '26158E56-5836-46D3-B819-92969016332B';
+
+    const locations = [
+      { lat: 35.7765900, lon: -79.1459700, aqiId: 'aqi-1', descId: 'aqi-desc-1' },
+      { lat: 35.7309950, lon: -79.1071090, aqiId: 'aqi-2', descId: 'aqi-desc-2' }
+    ];
+
+    function getAQIDescription(aqi) {
+      if (aqi <= 50) return 'Good';
+      if (aqi <= 100) return 'Moderate';
+      if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
+      if (aqi <= 200) return 'Unhealthy';
+      if (aqi <= 300) return 'Very Unhealthy';
+      return 'Hazardous';
+    }
+
+    function updateTimestamp() {
+      const now = new Date();
+      const formatted = now.toLocaleString('en-US', {
+        month: '2-digit', day: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+      document.getElementById('last-updated').innerHTML =
+        `Last updated: ${formatted}<br/>Source: NWS / EPA / CDC / USGS APIs`;
+    }
+
+    async function fetchAQI(lat, lon, aqiId, descId) {
+      try {
+        const response = await fetch(`https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${lat}&longitude=${lon}&distance=25&API_KEY=${apiKey}`);
+        const data = await response.json();
+        const pm25 = data.find(d => d.ParameterName === 'PM2.5');
+        if (pm25) {
+          document.getElementById(aqiId).textContent = pm25.AQI;
+          document.getElementById(descId).textContent = getAQIDescription(pm25.AQI);
+        } else {
+          document.getElementById(descId).textContent = 'Data unavailable';
+        }
+      } catch (err) {
+        console.error('Error fetching AQI:', err);
+        document.getElementById(descId).textContent = 'Error loading data';
+      }
+    }
+
+    window.onload = () => {
+      updateTimestamp();
+      locations.forEach(loc => fetchAQI(loc.lat, loc.lon, loc.aqiId, loc.descId));
+    };
+  </script>
 </body>
 </html>
