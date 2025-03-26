@@ -252,14 +252,14 @@
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
 
-      // Dimensions
-      const svgWidth = 480;  // a bit wider
-      const svgHeight = 280; // taller to allow more space
-      const graphHeight = 180; 
-      const graphOffsetX = 60; // a bit more left margin
+      // Dimensions (2x the previous width)
+      const svgWidth = 960;
+      const svgHeight = 280;
+      const graphHeight = 180;
+      const graphOffsetX = 60; // left margin
       const graphWidth = svgWidth - graphOffsetX - 20; // 20 px right margin
-      const axisLabelY = 250; // place "Date" label lower
-      const dateLabelY = 230; // place each 3-hour label above the axis label
+      const axisLabelY = 260; // place "Date" label lower
+      const dateLabelY = 240; // place day labels above the "Date" label
 
       // Create SVG
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -312,7 +312,7 @@
       floodLabel.textContent = "Flood Stage";
       svg.appendChild(floodLabel);
 
-      // Left-aligned "Stage (ft)" near the top
+      // Left-aligned "Stage (ft)"
       const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       yAxisLabel.setAttribute("x", "10");
       yAxisLabel.setAttribute("y", "20");
@@ -332,11 +332,13 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw a small label for each data point (3-hour block)
+      // Draw a circle at each point & label day once per day
+      let lastDay = null;
       dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
-        // Circle or small dot at each point
+
+        // Draw a small circle at each point
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
@@ -344,32 +346,22 @@
         circle.setAttribute("fill", "black");
         svg.appendChild(circle);
 
-        // X-axis text label
-        const dateLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        dateLabel.setAttribute("x", x);
-        dateLabel.setAttribute("y", dateLabelY);
-        dateLabel.setAttribute("font-size", "12");
-        dateLabel.setAttribute("fill", "black");
-        dateLabel.setAttribute("text-anchor", "middle");
-        dateLabel.textContent = format3HourLabel(pt.dateObj);
-        svg.appendChild(dateLabel);
+        // Only show day marker once per day
+        const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        if (dayLabel !== lastDay) {
+          lastDay = dayLabel;
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", x);
+          label.setAttribute("y", dateLabelY);
+          label.setAttribute("font-size", "14");
+          label.setAttribute("fill", "black");
+          label.setAttribute("text-anchor", "middle");
+          label.textContent = dayLabel;
+          svg.appendChild(label);
+        }
       });
 
       container.appendChild(svg);
-    }
-
-    // Format a 3-hour block label, e.g. "Mar 23 3 AM"
-    function format3HourLabel(dateObj) {
-      const monthDay = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      let hour = dateObj.getHours();
-      let ampm = 'AM';
-      if (hour === 0) {
-        hour = 12; // midnight is 12 AM
-      } else if (hour >= 12) {
-        if (hour > 12) hour -= 12;
-        ampm = 'PM';
-      }
-      return `${monthDay} ${hour} ${ampm}`;
     }
 
     // --- AQI Data ---
