@@ -41,7 +41,7 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* For sections to be centered */
+    /* For sections that should be centered */
     .centered .section-content {
       align-items: center;
       text-align: center;
@@ -400,7 +400,7 @@
         const y = scaleY(pt.stage);
         return (i === 0 ? 'M' : 'L') + x + ',' + y;
       }).join(' ');
-      // Increase line weight on USGS graph x2 (from 3 to 6)
+      // Increase line weight on USGS graph to 6
       const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       polyline.setAttribute("d", pathData);
       polyline.setAttribute("stroke", "black");
@@ -408,7 +408,7 @@
       polyline.setAttribute("stroke-width", "6");
       svg.appendChild(polyline);
       
-      // Draw Flood Stage dashed line (stroke width increased to 4)
+      // Draw Flood Stage dashed line (stroke width 4)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -420,7 +420,7 @@
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
       
-      // X-axis label "Date" with increased font size (26px)
+      // X-axis label "Date" with font size 26px
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -430,7 +430,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
       
-      // Draw circles for each data point and add one day marker per day (skip first day, font size 30px)
+      // Draw circles for each point and add one day marker per day (skip first day, font size 30px)
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
@@ -498,6 +498,10 @@
     function fetchNWSData() {
       const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
+      document.getElementById('alerts-timestamp').textContent = "Last updated: " + nwsTime;
+      document.getElementById('rainfall-timestamp').textContent = "Last updated: " + nwsTime;
+      document.getElementById('precipitation-timestamp').textContent = "Last updated: " + nwsTime;
+      
       const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
       fetch(pointUrl)
         .then(res => res.json())
