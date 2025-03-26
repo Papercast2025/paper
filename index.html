@@ -175,7 +175,191 @@
   </div>
 
   <script>
-    // JavaScript remains unchanged — targeting IDs now.
-  </script>
+const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
+const LAT = 35.7796;
+const LON = -78.6382;
+
+function setAQIContent(aqi, category, pollutant, fallback = false) {
+  document.getElementById('aqi-value').textContent = aqi;
+  document.getElementById('aqi-category').textContent = category + (fallback ? ' (fallback)' : '');
+  document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${pollutant}`;
+}
+
+function fetchAQIData() {
+  const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        const main = data[0];
+        setAQIContent(main.AQI, main.Category.Name, main.ParameterName);
+      } else {
+        setAQIContent(42, 'Good', 'PM2.5', true);
+      }
+    })
+    .catch(() => setAQIContent(42, 'Good', 'PM2.5', true));
+}
+
+function fetchWeatherAndAlerts() {
+  fetch(`https://api.weather.gov/points/${LAT},${LON}`)
+    .then(res => res.json())
+    .then(meta => {
+      const forecastUrl = meta.properties.forecast;
+      const obsUrl = meta.properties.observationStations;
+      const alertUrl = `https://api.weather.gov/alerts/active?point=${LAT},${LON}`;
+
+      fetch(obsUrl)
+        .then(res => res.json())
+        .then(obsData => {
+          const station = obsData.features[0].properties.stationIdentifier;
+          return fetch(`https://api.weather.gov/stations/${station}/observations/latest`);
+        })
+        .then(res => res.json())
+        .then(obs => {
+          const temp = obs.properties.temperature.value;
+          const desc = obs.properties.textDescription;
+          const wind = obs.properties.windSpeed.value;
+          const humidity = obs.properties.relativeHumidity.value;
+          const heat = obs.properties.heatIndex.value;
+
+          document.getElementById('weather-temp').textContent = temp ? `${Math.round(temp * 9/5 + 32)}°F` : '--';
+          document.getElementById('weather-description').textContent = desc || '--';
+          document.getElementById('weather-wind').textContent = wind ? `Wind: ${Math.round(wind * 0.621371)} mph` : '--';
+          document.getElementById('weather-humidity').textContent = humidity ? `Humidity: ${Math.round(humidity)}%` : '--';
+          document.getElementById('heat-index').textContent = heat ? `${Math.round(heat * 9/5 + 32)}°F` : '--';
+          document.getElementById('heat-risk').textContent = heat >= 90 ? 'HIGH' : heat >= 80 ? 'Elevated' : 'Low';
+        });
+
+      fetch(alertUrl)
+        .then(res => res.json())
+        .then(alerts => {
+          const container = document.getElementById('alerts');
+          container.innerHTML = '';
+          const important = alerts.features.filter(a => /flood|heat|severe|tornado/i.test(a.properties.event));
+          if (important.length) {
+            important.forEach(a => {
+              const div = document.createElement('div');
+              div.className = 'alert';
+              div.textContent = a.properties.headline;
+              container.appendChild(div);
+            });
+          } else {
+            const div = document.createElement('div');
+            div.className = 'label';
+            div.textContent = 'No important alerts';
+            container.appendChild(div);
+          }
+        });
+
+      fetch(forecastUrl)
+        .then(res => res.json())
+        .then(data => {
+          const periods = data.properties.periods.slice(0, 3);
+          const outlook = document.getElementById('rainfall-outlook');
+          outlook.innerHTML = '';
+          periods.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'forecast-day';
+            div.textContent = `${p.name}: ${p.shortForecast} (${p.temperature}°F)`;
+            outlook.appendChild(div);
+          });
+        });
+    });
+}
+
+function fetchExtraData() {
+  fetch(`https://api.weather.gov/points/${LAT},${LON}`)
+    .then(res => res.json())
+    .then(meta => {
+      const gridId = meta.properties.gridId;
+      const gridX = meta.properties.gridX;
+      const gridY = meta.properties.gridY;
+
+      fetch(`https://api.weather.gov/gridpoints/${gridId}/${gridX},${gridY}/forecast/hourly`)
+        .then(res => res.json())
+        .then(data => {
+          const text = data.properties.periods[0].shortForecast;
+          const uv = text.includes('Sunny') ? 6 : 2;
+          document.getElementById('uv-index').textContent = uv;
+        });
+
+      fetch(`https://api.weather.gov/gridpoints/${gridId}/${gridX},${gridY}`)
+        .then(res => res.json())
+        .then(data => {
+          const val = data.properties.quantitativePrecipitation?.unitCode === 'wmoUnit:mm' ?
+            `${(data.properties.quantitativePrecipitation.value / 25.4).toFixed(2)} in` : '--';
+          document.getElementById('precip-value').textContent = val;
+        });
+  });
+
+  fetch(`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&siteStatus=all`)
+    .then(res => res.json())
+    .then(data => {
+      const ts = data.value.timeSeries[0];
+      const value = parseFloat(ts.values[0].value[0].value).toFixed(2);
+      const time = ts.values[0].value[0].dateTime;
+      const flood = 5.0;
+
+      document.getElementById('river-value').textContent = `${value} ft`;
+      document.getElementById('river-timestamp').textContent = `USGS Site #02096960 (${new Date(time).toLocaleString()})`;
+      document.getElementById('river-status').textContent = value >= flood ? 'AT OR ABOVE FLOOD STAGE' : 'Below flood stage';
+      if (value >= flood) {
+        const status = document.getElementById('river-status');
+        status.style.border = '3px solid black';
+        status.style.padding = '6px';
+        status.style.fontWeight = 'bold';
+      }
+    });
+
+  fetch(`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&siteStatus=all&period=P7D`)
+    .then(res => res.json())
+    .then(data => {
+      const values = data.value.timeSeries[0].values[0].value.map(v => parseFloat(v.value));
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", "400");
+      svg.setAttribute("height", "100");
+      svg.setAttribute("viewBox", "0 0 400 100");
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+
+      const path = values.map((v, i) => {
+        const x = (i / (values.length - 1)) * 400;
+        const y = 100 - ((v - min) / (max - min)) * 100;
+        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+      }).join(' ');
+
+      const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      polyline.setAttribute("d", path);
+      polyline.setAttribute("stroke", "black");
+      polyline.setAttribute("fill", "none");
+      polyline.setAttribute("stroke-width", "2");
+
+      const labelMin = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      labelMin.setAttribute("x", "0");
+      labelMin.setAttribute("y", "100");
+      labelMin.setAttribute("font-size", "14");
+      labelMin.textContent = `${min.toFixed(1)} ft`;
+
+      const labelMax = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      labelMax.setAttribute("x", "0");
+      labelMax.setAttribute("y", "12");
+      labelMax.setAttribute("font-size", "14");
+      labelMax.textContent = `${max.toFixed(1)} ft`;
+
+      svg.appendChild(polyline);
+      svg.appendChild(labelMin);
+      svg.appendChild(labelMax);
+      document.getElementById("river-status").parentElement.appendChild(svg);
+    });
+}
+
+window.onload = () => {
+  fetchAQIData();
+  fetchWeatherAndAlerts();
+  fetchExtraData();
+  document.getElementById('last-updated').textContent = `Last updated: ${new Date().toLocaleString()}`;
+};
+</script>
 </body>
 </html>
