@@ -30,7 +30,7 @@
       flex-direction: column;
       position: relative;
     }
-    /* Card title style: white text on black background */
+    /* Card titles: white text on black background */
     .card-title {
       font-size: 36px;
       font-weight: bold;
@@ -95,7 +95,7 @@
       </div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
         <div class="value" id="river-stage">Loading...</div>
-        <!-- Dynamic flood status text (will be bolded and centered in the card) -->
+        <!-- Dynamic flood status text -->
         <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
@@ -183,7 +183,7 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          // Attempt to extract flood stage from API metadata (if available)
+          // Try to extract flood stage from API metadata (if available)
           const siteProps = data.value.timeSeries[0].sourceInfo.siteProperty;
           if (siteProps) {
             siteProps.forEach(prop => {
@@ -192,7 +192,7 @@
               }
             });
           }
-          // Convert raw data to array of { dateTime, stage }
+          // Convert raw data to an array of { dateTime, stage }
           const rawValues = data.value.timeSeries[0].values[0].value || [];
           const floatValues = rawValues
             .map(v => ({
@@ -214,7 +214,7 @@
             timeStyle: 'short'
           });
 
-          // Update flood status label based on current stage vs. flood threshold
+          // Update flood status label based on current stage vs flood threshold
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
@@ -222,7 +222,7 @@
             statusEl.textContent = "Below Flood Stage";
           }
 
-          // Group data into 3-hour blocks
+          // Group measurements into 3‑hour blocks and render graph
           const groupedValues = groupBy3HourBlocks(floatValues);
           renderRiverGraph(groupedValues, floodThreshold);
         })
@@ -232,7 +232,7 @@
         });
     }
 
-    // Group measurements into 3-hour blocks and average each block
+    // Group measurements into 3‑hour blocks and average each block
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
       dataArray.forEach(pt => {
@@ -269,21 +269,21 @@
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
 
-      // Dimensions: Increase width by 20% -> 1152px wide, height remains 280px
-      const svgWidth = 1152;
+      // Dimensions: Increase width by 20%
+      const svgWidth = 1152; // 20% more than 960
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
       const graphWidth = svgWidth - graphOffsetX - 20;
-      const axisLabelY = 260; // "Date" label Y coordinate
-      const dateLabelY = 240; // Y coordinate for one day marker
+      const axisLabelY = 260; // "Date" label y-coordinate
+      const dateLabelY = 240; // Y coordinate for one day marker (exclude first day)
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Y-axis tick marks at half-foot increments
+      // Y-axis tick marks and labels (half-foot increments, font size increased to 18px)
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -300,7 +300,7 @@
         const tickLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
         tickLabel.setAttribute("x", graphOffsetX - 10);
         tickLabel.setAttribute("y", tickY + 4);
-        tickLabel.setAttribute("font-size", "12");
+        tickLabel.setAttribute("font-size", "18");  // increased 50% from 12px
         tickLabel.setAttribute("fill", "black");
         tickLabel.setAttribute("text-anchor", "end");
         tickLabel.textContent = tickVal.toFixed(1) + " ft";
@@ -329,7 +329,7 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Flood Stage line and left-aligned label with padding
+      // Draw Flood Stage dashed line (keep the line, hide label)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -340,17 +340,9 @@
       floodLine.setAttribute("stroke-dasharray", "6,3");
       floodLine.setAttribute("stroke-width", "2");
       svg.appendChild(floodLine);
-      const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      // Left align with a little left padding (e.g., 10px inside the graph)
-      floodLabel.setAttribute("x", graphOffsetX + 10);
-      floodLabel.setAttribute("y", floodY - 5);
-      floodLabel.setAttribute("font-size", "24");
-      floodLabel.setAttribute("fill", "black");
-      floodLabel.setAttribute("text-anchor", "start");
-      floodLabel.textContent = "Flood Stage";
-      svg.appendChild(floodLabel);
+      // (Flood Stage label is hidden per request)
 
-      // X-axis label "Date" with increased font size (21px)
+      // X-axis label "Date" (font size 21px remains unchanged)
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -360,19 +352,22 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw a small circle for each data point and add one day marker per day (font size increased to 24px)
+      // Draw circles for each point and add one day marker per day, skipping the first day label
+      const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
+        // Draw circle
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
         circle.setAttribute("r", 3);
         circle.setAttribute("fill", "black");
         svg.appendChild(circle);
+        // Determine day label; skip if it's the first day
         const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        if (dayLabel !== lastDay) {
+        if (dayLabel !== minDateLabel && dayLabel !== lastDay) {
           lastDay = dayLabel;
           const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
           label.setAttribute("x", x);
