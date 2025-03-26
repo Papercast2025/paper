@@ -30,7 +30,7 @@
       flex-direction: column;
       position: relative;
     }
-    /* Card titles: white text on black background */
+    /* Card headers: left aligned with white text on black background */
     .card-title {
       font-size: 36px;
       font-weight: bold;
@@ -38,6 +38,12 @@
       color: white;
       padding: 4px 8px;
       margin-bottom: 8px;
+      text-align: left;
+    }
+    /* For sections to be centered, override section-content */
+    .centered .section-content {
+      align-items: center;
+      text-align: center;
     }
     .section-content {
       display: flex;
@@ -65,7 +71,7 @@
       display: block;
       margin: 12px auto 0 auto;
     }
-    /* USGS site info styling (bottom of card, right aligned) */
+    /* USGS site info styling (bottom of river card, right aligned) */
     #usgs-site-info {
       width: 100%;
       text-align: right;
@@ -73,7 +79,7 @@
       color: #666;
       margin-top: 8px;
     }
-    /* Flood status text styling */
+    /* Flood status text styling remains as before */
     #flood-status {
       font-weight: bold;
       text-align: center;
@@ -88,7 +94,7 @@
     Chatham County
   </div>
   <div class="container">
-    <!-- River & Water Levels Section -->
+    <!-- River & Water Levels Section (content remains left aligned) -->
     <div class="section" id="river-section">
       <div class="card-title" style="position: absolute; top: 16px; left: 16px;">
         River & Water Levels
@@ -102,16 +108,16 @@
       <div id="usgs-site-info">USGS Site #02096960 (Live)</div>
     </div>
 
-    <!-- Alerts Section -->
-    <div class="section" id="alerts-section">
+    <!-- Alerts Section (centered) -->
+    <div class="section centered" id="alerts-section">
       <div class="card-title">Alerts</div>
       <div class="section-content">
         <div class="label" id="alert-message">No alerts at this time.</div>
       </div>
     </div>
 
-    <!-- Weather Conditions Section -->
-    <div class="section" id="weather-section">
+    <!-- Weather Conditions Section (centered) -->
+    <div class="section centered" id="weather-section">
       <div class="card-title">Weather Conditions</div>
       <div class="section-content">
         <div class="value" id="weather-temp">--</div>
@@ -121,8 +127,8 @@
       </div>
     </div>
 
-    <!-- Rainfall Forecast Section -->
-    <div class="section" id="rainfall-forecast">
+    <!-- Rainfall Forecast Section (centered) -->
+    <div class="section centered" id="rainfall-forecast">
       <div class="card-title">Rainfall Forecast</div>
       <div class="section-content">
         <div class="label" id="rainfall-forecast-1">--</div>
@@ -131,8 +137,8 @@
       </div>
     </div>
 
-    <!-- Precipitation Section -->
-    <div class="section" id="precipitation-section">
+    <!-- Precipitation Section (centered) -->
+    <div class="section centered" id="precipitation-section">
       <div class="card-title">Precipitation (24h)</div>
       <div class="section-content">
         <div class="value" id="precip-value">--</div>
@@ -140,8 +146,8 @@
       </div>
     </div>
 
-    <!-- Air Quality Index (AQI) Section -->
-    <div class="section" id="aqi-section">
+    <!-- Air Quality Index (AQI) Section (centered) -->
+    <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
       <div class="section-content">
         <div class="value" id="aqi-value">--</div>
@@ -150,7 +156,7 @@
       </div>
     </div>
 
-    <!-- Timestamp Section -->
+    <!-- Timestamp Section (centered) -->
     <div class="timestamp">
       Last updated:<br />
       AQI: <span id="last-aqi-update">Loading...</span> |
@@ -192,7 +198,7 @@
               }
             });
           }
-          // Convert raw data to an array of { dateTime, stage }
+          // Convert raw data to array of { dateTime, stage }
           const rawValues = data.value.timeSeries[0].values[0].value || [];
           const floatValues = rawValues
             .map(v => ({
@@ -222,7 +228,7 @@
             statusEl.textContent = "Below Flood Stage";
           }
 
-          // Group measurements into 3‑hour blocks and render graph
+          // Group into 3-hour blocks and render graph
           const groupedValues = groupBy3HourBlocks(floatValues);
           renderRiverGraph(groupedValues, floodThreshold);
         })
@@ -232,7 +238,7 @@
         });
     }
 
-    // Group measurements into 3‑hour blocks and average each block
+    // Group measurements into 3-hour blocks and average each block
     function groupBy3HourBlocks(dataArray) {
       const blockMap = {};
       dataArray.forEach(pt => {
@@ -258,7 +264,7 @@
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
 
-      // Ensure floodThreshold is included in min/max
+      // Ensure floodThreshold is included in min/max calculations
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
       minStage = Math.min(minStage, floodThreshold);
@@ -269,21 +275,21 @@
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
 
-      // Dimensions: Increase width by 20%
-      const svgWidth = 1152; // 20% more than 960
+      // Dimensions: 1152 x 280
+      const svgWidth = 1152;
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
       const graphWidth = svgWidth - graphOffsetX - 20;
-      const axisLabelY = 260; // "Date" label y-coordinate
-      const dateLabelY = 240; // Y coordinate for one day marker (exclude first day)
+      const axisLabelY = 260; // "Date" axis label y-coordinate
+      const dateLabelY = 240; // Y coordinate for one day marker; first day's label will be skipped
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // Y-axis tick marks and labels (half-foot increments, font size increased to 18px)
+      // Y-axis tick marks at half-foot increments (font size increased to 18px)
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -300,7 +306,7 @@
         const tickLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
         tickLabel.setAttribute("x", graphOffsetX - 10);
         tickLabel.setAttribute("y", tickY + 4);
-        tickLabel.setAttribute("font-size", "18");  // increased 50% from 12px
+        tickLabel.setAttribute("font-size", "18");
         tickLabel.setAttribute("fill", "black");
         tickLabel.setAttribute("text-anchor", "end");
         tickLabel.textContent = tickVal.toFixed(1) + " ft";
@@ -329,7 +335,7 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Draw Flood Stage dashed line (keep the line, hide label)
+      // Draw Flood Stage dashed line (no label)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -340,9 +346,8 @@
       floodLine.setAttribute("stroke-dasharray", "6,3");
       floodLine.setAttribute("stroke-width", "2");
       svg.appendChild(floodLine);
-      // (Flood Stage label is hidden per request)
 
-      // X-axis label "Date" (font size 21px remains unchanged)
+      // X-axis label "Date" (21px)
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -352,20 +357,18 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw circles for each point and add one day marker per day, skipping the first day label
+      // Draw circles for each point and add one day marker per day, skipping the first day
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
-        // Draw circle
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
         circle.setAttribute("r", 3);
         circle.setAttribute("fill", "black");
         svg.appendChild(circle);
-        // Determine day label; skip if it's the first day
         const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         if (dayLabel !== minDateLabel && dayLabel !== lastDay) {
           lastDay = dayLabel;
@@ -428,7 +431,9 @@
             .then(obsData => {
               if (obsData.properties && obsData.properties.periods && obsData.properties.periods.length > 0) {
                 const now = obsData.properties.periods[0];
-                document.getElementById('weather-temp').textContent = `${now.temperature ?? '--'}°F`;
+                const tempF = now.temperature;
+                const tempC = ((tempF - 32) * 5/9).toFixed(1);
+                document.getElementById('weather-temp').textContent = `${tempF ?? '--'}°F (${tempC}°C)`;
                 document.getElementById('weather-forecast').textContent = now.shortForecast || 'N/A';
                 document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed || '--'}`;
                 const humidity = now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--';
