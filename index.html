@@ -134,7 +134,14 @@
 
 
     <div class="timestamp" style="font-size: 24px; text-align: center; margin-top: 20px;">
+      Last updated:<br>
+      AQI: <span id="last-aqi-update">Loading...</span> |
+      Weather & Forecast: <span id="last-nws-update">Loading...</span> |
+      River: <span id="last-river-update">Loading...</span>
+    </div>
+    <div class="timestamp" style="font-size: 24px; text-align: center; margin-top: 10px;">
       For more information, visit <a href="https://www.chathamcountync.gov/" target="_blank">chathamcountync.gov</a>
+    </div>
     </div>
   </div>
   <script>
@@ -205,6 +212,7 @@ xAxisLabel.textContent = "Day";
 svg.appendChild(xAxisLabel);
 
 document.getElementById("river-graph").appendChild(svg);
+      document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
     } catch (err) {
       console.error('River graph error:', err);
     }
@@ -215,6 +223,7 @@ document.getElementById("river-graph").appendChild(svg);
     const LON = -79.14597;
 
     function setAQIContent(aqi, category, pollutant, fallback = false) {
+      document.getElementById('last-aqi-update').textContent = new Date().toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
       document.getElementById('aqi-value').textContent = aqi;
       document.getElementById('aqi-category').textContent = category + (fallback ? ' (fallback)' : '');
       document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${pollutant}`;
@@ -387,6 +396,7 @@ document.getElementById("river-graph").appendChild(svg);
     }, 10 * 60 * 1000);
   };
   function fetchNWSData() {
+  document.getElementById('last-nws-update').textContent = new Date().toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
   const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
 
   fetch(pointUrl)
@@ -404,7 +414,7 @@ document.getElementById("river-graph").appendChild(svg);
           document.querySelector('.section:nth-of-type(3) .value').textContent = `${now.temperature}°F`;
           document.querySelector('.section:nth-of-type(3) .label:nth-of-type(1)').textContent = now.shortForecast;
           document.querySelector('.section:nth-of-type(3) .label:nth-of-type(2)').textContent = `Wind: ${now.windSpeed}`;
-          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(3)').textContent = `Humidity: --`;
+          document.querySelector('.section:nth-of-type(3) .label:nth-of-type(3)').textContent = `Humidity: ${now.relativeHumidity?.value ?? '--'}%`;
         });
 
       // Rainfall Forecast
