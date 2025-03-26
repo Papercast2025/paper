@@ -169,8 +169,9 @@
       </div>
     </div>
 
-    <div class="timestamp" id="last-updated">
-      Loading...
+    
+    <div class="timestamp" style="font-size: 24px; text-align: center; margin-top: 20px;">
+      For more information, visit <a href="https://www.chathamcountync.gov/" target="_blank">chathamcountync.gov</a>
     </div>
   </div>
 
@@ -226,7 +227,7 @@ function fetchWeatherAndAlerts() {
           document.getElementById('weather-description').textContent = desc || '--';
           document.getElementById('weather-wind').textContent = wind ? `Wind: ${Math.round(wind * 0.621371)} mph` : '--';
           document.getElementById('weather-humidity').textContent = humidity ? `Humidity: ${Math.round(humidity)}%` : '--';
-          document.getElementById('heat-index').textContent = heat ? `${Math.round(heat * 9/5 + 32)}°F` : '--';
+          document.getElementById('heat-index').textContent = heat !== null && !isNaN(heat) ? `${Math.round(heat * 9/5 + 32)}°F` : 'N/A';
           document.getElementById('heat-risk').textContent = heat >= 90 ? 'HIGH' : heat >= 80 ? 'Elevated' : 'Low';
         });
 
@@ -288,7 +289,7 @@ function fetchExtraData() {
         .then(data => {
           const val = data.properties.quantitativePrecipitation?.unitCode === 'wmoUnit:mm' ?
             `${(data.properties.quantitativePrecipitation.value / 25.4).toFixed(2)} in` : '--';
-          document.getElementById('precip-value').textContent = val;
+          document.getElementById('precip-value').textContent = val && !isNaN(parseFloat(val)) ? val : 'N/A';
         });
   });
 
@@ -316,18 +317,21 @@ function fetchExtraData() {
     .then(data => {
       const values = data.value.timeSeries[0].values[0].value.map(v => parseFloat(v.value));
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("width", "400");
+      svg.setAttribute("width", "440");
       svg.setAttribute("height", "100");
       svg.setAttribute("viewBox", "0 0 400 100");
 
       const min = Math.min(...values);
       const max = Math.max(...values);
 
-      const path = values.map((v, i) => {
-        const x = (i / (values.length - 1)) * 400;
-        const y = 100 - ((v - min) / (max - min)) * 100;
-        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
-      }).join(' ');
+      const graphOffsetX = 40;
+const graphWidth = 360;
+
+const path = values.map((v, i) => {
+  const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
+  const y = 100 - ((v - min) / (max - min)) * 100;
+  return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+}).join(' ');
 
       const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       polyline.setAttribute("d", path);
@@ -336,20 +340,69 @@ function fetchExtraData() {
       polyline.setAttribute("stroke-width", "2");
 
       const labelMin = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      labelMin.setAttribute("x", "0");
-      labelMin.setAttribute("y", "100");
-      labelMin.setAttribute("font-size", "14");
-      labelMin.textContent = `${min.toFixed(1)} ft`;
+labelMin.setAttribute("x", "0");
+labelMin.setAttribute("y", "100");
+labelMin.setAttribute("font-size", "14");
+labelMin.textContent = `${min.toFixed(1)} ft`;
 
-      const labelMax = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      labelMax.setAttribute("x", "0");
-      labelMax.setAttribute("y", "12");
-      labelMax.setAttribute("font-size", "14");
-      labelMax.textContent = `${max.toFixed(1)} ft`;
+const labelMax = document.createElementNS("http://www.w3.org/2000/svg", "text");
+labelMax.setAttribute("x", "0");
+labelMax.setAttribute("y", "12");
+labelMax.setAttribute("font-size", "14");
+labelMax.textContent = `${max.toFixed(1)} ft`;
 
-      svg.appendChild(polyline);
-      svg.appendChild(labelMin);
-      svg.appendChild(labelMax);
+// Add x-axis day labels
+const dayCount = values.length;
+for (let i = 0; i < dayCount; i++) {
+  const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  tick.setAttribute("x", `${graphOffsetX + (i / (dayCount - 1)) * graphWidth}`);
+  tick.setAttribute("y", "95");
+  tick.setAttribute("font-size", "12");
+  tick.setAttribute("text-anchor", "middle");
+
+  const now = new Date();
+  now.setDate(now.getDate() - (dayCount - 1 - i));
+  const dayLabel = now.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  tick.textContent = dayLabel;
+  svg.appendChild(tick);
+}
+
+svg.appendChild(labelMin);
+svg.appendChild(labelMax);
+
+// Add Y-axis tick marks
+[min, max].forEach((val, i) => {
+  const y = 100 - ((val - min) / (max - min)) * 100;
+  const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  tick.setAttribute("x1", graphOffsetX);
+  tick.setAttribute("x2", graphOffsetX + graphWidth);
+  tick.setAttribute("y1", y);
+  tick.setAttribute("y2", y);
+  tick.setAttribute("stroke", "#ccc");
+  tick.setAttribute("stroke-dasharray", "4,4");
+  svg.appendChild(tick);
+});
+
+// Add flood stage line
+const floodLabelY = 100 - ((floodStage - min) / (max - min)) * 100;
+const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+line.setAttribute("x1", graphOffsetX);
+line.setAttribute("x2", graphOffsetX + graphWidth);
+line.setAttribute("y1", floodLabelY);
+line.setAttribute("y2", floodLabelY);
+line.setAttribute("stroke", "black");
+line.setAttribute("stroke-width", "1");
+line.setAttribute("stroke-dasharray", "6,3");
+svg.appendChild(line);
+
+const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+floodLabel.setAttribute("x", graphOffsetX + 5);
+floodLabel.setAttribute("y", floodLabelY - 4);
+floodLabel.setAttribute("font-size", "12");
+floodLabel.setAttribute("fill", "black");
+floodLabel.textContent = "Flood Stage";
+svg.appendChild(floodLabel);
+}
       document.getElementById("river-status").parentElement.appendChild(svg);
     });
 }
