@@ -21,7 +21,7 @@
       flex-direction: column;
       gap: 28px;
     }
-    /* Card frame border increased from 2px to 4px; white background for cards */
+    /* Card frames: white background, black border 4px */
     .section {
       border: 4px solid #000;
       padding: 16px;
@@ -41,7 +41,7 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* For sections that should be centered */
+    /* Centered content for cards that need it */
     .centered .section-content {
       align-items: center;
       text-align: center;
@@ -72,7 +72,7 @@
       display: block;
       margin: 12px auto 0 auto;
     }
-    /* USGS site info styling (bottom of river card, right aligned) */
+    /* USGS site info (bottom of river card, right aligned) */
     #usgs-site-info {
       width: 100%;
       text-align: right;
@@ -90,12 +90,10 @@
     <!-- Weather Conditions Section (centered) -->
     <div class="section centered" id="weather-section">
       <div class="card-title">Weather Conditions</div>
-      <!-- Inline container for weather icon and temperature -->
+      <!-- Weather icon on its own row -->
+      <div id="weather-icon" style="margin-bottom: 8px;"></div>
       <div class="section-content">
-        <div style="display: flex; align-items: center; justify-content: center;">
-          <div id="weather-icon" style="margin-right: 8px;"></div>
-          <div class="value" id="weather-temp">--</div>
-        </div>
+        <div class="value" id="weather-temp">--</div>
         <div class="label" id="weather-forecast">--</div>
         <div class="label" id="weather-wind">--</div>
         <div class="label" id="weather-humidity">--</div>
@@ -150,15 +148,15 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- Inline container for AQI icon and reading (icon and reading same height) -->
-      <div style="display: flex; align-items: center; justify-content: center;">
-        <div id="aqi-icon" style="margin-right: 8px;"></div>
+      <!-- AQI icon on its own row -->
+      <div id="aqi-icon" style="margin-bottom: 8px;"></div>
+      <div class="section-content">
         <div id="aqi-reading" style="display: flex; align-items: center; font-size: 100px;">
           <span id="aqi-value">--</span>
           <span id="aqi-category" style="margin-left: 8px;">Loading...</span>
         </div>
       </div>
-      <!-- Center "Primary Pollutant" text -->
+      <!-- Center Primary Pollutant text -->
       <div class="label" id="aqi-pollutant" style="text-align: center;">Primary Pollutant: --</div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
     </div>
@@ -172,7 +170,7 @@
     // Global flood threshold (default 5.0 ft)
     let floodThreshold = 5.0;
     
-    // --- Helper functions for dynamic icons (black & white, thicker strokes) ---
+    // --- Helper functions for dynamic icons (black & white) ---
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
@@ -236,7 +234,7 @@
       } else if (category.includes("unhealthy for sensitive groups")) {
         iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">USG</text>
+                     <text x="32" y="42" font-size="20" fill="black" text-anchor="middle" font-family="Arial">USG</text>
                    </svg>`;
       } else if (category.includes("unhealthy")) {
         iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
@@ -294,9 +292,9 @@
           }
           const lastReading = floatValues[floatValues.length - 1].stage;
           document.getElementById('river-stage').textContent = `${lastReading.toFixed(2)} ft`;
-          const riverTimestamp = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-          document.getElementById("last-river-update").textContent = riverTimestamp;
-          document.getElementById("river-timestamp").textContent = "Last updated: " + riverTimestamp;
+          const riverTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+          document.getElementById("last-river-update").textContent = riverTime;
+          document.getElementById("river-timestamp").textContent = "Last updated: " + riverTime;
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
@@ -357,7 +355,7 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis tick marks at half-foot increments with 22px font
+      // Y-axis tick marks at half-foot increments (font size increased to 22px)
       const startTick = Math.floor(minStage * 2) / 2;
       const endTick = Math.ceil(maxStage * 2) / 2;
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 0.5) {
@@ -401,7 +399,7 @@
       polyline.setAttribute("stroke-width", "6");
       svg.appendChild(polyline);
       
-      // Flood Stage dashed line (stroke width 4)
+      // Flood Stage dashed line (stroke width increased to 4)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -413,7 +411,7 @@
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
       
-      // X-axis label "Date" with font size 26px
+      // X-axis label "Date" (font size increased to 26px)
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -423,7 +421,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
       
-      // Draw circles for each point and add one day marker per day (skip first day's label, font size 30px)
+      // Draw circles for each data point and add one day marker per day (skip first day's label, font size increased to 30px)
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
@@ -460,7 +458,6 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // In the AQI card, the inline container shows: symbol, numeric value, and category (all same size)
             document.getElementById('aqi-value').textContent = main.AQI;
             document.getElementById('aqi-category').textContent = main.Category.Name;
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
