@@ -63,6 +63,11 @@
       margin-top: 20px;
       text-align: center;
     }
+    /* Center the river graph container */
+    #river-graph {
+      display: block;
+      margin: 12px auto 0 auto;
+    }
   </style>
 </head>
 <body>
@@ -80,7 +85,7 @@
         <div class="label" style="font-size: 20px; color: #666;">USGS Site #02096960 (Live)</div>
         <div class="label">AT OR ABOVE FLOOD STAGE</div>
       </div>
-      <div id="river-graph" style="margin-top: 12px; width: 100%; display: flex; justify-content: flex-start;"></div>
+      <div id="river-graph"></div>
     </div>
 
     <!-- Alerts Section -->
@@ -203,7 +208,7 @@
         const y = date.getFullYear();
         const m = date.getMonth();
         const d = date.getDate();
-        // Each block is 3 hours, e.g. 0-2 => 0, 3-5 => 3, 6-8 => 6, etc.
+        // Each block is 3 hours, e.g., 0-2 => 0, 3-5 => 3, etc.
         const hBlock = Math.floor(date.getHours() / 3) * 3;
 
         // Build a consistent date/time for the block
@@ -217,14 +222,12 @@
         blockMap[key].count += 1;
       });
 
-      // Convert blockMap to an array
+      // Convert blockMap to an array and sort by date/time
       const result = Object.values(blockMap).map(item => ({
         dateObj: item.dateObj,
         stage: item.sum / item.count
-      }));
-
-      // Sort by date/time
-      result.sort((a, b) => a.dateObj - b.dateObj);
+      })).sort((a, b) => a.dateObj - b.dateObj);
+      
       return result;
     }
 
@@ -232,19 +235,12 @@
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
 
-      // If no data, exit
-      if (!dataPoints.length) return;
-
-      // Compute min & max
+      // Compute min & max stage values; always include flood stage (5.0 ft)
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
-
-      // Always show flood line => expand min/max if needed
       const floodStage = 5.0;
       minStage = Math.min(minStage, floodStage);
       maxStage = Math.max(maxStage, floodStage);
-
-      // If all stages are the same, fallback range
       const stageRange = (maxStage - minStage) || 1;
 
       // X scale: from earliest date to latest date
@@ -252,22 +248,22 @@
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
 
-      // Dimensions (2x the previous width)
+      // Dimensions: 960px wide, 280px tall
       const svgWidth = 960;
       const svgHeight = 280;
-      const graphHeight = 180;
+      const graphHeight = 180; 
       const graphOffsetX = 60; // left margin
-      const graphWidth = svgWidth - graphOffsetX - 20; // 20 px right margin
-      const axisLabelY = 260; // place "Date" label lower
-      const dateLabelY = 240; // place day labels above the "Date" label
+      const graphWidth = svgWidth - graphOffsetX - 20; // right margin of 20px
+      const axisLabelY = 260; // "Date" label Y coordinate
+      const dateLabelY = 240; // Y coordinate for each day's label
 
-      // Create SVG
+      // Create SVG element
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-      // X & Y scale functions
+      // Scale functions
       const scaleX = dateObj => {
         const currentMillis = dateObj - minDate;
         return graphOffsetX + (currentMillis / totalMillis) * graphWidth;
@@ -276,14 +272,14 @@
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       };
 
-      // Build path data
+      // Build the polyline path
       const pathData = dataPoints.map((pt, i) => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
         return (i === 0 ? 'M' : 'L') + x + ',' + y;
       }).join(' ');
 
-      // Main line
+      // Draw main polyline
       const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
       polyline.setAttribute("d", pathData);
       polyline.setAttribute("stroke", "black");
@@ -291,7 +287,7 @@
       polyline.setAttribute("stroke-width", "3");
       svg.appendChild(polyline);
 
-      // Flood Stage line
+      // Draw Flood Stage line (center aligned)
       const floodY = scaleY(floodStage);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -302,17 +298,44 @@
       floodLine.setAttribute("stroke-dasharray", "6,3");
       floodLine.setAttribute("stroke-width", "2");
       svg.appendChild(floodLine);
-
+      
+      // Center aligned "Flood Stage" label on the flood line
       const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      floodLabel.setAttribute("x", graphOffsetX + graphWidth - 5);
+      floodLabel.setAttribute("x", graphOffsetX + graphWidth / 2);
       floodLabel.setAttribute("y", floodY - 5);
       floodLabel.setAttribute("font-size", "14");
       floodLabel.setAttribute("fill", "black");
-      floodLabel.setAttribute("text-anchor", "end");
+      floodLabel.setAttribute("text-anchor", "middle");
       floodLabel.textContent = "Flood Stage";
       svg.appendChild(floodLabel);
 
-      // Left-aligned "Stage (ft)"
+      // Draw Y-axis tick marks and labels (e.g., 5 ticks)
+      const numTicks = 5;
+      for (let i = 0; i <= numTicks; i++) {
+        const fraction = i / numTicks;
+        const y = 20 + fraction * graphHeight;
+        const stageValue = (maxStage - fraction * stageRange).toFixed(1);
+        // Tick mark
+        const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        tick.setAttribute("x1", graphOffsetX - 5);
+        tick.setAttribute("x2", graphOffsetX);
+        tick.setAttribute("y1", y);
+        tick.setAttribute("y2", y);
+        tick.setAttribute("stroke", "black");
+        tick.setAttribute("stroke-width", "1");
+        svg.appendChild(tick);
+        // Label for tick
+        const tickLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        tickLabel.setAttribute("x", graphOffsetX - 10);
+        tickLabel.setAttribute("y", y + 4); // adjust for text baseline
+        tickLabel.setAttribute("font-size", "12");
+        tickLabel.setAttribute("fill", "black");
+        tickLabel.setAttribute("text-anchor", "end");
+        tickLabel.textContent = stageValue;
+        svg.appendChild(tickLabel);
+      }
+
+      // Left-aligned "Stage (ft)" label at top
       const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       yAxisLabel.setAttribute("x", "10");
       yAxisLabel.setAttribute("y", "20");
@@ -322,7 +345,7 @@
       yAxisLabel.textContent = "Stage (ft)";
       svg.appendChild(yAxisLabel);
 
-      // X-axis label
+      // X-axis label "Date"
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -332,21 +355,19 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
 
-      // Draw a circle at each point & label day once per day
-      let lastDay = null;
+      // Draw a small circle for each point and add day marker (only once per day)
+      let lastDay = "";
       dataPoints.forEach(pt => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
-
-        // Draw a small circle at each point
+        // Draw circle
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
         circle.setAttribute("r", 3);
         circle.setAttribute("fill", "black");
         svg.appendChild(circle);
-
-        // Only show day marker once per day
+        // Show day marker once per day
         const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         if (dayLabel !== lastDay) {
           lastDay = dayLabel;
@@ -377,7 +398,6 @@
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
           } else {
-            // Fallback if no data is returned
             document.getElementById('aqi-value').textContent = "42";
             document.getElementById('aqi-category').textContent = "Good";
             document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
@@ -386,7 +406,6 @@
         })
         .catch(err => {
           console.error('Error fetching AQI data:', err);
-          // Fallback on error
           document.getElementById('aqi-value').textContent = "42";
           document.getElementById('aqi-category').textContent = "Good";
           document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
