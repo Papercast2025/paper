@@ -119,7 +119,7 @@
       </div>
     </div>
 
-    <!-- AQI Section -->
+    <!-- Air Quality Index (AQI) Section -->
     <div class="section" id="aqi-section">
       <div style="font-size: 36px; font-weight: bold;">Air Quality Index</div>
       <div class="section-content">
@@ -185,6 +185,8 @@
 
       const min = Math.min(...values);
       const max = Math.max(...values);
+      // If all values are equal, use 1 as a fallback range.
+      const range = (max - min) || 1;
       const floodStage = 5.0;
       const graphOffsetX = 40;
       const graphWidth = 360;
@@ -192,7 +194,7 @@
 
       const path = values.map((v, i) => {
         const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
-        const y = 160 - ((v - min) / (max - min)) * 160;
+        const y = 160 - ((v - min) / range) * 160;
         return `${i === 0 ? 'M' : 'L'}${x},${y}`;
       }).join(' ');
 
@@ -205,7 +207,7 @@
 
       // Flood Stage Line
       if (floodStage >= min && floodStage <= max) {
-        const y = 160 - ((floodStage - min) / (max - min)) * 160;
+        const y = 160 - ((floodStage - min) / range) * 160;
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", graphOffsetX);
         line.setAttribute("x2", graphOffsetX + graphWidth);
@@ -245,7 +247,7 @@
       xAxisLabel.textContent = "Day";
       svg.appendChild(xAxisLabel);
 
-      // X-axis Day Labels
+      // Day Labels
       days.forEach((day, i) => {
         const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -274,7 +276,7 @@
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             document.getElementById('last-aqi-update').textContent = new Date().toLocaleString();
           } else {
-            // Fallback values if no data is returned
+            // Fallback if no data is returned
             document.getElementById('aqi-value').textContent = "42";
             document.getElementById('aqi-category').textContent = "Good";
             document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
@@ -298,11 +300,10 @@
       fetch(pointUrl)
         .then(res => res.json())
         .then(pointData => {
-          // Get URLs for hourly observations, forecast and alerts
           const obsUrl = pointData.properties.forecastHourly;
           const gridUrl = pointData.properties.forecast;
           const alertZone = pointData.properties.forecastZone;
-
+          
           // Weather Observations
           fetch(obsUrl)
             .then(res => res.json())
@@ -316,6 +317,8 @@
                 document.getElementById('weather-humidity').textContent = `Humidity: ${humidity}%`;
                 if (now.quantitativePrecipitation && typeof now.quantitativePrecipitation.value === 'number') {
                   document.getElementById('precip-value').textContent = `${now.quantitativePrecipitation.value.toFixed(2)} in`;
+                } else {
+                  document.getElementById('precip-value').textContent = "0.00 in";
                 }
               }
             })
@@ -363,7 +366,7 @@
       fetchRiverData();
       fetchAQIData();
       fetchNWSData();
-    }, 10 * 60 * 1000); // Refresh every 10 minutes
+    }, 10 * 60 * 1000);
   </script>
 </body>
 </html>
