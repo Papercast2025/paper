@@ -80,7 +80,7 @@
     <div class="section" style="position: relative; flex-direction: column; align-items: stretch;">
       <div style="position: absolute; top: 16px; left: 16px; font-size: 36px; font-weight: bold;">River & Water Levels</div>
       <div style="margin-top: 56px; padding-left: 16px; padding-right: 16px; display: flex; flex-direction: column; align-items: flex-end;">
-        <div class="value" style="text-align: right;">4.9 ft</div>
+        <div class="value" style="text-align: right;" id="river-stage">Loading...</div>
         <div class="label" style="font-size: 20px; color: #666; text-align: right;">USGS Site #02096960 (Live)</div>
         <div class="label" style="text-align: right;">AT OR ABOVE FLOOD STAGE</div>
       </div>
@@ -146,86 +146,121 @@
     const LAT = 35.77659;
     const LON = -79.14597;
 
-    function setAQIContent(aqi, category, pollutant) {
-      document.getElementById('last-aqi-update').textContent = new Date().toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
-      document.getElementById('aqi-value').textContent = (aqi != null && !isNaN(aqi)) ? aqi : '--';
-      document.getElementById('aqi-category').textContent = category || 'N/A';
-      document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${pollutant || 'N/A'}`;
-    }
+    // River Data Fetching
+    function fetchRiverData() {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 7);
 
-    function fetchAQIData() {
-      const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
+      const format = (d) => d.toISOString().split('.')[0];
+      const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
+
       fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            const main = data[0];
-            setAQIContent(main.AQI, main.Category.Name, main.ParameterName);
-          } else {
-            setAQIContent(42, 'Good', 'PM2.5');
+        .then((res) => res.json())
+        .then((data) => {
+          const values = data.value.timeSeries[0].values[0].value.map(v => parseFloat(v.value)).filter(v => !isNaN(v));
+          if (values.length > 0) {
+            window.usgsRiverData = values;
+            document.getElementById('river-stage').textContent = `${values[values.length - 1]} ft`;
+            document.getElementById("last-river-update").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+            renderRiverGraph(values);
           }
         })
-        .catch(() => setAQIContent(42, 'Good', 'PM2.5'));
+        .catch((err) => console.error('USGS River Data fetch error:', err));
     }
 
-    function fetchNWSData() {
-      document.getElementById('last-nws-update').textContent = new Date().toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
-      const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
+    // River Graph Rendering
+    function renderRiverGraph(values) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", "440");
+      svg.setAttribute("height", "220");
+      svg.setAttribute("viewBox", "0 0 440 200");
 
-      fetch(pointUrl)
-        .then(res => res.json())
-        .then(pointData => {
-          const gridUrl = pointData.properties.forecast;
-          const obsUrl = pointData.properties.forecastHourly;
-          const alertUrl = pointData.properties.forecastZone;
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const floodStage = 5.0;
+      const graphOffsetX = 40;
+      const graphWidth = 360;
 
-          // Weather Summary
-          fetch(obsUrl)
-            .then(res => res.json())
-            .then(obs => {
-              const now = obs.properties.periods[0];
-              document.getElementById('weather-temp').textContent = `${now.temperature ?? '--'}°F`;
-              document.getElementById('weather-forecast').textContent = now.shortForecast ?? 'N/A';
-              document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed ?? '--'}`;
-              document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity?.value ?? '--'}%`;
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-              const precipVal = now.quantitativePrecipitation?.value;
-              if (precipVal != null && !isNaN(precipVal)) {
-                document.getElementById('precip-value').textContent = `${precipVal.toFixed(2)} in`;
-              }
-            });
+      const path = values.map((v, i) => {
+        const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
+        const y = 160 - ((v - min) / (max - min)) * 160;
+        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+      }).join(' ');
 
-          // Rainfall Forecast
-          fetch(gridUrl)
-            .then(res => res.json())
-            .then(grid => {
-              const days = grid.properties.periods.slice(0, 3);
-              document.getElementById('rainfall-forecast-1').textContent = `${days[0]?.name}: ${days[0]?.shortForecast ?? 'N/A'}`;
-              document.getElementById('rainfall-forecast-2').textContent = `${days[1]?.name}: ${days[1]?.shortForecast ?? 'N/A'}`;
-              document.getElementById('rainfall-forecast-3').textContent = `${days[2]?.name}: ${days[2]?.shortForecast ?? 'N/A'}`;
-            });
+      const polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      polyline.setAttribute("d", path);
+      polyline.setAttribute("stroke", "black");
+      polyline.setAttribute("fill", "none");
+      polyline.setAttribute("stroke-width", "4");
+      svg.appendChild(polyline);
 
-          // Alerts
-          fetch(`https://api.weather.gov/alerts/active/zone/${alertUrl.split('/').pop()}`)
-            .then(res => res.json())
-            .then(data => {
-              const alertBox = document.getElementById('alert-message');
-              if (data.features.length === 0) {
-                alertBox.textContent = 'No alerts at this time.';
-              } else {
-                alertBox.textContent = data.features.map(a => a.properties.headline).join(' | ');
-              }
-            });
-        })
-        .catch(err => console.error('Error fetching NWS data:', err));
+      if (floodStage >= min && floodStage <= max) {
+        const y = 160 - ((floodStage - min) / (max - min)) * 160;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", graphOffsetX);
+        line.setAttribute("x2", graphOffsetX + graphWidth);
+        line.setAttribute("y1", y);
+        line.setAttribute("y2", y);
+        line.setAttribute("stroke", "black");
+        line.setAttribute("stroke-dasharray", "6,3");
+        line.setAttribute("stroke-width", "3");
+        svg.appendChild(line);
+
+        const floodLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        floodLabel.setAttribute("x", graphOffsetX + graphWidth - 5);
+        floodLabel.setAttribute("y", y - 4);
+        floodLabel.setAttribute("font-size", "16");
+        floodLabel.setAttribute("fill", "black");
+        floodLabel.setAttribute("text-anchor", "end");
+        floodLabel.textContent = "Flood Stage";
+        svg.appendChild(floodLabel);
+      }
+
+      // Y-axis Label (Stage in feet)
+      const yAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      yAxisLabel.setAttribute("x", "5");
+      yAxisLabel.setAttribute("y", "100");
+      yAxisLabel.setAttribute("font-size", "16");
+      yAxisLabel.setAttribute("fill", "black");
+      yAxisLabel.setAttribute("transform", "rotate(-90 5,50)");
+      yAxisLabel.textContent = "Stage (ft)";
+      svg.appendChild(yAxisLabel);
+
+      // X-axis Label (Day)
+      const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      xAxisLabel.setAttribute("x", "240");
+      xAxisLabel.setAttribute("y", "195");
+      xAxisLabel.setAttribute("font-size", "16");
+      xAxisLabel.setAttribute("fill", "black");
+      xAxisLabel.setAttribute("text-anchor", "middle");
+      xAxisLabel.textContent = "Day";
+      svg.appendChild(xAxisLabel);
+
+      // Add X-axis day labels under each data point
+      days.forEach((day, i) => {
+        const x = graphOffsetX + (i / (values.length - 1)) * graphWidth;
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", x);
+        label.setAttribute("y", "210");
+        label.setAttribute("font-size", "14");
+        label.setAttribute("fill", "black");
+        label.setAttribute("text-anchor", "middle");
+        label.textContent = day;
+        svg.appendChild(label);
+      });
+
+      // Add the graph to the page
+      document.getElementById("river-graph").appendChild(svg);
     }
 
-    fetchAQIData();
-    fetchNWSData();
+    // Fetch River Data
+    fetchRiverData();
 
     setInterval(() => {
-      fetchAQIData();
-      fetchNWSData();
+      fetchRiverData();
     }, 10 * 60 * 1000); // Refresh every 10 minutes
   </script>
 </body>
