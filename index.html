@@ -41,7 +41,7 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* For sections that should be centered */
+    /* For sections to be centered */
     .centered .section-content {
       align-items: center;
       text-align: center;
@@ -72,7 +72,7 @@
       display: block;
       margin: 12px auto 0 auto;
     }
-    /* USGS site info styling (bottom of river card, right aligned) */
+    /* USGS site info (bottom of river card, right aligned) */
     #usgs-site-info {
       width: 100%;
       text-align: right;
@@ -118,7 +118,6 @@
       </div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
         <div class="value" id="river-stage">Loading...</div>
-        <!-- Dynamic flood status text -->
         <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
@@ -164,10 +163,9 @@
         <div id="aqi-icon" style="margin-right: 8px;"></div>
         <div id="aqi-reading" style="display: flex; align-items: center; font-size: 100px;">
           <span id="aqi-value">--</span>
-          <span id="aqi-category" style="margin-left: 8px;">Loading...</span>
+          <span id="aqi-category" style="margin-left: 8px;">--</span>
         </div>
       </div>
-      <!-- Center "Primary Pollutant" text -->
       <div class="label" id="aqi-pollutant" style="text-align: center;">Primary Pollutant: --</div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
     </div>
@@ -245,7 +243,7 @@
       } else if (category.includes("unhealthy for sensitive groups")) {
         iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
                      <circle cx="32" cy="32" r="30" fill="white" stroke="black" stroke-width="3"/>
-                     <text x="32" y="42" font-size="20" fill="black" text-anchor="middle" font-family="Arial">USG</text>
+                     <text x="32" y="42" font-size="24" fill="black" text-anchor="middle" font-family="Arial">USG</text>
                    </svg>`;
       } else if (category.includes("unhealthy")) {
         iconSVG = `<svg width="50" height="50" viewBox="0 0 64 64">
@@ -304,7 +302,6 @@
           const lastReading = floatValues[floatValues.length - 1].stage;
           document.getElementById('river-stage').textContent = `${lastReading.toFixed(2)} ft`;
           const riverTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-          document.getElementById("last-river-update").textContent = riverTime;
           document.getElementById("river-timestamp").textContent = "Last updated: " + riverTime;
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
@@ -411,7 +408,7 @@
       polyline.setAttribute("stroke-width", "6");
       svg.appendChild(polyline);
       
-      // Draw Flood Stage dashed line; increase stroke weight by 2 (from 2 to 4)
+      // Draw Flood Stage dashed line (stroke width increased to 4)
       const floodY = scaleY(floodThreshold);
       const floodLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -423,7 +420,7 @@
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
       
-      // X-axis label "Date" with increased font size (from 21 to 26)
+      // X-axis label "Date" with increased font size (26px)
       const xAxisLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
       xAxisLabel.setAttribute("x", svgWidth / 2);
       xAxisLabel.setAttribute("y", axisLabelY);
@@ -433,7 +430,7 @@
       xAxisLabel.textContent = "Date";
       svg.appendChild(xAxisLabel);
       
-      // Draw circles for each point and add one day marker per day (skip first day, font size increased to 30)
+      // Draw circles for each data point and add one day marker per day (skip first day, font size 30px)
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach(pt => {
@@ -470,11 +467,11 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
+            // Combine AQI value and category on one line: "symbol 42 Good"
             document.getElementById('aqi-value').textContent = main.AQI;
             document.getElementById('aqi-category').textContent = main.Category.Name;
             document.getElementById('aqi-pollutant').textContent = `Primary Pollutant: ${main.ParameterName}`;
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-            document.getElementById('last-aqi-update').textContent = aqiTime;
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
             document.getElementById('aqi-icon').innerHTML = getAQIIcon(main.Category.Name);
           } else {
@@ -482,7 +479,6 @@
             document.getElementById('aqi-category').textContent = "Good";
             document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-            document.getElementById('last-aqi-update').textContent = aqiTime;
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
             document.getElementById('aqi-icon').innerHTML = getAQIIcon("Good");
           }
@@ -493,7 +489,6 @@
           document.getElementById('aqi-category').textContent = "Good";
           document.getElementById('aqi-pollutant').textContent = "Primary Pollutant: PM2.5";
           const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-          document.getElementById('last-aqi-update').textContent = aqiTime;
           document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
           document.getElementById('aqi-icon').innerHTML = getAQIIcon("Good");
         });
@@ -502,7 +497,6 @@
     // --- Weather, Rainfall Forecast & Alerts from NWS ---
     function fetchNWSData() {
       const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      document.getElementById('last-nws-update').textContent = nwsTime;
       document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
       const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
       fetch(pointUrl)
