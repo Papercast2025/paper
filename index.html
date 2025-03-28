@@ -104,7 +104,7 @@
       display: inline-block;
       text-align: center;
     }
-    /* Y-axis label styling: increased to 18px and shifted right */
+    /* Y-axis label styling: increased to 18px and shifted right (x=25) */
     #y-axis-label {
       font-size: 18px;
       font-weight: bold;
@@ -139,7 +139,7 @@
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
     #weather-details div { font-size: 40px; font-weight: bold; }
-    /* Sunrise/Sunset container: placed right of temperature measurements */
+    /* Sunrise/Sunset container: placed right of the temperature measurements */
     #sunrise-sunset {
       display: inline-block;
       vertical-align: middle;
@@ -154,7 +154,7 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Increase font sizes by 20% (to 43px) and add extra top margin above classification.
+       Increase font sizes by 20% (to 43px) and extra top margin (40px) above classification.
     */
     #aqi-content {
       display: flex;
@@ -273,7 +273,7 @@
           if (data.status === "OK") {
             const sunriseUTC = new Date(data.results.sunrise);
             const sunsetUTC = new Date(data.results.sunset);
-            // Convert UTC to local time (adjust with timezone offset)
+            // Convert UTC to local time using the browser's timezone offset
             const sunriseLocal = new Date(sunriseUTC.getTime() - (sunriseUTC.getTimezoneOffset() * 60000));
             const sunsetLocal = new Date(sunsetUTC.getTime() - (sunsetUTC.getTimezoneOffset() * 60000));
             const options = { hour: 'numeric', minute: 'numeric' };
@@ -312,7 +312,7 @@
     
     // ----------------------------------------------------------
     // 1) Generate a semicircular AQI gauge in grayscale with 5 equal segments.
-    // Stroke weight is set to 8 for both arcs and pointer.
+    // Stroke weight is now 8 for both the arcs and the pointer.
     // ----------------------------------------------------------
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
@@ -343,7 +343,7 @@
         path.setAttribute("d", d);
         path.setAttribute("fill", segmentColors[i]);
         path.setAttribute("stroke", "black");
-        path.setAttribute("stroke-width", "8"); 
+        path.setAttribute("stroke-width", "8");
         svg.appendChild(path);
       }
       
@@ -432,7 +432,7 @@
     
     // ----------------------------------------------------------
     // 3) fetchAQIData: Update AQI section layout.
-    // Render the gauge in grayscale and place classification left and measurement right.
+    // Render gauge in grayscale; classification left with extra top spacing, measurement right.
     // ----------------------------------------------------------
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
@@ -595,7 +595,7 @@
                 document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--'}%`;
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 updateHeatRisk(tempF, now.relativeHumidity ? now.relativeHumidity.value : 0);
-                // Update sunrise/sunset info after weather data
+                // Update sunrise/sunset info
                 fetchSunriseSunset();
               }
             })
@@ -736,7 +736,7 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label (x set to 25 so it's not cut off)
+      // Y-axis label (x=25 so it doesn't get cut off)
       const yLabel = document.createElementNS(svgNS, "text");
       yLabel.setAttribute("x", 25);
       yLabel.setAttribute("y", svgHeight / 2 + 30);
@@ -756,7 +756,7 @@
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       }
       
-      // Y-axis ticks (every 1 ft)
+      // Y-axis ticks
       const startTick = Math.floor(minStage);
       const endTick = Math.ceil(maxStage);
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 1) {
@@ -816,7 +816,7 @@
       floodLabel.textContent = "Flood Stage";
       svg.appendChild(floodLabel);
       
-      // Date labels along x-axis
+      // Date labels
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach((pt, i) => {
