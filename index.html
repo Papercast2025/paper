@@ -174,7 +174,7 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- AQI card now only shows the AQI category gauge -->
+      <!-- AQI card now shows a gauge for the AQI category -->
       <div class="section-content" id="aqi-content">
         <div class="value" id="aqi-category">--</div>
       </div>
@@ -192,18 +192,18 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator --- (Now 2x as big relative to the 80x80 original, i.e. scale = 6)
-    // The gauge is 80*scale by 80*scale (480x480), and the text label is positioned at y = 85*scale.
+    // --- Gauge Generator --- (Dial scaled to 0.85 of previous size; scale factor now 5.1)
     function generateGauge(value, min, max, label, color) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // 0 to 180 degrees
-      let scale = 6;
+      let scale = 5.1; // previously 6; now reduced to 0.85 times that value
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
       let needleY = centerY + r * Math.sin(Math.PI - rad);
+      // Increase spacing by adjusting the text y-position to 85*scale
       return `<svg width="${80 * scale}" height="${80 * scale}" viewBox="0 0 ${80 * scale} ${80 * scale}">
         <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5 * scale}"/>
         <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5 * scale}"/>
@@ -498,7 +498,7 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // For AQI, display a gauge if the category isn't "Good"
+            // Display the AQI gauge for the category.
             document.getElementById('aqi-category').innerHTML = generateAQIGauge(main.Category.Name);
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
