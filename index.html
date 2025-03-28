@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
+    /* Place @import rules at the very top */
+    @import url('https://fonts.googleapis.com/css2?family=Arial&display=swap');
+
     body {
       background-color: #f0f0f0;
       color: #000;
@@ -310,8 +313,8 @@
       return svg.outerHTML;
     }
     
-    // Generate a semicircular AQI gauge in grayscale with 5 segments.
-    // Arc and pointer stroke-width set to 8.
+    // Generate a semicircular AQI gauge in grayscale with 5 equal segments.
+    // Stroke weight is set to 8.
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
       const width = 250;
@@ -421,7 +424,6 @@
                   : "#000000";
         document.getElementById('heat-risk-level').innerHTML = generateGauge(HI, 80, 120, riskLevel, color, false, 3.0);
       }
-      // Removed updating heat-risk-graphic to fix error.
     }
     
     // Update AQI section: classification left, gauge center, measurement right.
@@ -507,7 +509,7 @@
         });
     }
     
-    // getWeatherIcon: Already set via CSS to 126×126.
+    // getWeatherIcon: Already set to 126×126 via CSS.
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
@@ -725,7 +727,7 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label (x=25 so it isn't cut off)
+      // Y-axis label (x=25)
       const yLabel = document.createElementNS(svgNS, "text");
       yLabel.setAttribute("x", 25);
       yLabel.setAttribute("y", svgHeight / 2 + 30);
@@ -794,7 +796,7 @@
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
       
-      // Flood Stage label (32px, bold)
+      // Flood Stage label
       const floodLabel = document.createElementNS(svgNS, "text");
       floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
       floodLabel.setAttribute("y", floodY - 10);
@@ -862,9 +864,7 @@
       container.appendChild(svg);
     }
     
-    // ----------------------------------------------------------
-    // 13) Initial Data Fetch & Periodic Refresh
-    // ----------------------------------------------------------
+    // Initial data fetch and periodic refresh
     function fetchAllData() {
       fetchRiverData();
       fetchAQIData();
