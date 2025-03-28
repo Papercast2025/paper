@@ -31,7 +31,7 @@
       flex-direction: column;
       position: relative;
     }
-    /* Card headers: left aligned with white text on black background */
+    /* Card headers: left aligned with white text on black background by default */
     .card-title {
       font-size: 36px;
       font-weight: bold;
@@ -40,6 +40,16 @@
       padding: 4px 8px;
       margin-bottom: 8px;
       text-align: left;
+    }
+    /* For the River & Water Levels header, we want full width and centered text */
+    .river-header {
+      background-color: black;
+      color: white;
+      font-size: 36px;
+      font-weight: bold;
+      padding: 10px 8px;
+      text-align: center;
+      margin-bottom: 8px;
     }
     /* For sections that should be centered */
     .centered .section-content {
@@ -88,7 +98,7 @@
       font-size: 32px;
       margin-top: 8px;
     }
-    /* Additional styling for below-flood status */
+    /* Styling for below-flood status: only the status text gets the black background */
     .below-flood {
       font-size: 42px; /* 30% larger than 32px */
       background-color: black;
@@ -112,24 +122,22 @@
   </style>
 </head>
 <body>
-  <!-- Header displays county info with coordinates and a website link.
-       To change the location, update the LAT and LON values in the script below. -->
+  <!-- Header: Update the global LAT and LON in the script to change location -->
   <div id="header">
-    Chatham County (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>) | 
-    <a href="https://www.chathamcountync.gov/" target="_blank">chathamcountync.gov</a>
+    Catham County Parks and Recreation (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>) | 
+    <a href="https://www.chathamcountync.gov/parks-recreation" target="_blank">www.chathamcountync.gov/parks-recreation</a>
   </div>
   <div class="container">
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- The Heat Risk card displays a dial gauge if conditions exceed safe levels -->
       <div class="section-content" id="heat-risk-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Alerts Section (centered) placed immediately under Heat Risk -->
+    <!-- Alerts Section (centered) -->
     <div class="section centered" id="alerts-section">
       <div class="card-title">Alerts</div>
       <div class="section-content">
@@ -141,7 +149,6 @@
     <!-- Weather Conditions Section (centered) -->
     <div class="section centered" id="weather-section">
       <div class="card-title">Weather Conditions</div>
-      <!-- Inline container for weather icon and temperature -->
       <div class="section-content">
         <div style="display: flex; align-items: center; justify-content: center;">
           <div id="weather-icon" style="margin-right: 8px;"></div>
@@ -154,13 +161,13 @@
       <div class="card-timestamp" id="weather-timestamp">Last updated: --</div>
     </div>
 
-    <!-- River & Water Levels Section (left aligned) -->
+    <!-- River & Water Levels Section -->
     <div class="section" id="river-section">
-      <div class="card-title" style="position: absolute; top: 16px; left: 16px;">
-        River & Water Levels
-      </div>
+      <!-- River header now spans full width with black background -->
+      <div class="river-header">River & Water Levels</div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
         <div class="value" id="river-stage">Loading...</div>
+        <!-- Flood status text gets special styling if below flood stage -->
         <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
@@ -182,7 +189,7 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- New layout: AQI category text on the left, gauge in the center, and numeric AQI value on the right -->
+      <!-- New layout: left-side AQI category text, center gauge, right-side numeric value -->
       <div class="section-content" id="aqi-content">
         <div style="display: flex; align-items: center; justify-content: center;">
           <div id="aqi-category-text" style="margin-right: 20px; font-size: 160px; background-color: black; color: white; text-transform: uppercase; padding: 10px;">--</div>
@@ -211,7 +218,7 @@
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // maps value to 0-180 degrees
-      let scale = 5.1; // Scale factor
+      let scale = 5.1; // Scale factor for desired gauge size
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
@@ -245,7 +252,7 @@
       } else {
         value = 25; color = "#00FF00";
       }
-      // For the AQI gauge, hide the inner text label (redundant "good")
+      // For the AQI gauge, hide the inner text label.
       return generateGauge(value, 0, 250, category.charAt(0).toUpperCase() + category.slice(1), color, true);
     }
     
@@ -519,9 +526,9 @@
           if (data && data.length > 0) {
             const main = data[0];
             // Populate the AQI section:
-            // Left-side category text (reduced in size by 20% from 200px to 160px)
+            // Left-side category text
             document.getElementById('aqi-category-text').textContent = main.Category.Name;
-            // Right-side numeric value, increased 3x and bold
+            // Right-side numeric value
             document.getElementById('aqi-value').textContent = main.AQI;
             // Center gauge (without inner text)
             document.getElementById('aqi-gauge').innerHTML = generateAQIGauge(main.Category.Name);
