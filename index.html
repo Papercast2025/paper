@@ -154,7 +154,7 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Increase font sizes by 20% (to 43px) and extra top margin (40px) above classification.
+       Increase font sizes by 20% (to 43px) and add extra top margin (40px) above classification.
     */
     #aqi-content {
       display: flex;
@@ -263,8 +263,8 @@
     document.getElementById('header-lon').textContent = LON;
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
-
-    // NEW: Fetch sunrise/sunset info and update #sunrise-sunset container
+    
+    // Fetch sunrise/sunset info and update #sunrise-sunset container
     function fetchSunriseSunset() {
       const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`;
       fetch(url)
@@ -273,7 +273,7 @@
           if (data.status === "OK") {
             const sunriseUTC = new Date(data.results.sunrise);
             const sunsetUTC = new Date(data.results.sunset);
-            // Convert UTC to local time using the browser's timezone offset
+            // Convert UTC to local time using browser's timezone offset
             const sunriseLocal = new Date(sunriseUTC.getTime() - (sunriseUTC.getTimezoneOffset() * 60000));
             const sunsetLocal = new Date(sunsetUTC.getTime() - (sunsetUTC.getTimezoneOffset() * 60000));
             const options = { hour: 'numeric', minute: 'numeric' };
@@ -310,10 +310,8 @@
       return svg.outerHTML;
     }
     
-    // ----------------------------------------------------------
-    // 1) Generate a semicircular AQI gauge in grayscale with 5 equal segments.
-    // Stroke weight is now 8 for both the arcs and the pointer.
-    // ----------------------------------------------------------
+    // Generate a semicircular AQI gauge in grayscale with 5 segments.
+    // Arc and pointer stroke-width set to 8.
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
       const width = 250;
@@ -376,9 +374,7 @@
       return svg;
     }
     
-    // ----------------------------------------------------------
-    // 2) Heat Risk Gauge (scale 3.0) – graphic removed.
-    // ----------------------------------------------------------
+    // Heat Risk Gauge (graphic removed)
     function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
@@ -425,15 +421,10 @@
                   : "#000000";
         document.getElementById('heat-risk-level').innerHTML = generateGauge(HI, 80, 120, riskLevel, color, false, 3.0);
       }
-      const graphicContainer = document.getElementById('heat-risk-graphic');
-      graphicContainer.innerHTML = "";
-      graphicContainer.appendChild(getHeatRiskGraphic(riskLevel));
+      // Removed updating heat-risk-graphic to fix error.
     }
     
-    // ----------------------------------------------------------
-    // 3) fetchAQIData: Update AQI section layout.
-    // Render gauge in grayscale; classification left with extra top spacing, measurement right.
-    // ----------------------------------------------------------
+    // Update AQI section: classification left, gauge center, measurement right.
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
       fetch(url)
@@ -516,9 +507,7 @@
         });
     }
     
-    // ----------------------------------------------------------
-    // 4) getWeatherIcon: Already set to 126×126 via CSS.
-    // ----------------------------------------------------------
+    // getWeatherIcon: Already set via CSS to 126×126.
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
@@ -595,7 +584,7 @@
                 document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--'}%`;
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 updateHeatRisk(tempF, now.relativeHumidity ? now.relativeHumidity.value : 0);
-                // Update sunrise/sunset info
+                // Update sunrise/sunset information
                 fetchSunriseSunset();
               }
             })
@@ -634,7 +623,7 @@
     }
     
     // ----------------------------------------------------------
-    // 6) fetchRiverData & renderRiverGraph: River & Water Levels
+    // 6) fetchRiverData & renderRiverGraph: River & Water Levels.
     // ----------------------------------------------------------
     function fetchRiverData() {
       const end = new Date();
@@ -736,7 +725,7 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label (x=25 so it doesn't get cut off)
+      // Y-axis label (x=25 so it isn't cut off)
       const yLabel = document.createElementNS(svgNS, "text");
       yLabel.setAttribute("x", 25);
       yLabel.setAttribute("y", svgHeight / 2 + 30);
@@ -780,7 +769,7 @@
         svg.appendChild(tickLabel);
       }
       
-      // Data path with stroke-width 6.6
+      // Data path
       const pathData = dataPoints.map((pt, i) => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
