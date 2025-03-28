@@ -79,15 +79,16 @@
     }
     /* Hide old river measurement element */
     #river-stage { display: none; }
-    /* River graph container with gray background, width increased by 20% (from 1152px to 1382px) */
+    /* River graph container: width reduced by 15% (to 1179px) and extend left with 5% padding */
     #river-graph {
       background-color: #cccccc;
       display: block;
       margin: 12px auto 0 auto;
       position: relative;
-      width: 1382px;
+      width: 1179px;
+      padding-left: 5%;
     }
-    /* USGS site info: now full black */
+    /* USGS site info now full black */
     #usgs-site-info {
       width: 100%;
       text-align: right;
@@ -103,7 +104,7 @@
       display: inline-block;
       text-align: center;
     }
-    /* Y-axis label styling: increased font size by 20% (from 15px to 18px) and pushed down */
+    /* Y-axis label styling: increased to 18px and pushed down */
     #y-axis-label {
       font-size: 18px;
       font-weight: bold;
@@ -132,7 +133,7 @@
       align-items: center;
       text-align: left;
     }
-    /* Increase weather icon size by 20% (from 105×105 to 126×126) */
+    /* Increase weather icon size by 20% (to 126×126) */
     #weather-icon { width: 126px; height: 126px; }
     #weather-temp-F { font-size: 100px; font-weight: bold; }
     #weather-temp-C { font-size: 50px; font-weight: bold; }
@@ -140,21 +141,21 @@
     #weather-details div { font-size: 40px; font-weight: bold; }
     /* Alerts text bold */
     #alert-message { font-weight: bold; }
-    /* AQI Section custom layout */
+    /* AQI Section layout: classification left, gauge center, measurement right, with font size 43px (20% increase) */
     #aqi-content {
       display: flex;
       align-items: center;
       justify-content: center;
     }
     #aqi-classification, #aqi-measurement {
-      font-size: 43px; /* 20% increase from 36px */
+      font-size: 43px;
       font-weight: bold;
       color: black;
       display: inline-block;
       vertical-align: middle;
-      margin: 0 10px;
+      margin: 20px 10px 0 10px; /* extra top margin for spacing above classification */
     }
-    /* Remove any background image in the heat risk section (i.e. remove the blue dot) */
+    /* Remove heat risk graphic */
     #heat-risk-graphic { display: none; }
   </style>
 </head>
@@ -171,7 +172,6 @@
       <div class="section-content" id="heat-risk-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
-      <!-- Removed heat risk graphic -->
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
     </div>
 
@@ -189,7 +189,7 @@
       <div class="card-title">Weather Conditions</div>
       <div class="section-content">
         <div id="weather-temp-container">
-          <!-- Weather icon to the left, now 126×126 -->
+          <!-- Weather icon appears to the left -->
           <div id="weather-icon" style="margin-right: 10px;"></div>
           <div>
             <div id="weather-temp-F">--°F</div>
@@ -220,7 +220,6 @@
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
       <div class="section-content" id="aqi-content">
-        <!-- New layout: classification on left, gauge in center, measurement on right -->
         <div id="aqi-classification"></div>
         <div id="aqi-gauge-container"></div>
         <div id="aqi-measurement"></div>
@@ -251,7 +250,7 @@
 
     // ----------------------------------------------------------
     // 1) Generate a semicircular AQI gauge in grayscale with 5 equal segments
-    // Each segment now uses a gray shade.
+    // Double the stroke weight of the arc outline and pointer.
     // ----------------------------------------------------------
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
@@ -261,7 +260,7 @@
       const centerY = height;
       const radius = width / 2;
       const segmentAngle = 36;
-      // Grayscale shades for segments (from light to dark)
+      // Grayscale shades for segments
       const segmentColors = ["#e0e0e0", "#cccccc", "#b8b8b8", "#a4a4a4", "#909090"];
       
       const svg = document.createElementNS(svgNS, "svg");
@@ -283,7 +282,7 @@
         path.setAttribute("d", d);
         path.setAttribute("fill", segmentColors[i]);
         path.setAttribute("stroke", "black");
-        path.setAttribute("stroke-width", "3");
+        path.setAttribute("stroke-width", "6"); // doubled from 3
         svg.appendChild(path);
       }
       
@@ -309,7 +308,7 @@
       pointerLine.setAttribute("x2", pointerX);
       pointerLine.setAttribute("y2", pointerY);
       pointerLine.setAttribute("stroke", "black");
-      pointerLine.setAttribute("stroke-width", "6");
+      pointerLine.setAttribute("stroke-width", "12"); // doubled from 6
       pointerLine.setAttribute("stroke-linecap", "round");
       svg.appendChild(pointerLine);
       
@@ -317,7 +316,7 @@
     }
     
     // ----------------------------------------------------------
-    // 2) Heat Risk Gauge (scale 3.0) – unchanged except for removal of graphic
+    // 2) Heat Risk Gauge (scale 3.0) – no graphic (blue dot removed)
     // ----------------------------------------------------------
     function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
       let ratio = (value - min) / (max - min);
@@ -339,7 +338,7 @@
     }
     
     function getHeatRiskGraphic(riskLevel) {
-      // Removed the heat risk graphic (blue dot) by returning an empty element.
+      // Return an empty group (no graphic)
       return document.createElementNS("http://www.w3.org/2000/svg", "g");
     }
     
@@ -366,17 +365,14 @@
                   : "#000000";
         document.getElementById('heat-risk-level').innerHTML = generateGauge(HI, 80, 120, riskLevel, color, false, 3.0);
       }
-      // Remove heat risk graphic (blue dot)
       const graphicContainer = document.getElementById('heat-risk-graphic');
       graphicContainer.innerHTML = "";
       graphicContainer.appendChild(getHeatRiskGraphic(riskLevel));
     }
     
     // ----------------------------------------------------------
-    // 3) fetchAQIData: AQI section layout updated.
+    // 3) fetchAQIData: Updated layout with left/right divs and extra spacing above classification.
     // The gauge is rendered in grayscale.
-    // The classification is moved to a left div and measurement to a right div, with gauge in the center.
-    // Font sizes increased by 20%.
     // ----------------------------------------------------------
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
@@ -395,6 +391,7 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = category.toUpperCase();
+            leftDiv.style.marginTop = "20px"; // extra spacing above classification
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             const gauge = generateAirNowArcGauge(aqiValue, category);
@@ -402,7 +399,6 @@
             const rightDiv = document.createElement("div");
             rightDiv.id = "aqi-measurement";
             rightDiv.textContent = "AQI: " + aqiValue;
-            // Append all three inline, centered.
             leftDiv.style.display = "inline-block";
             leftDiv.style.verticalAlign = "middle";
             centerDiv.style.display = "inline-block";
@@ -416,10 +412,10 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = "GOOD";
+            leftDiv.style.marginTop = "20px";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
-            const gauge = generateAirNowArcGauge(42, "Good");
-            centerDiv.appendChild(gauge);
+            centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
             const rightDiv = document.createElement("div");
             rightDiv.id = "aqi-measurement";
             rightDiv.textContent = "AQI: 42";
@@ -442,6 +438,7 @@
           const leftDiv = document.createElement("div");
           leftDiv.id = "aqi-classification";
           leftDiv.textContent = "GOOD";
+          leftDiv.style.marginTop = "20px";
           const centerDiv = document.createElement("div");
           centerDiv.id = "aqi-gauge-container";
           centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
@@ -461,8 +458,7 @@
     }
     
     // ----------------------------------------------------------
-    // 4) getWeatherIcon: Increase icon size by 20% (to 126x126 -> now 126, already set above) 
-    // (We already updated #weather-icon dimensions in CSS.)
+    // 4) getWeatherIcon: Increase icon size by 20% (to 126x126, already set via CSS)
     // ----------------------------------------------------------
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
@@ -510,10 +506,6 @@
       }
       return iconSVG;
     }
-    
-    // ----------------------------------------------------------
-    // 4) Fun Rainfall Graphic removed (no call to getRainfallGraphic)
-    // ----------------------------------------------------------
     
     // ----------------------------------------------------------
     // 5) fetchNWSData: Weather Conditions
@@ -672,7 +664,7 @@
       const minDate = dataPoints[0].dateObj;
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
-      const svgWidth = 1382; // increased width
+      const svgWidth = 1179; // new reduced width
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
@@ -683,313 +675,7 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label (15px originally increased to 18px, here set via inline style)
-      const yLabel = document.createElementNS(svgNS, "text");
-      yLabel.setAttribute("x", 5);
-      yLabel.setAttribute("y", svgHeight / 2 + 30);
-      yLabel.setAttribute("font-size", "18");
-      yLabel.setAttribute("font-weight", "bold");
-      yLabel.setAttribute("fill", "black");
-      yLabel.setAttribute("text-anchor", "start");
-      yLabel.setAttribute("transform", "rotate(-90 5," + (svgHeight / 2 + 30) + ")");
-      yLabel.textContent = "Water Level (ft)";
-      svg.appendChild(yLabel);
-      
-      function scaleX(dateObj) {
-        const currentMillis = dateObj - minDate;
-        return graphOffsetX + (currentMillis / totalMillis) * graphWidth;
-      }
-      function scaleY(stage) {
-        return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
-      }
-      
-      // Y-axis ticks (every 1 ft)
-      const startTick = Math.floor(minStage);
-      const endTick = Math.ceil(maxStage);
-      for (let tickVal = startTick; tickVal <= endTick; tickVal += 1) {
-        const fraction = (maxStage - tickVal) / stageRange;
-        const tickY = 20 + fraction * graphHeight;
-        const tickLine = document.createElementNS(svgNS, "line");
-        tickLine.setAttribute("x1", graphOffsetX - 5);
-        tickLine.setAttribute("x2", graphOffsetX);
-        tickLine.setAttribute("y1", tickY);
-        tickLine.setAttribute("y2", tickY);
-        tickLine.setAttribute("stroke", "black");
-        tickLine.setAttribute("stroke-width", "1");
-        svg.appendChild(tickLine);
-        const tickLabel = document.createElementNS(svgNS, "text");
-        tickLabel.setAttribute("x", graphOffsetX - 10);
-        tickLabel.setAttribute("y", tickY + 4);
-        tickLabel.setAttribute("font-size", "21");
-        tickLabel.setAttribute("fill", "black");
-        tickLabel.setAttribute("text-anchor", "end");
-        tickLabel.textContent = tickVal.toFixed(0);
-        svg.appendChild(tickLabel);
-      }
-      
-      // Data path with stroke-width 6.6
-      const pathData = dataPoints.map((pt, i) => {
-        const x = scaleX(pt.dateObj);
-        const y = scaleY(pt.stage);
-        return (i === 0 ? 'M' : 'L') + x + ',' + y;
-      }).join(' ');
-      const polyline = document.createElementNS(svgNS, "path");
-      polyline.setAttribute("d", pathData);
-      polyline.setAttribute("stroke", "black");
-      polyline.setAttribute("fill", "none");
-      polyline.setAttribute("stroke-width", "6.6");
-      svg.appendChild(polyline);
-      
-      // Flood line (dotted)
-      const floodY = graphHeight - ((floodThreshold - minStage) / stageRange) * graphHeight + 20;
-      const floodLine = document.createElementNS(svgNS, "line");
-      floodLine.setAttribute("x1", graphOffsetX);
-      floodLine.setAttribute("x2", graphOffsetX + graphWidth);
-      floodLine.setAttribute("y1", floodY);
-      floodLine.setAttribute("y2", floodY);
-      floodLine.setAttribute("stroke", "black");
-      floodLine.setAttribute("stroke-dasharray", "6,3");
-      floodLine.setAttribute("stroke-width", "4");
-      svg.appendChild(floodLine);
-      // Flood Stage label (32px, bold)
-      const floodLabel = document.createElementNS(svgNS, "text");
-      floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
-      floodLabel.setAttribute("y", floodY - 10);
-      floodLabel.setAttribute("font-size", "32");
-      floodLabel.setAttribute("font-weight", "bold");
-      floodLabel.setAttribute("fill", "black");
-      floodLabel.setAttribute("text-anchor", "end");
-      floodLabel.textContent = "Flood Stage";
-      svg.appendChild(floodLabel);
-      
-      // Date labels along x-axis
-      const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      let lastDay = "";
-      dataPoints.forEach((pt, i) => {
-        const x = scaleX(pt.dateObj);
-        const y = scaleY(pt.stage);
-        // Do not draw the blue dot; draw black circles instead (if any, already drawn below)
-        const circle = document.createElementNS(svgNS, "circle");
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", y);
-        circle.setAttribute("r", 3);
-        circle.setAttribute("fill", "black");
-        svg.appendChild(circle);
-        const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        if (dayLabel !== minDateLabel && dayLabel !== lastDay) {
-          lastDay = dayLabel;
-          const label = document.createElementNS(svgNS, "text");
-          label.setAttribute("x", x);
-          label.setAttribute("y", 240);
-          label.setAttribute("font-size", "30");
-          label.setAttribute("fill", "black");
-          label.setAttribute("text-anchor", "middle");
-          label.textContent = dayLabel;
-          svg.appendChild(label);
-        }
-        if (i === dataPoints.length - 1) {
-          const measurement = document.createElementNS(svgNS, "text");
-          measurement.setAttribute("x", x);
-          measurement.setAttribute("y", y + 45);
-          measurement.setAttribute("font-size", "35");
-          measurement.setAttribute("font-weight", "bold");
-          measurement.setAttribute("fill", "white");
-          measurement.setAttribute("text-anchor", "middle");
-          measurement.textContent = ` ${lastReadingStr} `;
-          const rect = document.createElementNS(svgNS, "rect");
-          setTimeout(() => {
-            const bbox = measurement.getBBox();
-            rect.setAttribute("x", bbox.x - 5);
-            rect.setAttribute("y", bbox.y);
-            rect.setAttribute("width", bbox.width + 10);
-            rect.setAttribute("height", bbox.height);
-            rect.setAttribute("fill", "black");
-          }, 0);
-          setTimeout(() => {
-            const bbox = measurement.getBBox();
-            rect.setAttribute("x", bbox.x - 5);
-            rect.setAttribute("y", bbox.y);
-            rect.setAttribute("width", bbox.width + 10);
-            rect.setAttribute("height", bbox.height);
-            svg.insertBefore(rect, measurement);
-          }, 0);
-          svg.appendChild(measurement);
-        }
-      });
-      
-      container.appendChild(svg);
-    }
-    
-    // ----------------------------------------------------------
-    // 7) fetchNWSData: Weather Conditions
-    // ----------------------------------------------------------
-    function fetchNWSData() {
-      const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
-      document.getElementById('alerts-timestamp').textContent = "Last updated: " + nwsTime;
-      document.getElementById('rainfall-timestamp').textContent = "Last updated: " + nwsTime;
-      const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
-      fetch(pointUrl)
-        .then(res => res.json())
-        .then(pointData => {
-          const obsUrl = pointData.properties.forecastHourly;
-          const gridUrl = pointData.properties.forecast;
-          const alertZone = pointData.properties.forecastZone;
-          fetch(obsUrl)
-            .then(res => res.json())
-            .then(obsData => {
-              if (obsData.properties && obsData.properties.periods && obsData.properties.periods.length > 0) {
-                const now = obsData.properties.periods[0];
-                const tempF = now.temperature;
-                const tempC = ((tempF - 32) * 5/9).toFixed(1);
-                document.getElementById('weather-temp-F').textContent = `${tempF ?? '--'}°F`;
-                document.getElementById('weather-temp-C').textContent = `${tempC}°C`;
-                document.getElementById('weather-forecast').textContent = now.shortForecast || 'N/A';
-                document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed || '--'} mph`;
-                document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--'}%`;
-                document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
-                updateHeatRisk(tempF, now.relativeHumidity ? now.relativeHumidity.value : 0);
-              }
-            })
-            .catch(err => console.error('Error fetching weather observations:', err));
-          fetch(gridUrl)
-            .then(res => res.json())
-            .then(gridData => {
-              if (gridData.properties && gridData.properties.periods) {
-                const days = gridData.properties.periods.slice(0, 3);
-                document.getElementById('rainfall-forecast-1').textContent =
-                  `${days[0]?.name || 'Day1'}: ${days[0]?.shortForecast || 'N/A'}`;
-                document.getElementById('rainfall-forecast-2').textContent =
-                  `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
-                document.getElementById('rainfall-forecast-3').textContent =
-                  `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
-                // Removed the fun rainfall graphic.
-              }
-            })
-            .catch(err => console.error('Error fetching rainfall forecast:', err));
-          if (alertZone) {
-            const zoneId = alertZone.split('/').pop();
-            const alertUrl = `https://api.weather.gov/alerts/active/zone/${zoneId}`;
-            fetch(alertUrl)
-              .then(res => res.json())
-              .then(alertData => {
-                if (alertData.features && alertData.features.length > 0) {
-                  const alertMsg = alertData.features.map(a => a.properties.headline).join(' | ');
-                  document.getElementById('alert-message').textContent = alertMsg;
-                } else {
-                  document.getElementById('alert-message').textContent = 'No alerts at this time.';
-                }
-              })
-              .catch(err => console.error('Error fetching alerts:', err));
-          }
-        })
-        .catch(err => console.error('Error fetching NWS points data:', err));
-    }
-    
-    // ----------------------------------------------------------
-    // 8) fetchRiverData & renderRiverGraph: River & Water Levels
-    // ----------------------------------------------------------
-    function fetchRiverData() {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - 4);
-      const format = d => d.toISOString().split('.')[0];
-      const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          const siteProps = data.value.timeSeries[0].sourceInfo.siteProperty;
-          if (siteProps) {
-            siteProps.forEach(prop => {
-              if (prop.propertyName === "floodStage") {
-                floodThreshold = parseFloat(prop.value);
-              }
-            });
-          }
-          const rawValues = data.value.timeSeries[0].values[0].value || [];
-          const floatValues = rawValues
-            .map(v => ({ dateTime: v.dateTime, stage: parseFloat(v.value) }))
-            .filter(pt => !isNaN(pt.stage));
-          if (floatValues.length === 0) {
-            document.getElementById('river-stage').textContent = 'No data available';
-            return;
-          }
-          const lastReading = floatValues[floatValues.length - 1].stage;
-          const lastReadingStr = `${lastReading.toFixed(2)} ft`;
-          document.getElementById("river-timestamp").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-          const statusEl = document.getElementById("flood-status");
-          if (lastReading >= floodThreshold) {
-            statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
-            statusEl.style.fontSize = "48px";
-            statusEl.style.backgroundColor = "black";
-            statusEl.style.color = "white";
-            statusEl.style.textTransform = "uppercase";
-            statusEl.style.padding = "5px";
-            statusEl.style.margin = "0 auto";
-          } else {
-            statusEl.innerHTML = "&#9888; BELOW FLOOD STAGE";
-            statusEl.style.fontSize = "48px";
-            statusEl.style.backgroundColor = "white";
-            statusEl.style.color = "black";
-            statusEl.style.textTransform = "uppercase";
-            statusEl.style.padding = "5px";
-            statusEl.style.margin = "0 auto";
-          }
-          const groupedValues = groupBy3HourBlocks(floatValues);
-          renderRiverGraph(groupedValues, floodThreshold, lastReadingStr);
-        })
-        .catch(err => {
-          console.error('USGS River Data fetch error:', err);
-          document.getElementById('river-stage').textContent = 'Error fetching data';
-        });
-    }
-    
-    function groupBy3HourBlocks(dataArray) {
-      const blockMap = {};
-      dataArray.forEach(pt => {
-        const date = new Date(pt.dateTime);
-        const y = date.getFullYear();
-        const m = date.getMonth();
-        const d = date.getDate();
-        const hBlock = Math.floor(date.getHours() / 3) * 3;
-        const blockDate = new Date(y, m, d, hBlock, 0, 0, 0);
-        const key = blockDate.toISOString();
-        if (!blockMap[key]) {
-          blockMap[key] = { dateObj: blockDate, sum: 0, count: 0 };
-        }
-        blockMap[key].sum += pt.stage;
-        blockMap[key].count += 1;
-      });
-      return Object.values(blockMap)
-        .map(item => ({ dateObj: item.dateObj, stage: item.sum / item.count }))
-        .sort((a, b) => a.dateObj - b.dateObj);
-    }
-    
-    function renderRiverGraph(dataPoints, floodThreshold, lastReadingStr) {
-      const container = document.getElementById("river-graph");
-      container.innerHTML = "";
-      if (!dataPoints.length) return;
-      let minStage = Math.min(...dataPoints.map(d => d.stage));
-      let maxStage = Math.max(...dataPoints.map(d => d.stage));
-      maxStage = Math.max(maxStage, 6);
-      minStage = Math.min(minStage, floodThreshold);
-      maxStage = Math.max(maxStage, floodThreshold);
-      const stageRange = (maxStage - minStage) || 1;
-      const minDate = dataPoints[0].dateObj;
-      const maxDate = dataPoints[dataPoints.length - 1].dateObj;
-      const totalMillis = maxDate - minDate;
-      const svgWidth = 1382; // increased width
-      const svgHeight = 280;
-      const graphHeight = 180;
-      const graphOffsetX = 60;
-      const graphWidth = svgWidth - graphOffsetX - 20;
-      const svgNS = "http://www.w3.org/2000/svg";
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", svgWidth);
-      svg.setAttribute("height", svgHeight);
-      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-      
-      // Y-axis label (18px now)
+      // Y-axis label
       const yLabel = document.createElementNS(svgNS, "text");
       yLabel.setAttribute("x", 5);
       yLabel.setAttribute("y", svgHeight / 2 + 30);
@@ -1075,7 +761,6 @@
       dataPoints.forEach((pt, i) => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
-        // Draw black circles (no blue dot)
         const circle = document.createElementNS(svgNS, "circle");
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
@@ -1125,72 +810,6 @@
       });
       
       container.appendChild(svg);
-    }
-    
-    // ----------------------------------------------------------
-    // 11) fetchNWSData: Weather Conditions
-    // ----------------------------------------------------------
-    function fetchNWSData() {
-      const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
-      document.getElementById('alerts-timestamp').textContent = "Last updated: " + nwsTime;
-      document.getElementById('rainfall-timestamp').textContent = "Last updated: " + nwsTime;
-      const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
-      fetch(pointUrl)
-        .then(res => res.json())
-        .then(pointData => {
-          const obsUrl = pointData.properties.forecastHourly;
-          const gridUrl = pointData.properties.forecast;
-          const alertZone = pointData.properties.forecastZone;
-          fetch(obsUrl)
-            .then(res => res.json())
-            .then(obsData => {
-              if (obsData.properties && obsData.properties.periods && obsData.properties.periods.length > 0) {
-                const now = obsData.properties.periods[0];
-                const tempF = now.temperature;
-                const tempC = ((tempF - 32) * 5/9).toFixed(1);
-                document.getElementById('weather-temp-F').textContent = `${tempF ?? '--'}°F`;
-                document.getElementById('weather-temp-C').textContent = `${tempC}°C`;
-                document.getElementById('weather-forecast').textContent = now.shortForecast || 'N/A';
-                document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed || '--'} mph`;
-                document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--'}%`;
-                document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
-                updateHeatRisk(tempF, now.relativeHumidity ? now.relativeHumidity.value : 0);
-              }
-            })
-            .catch(err => console.error('Error fetching weather observations:', err));
-          fetch(gridUrl)
-            .then(res => res.json())
-            .then(gridData => {
-              if (gridData.properties && gridData.properties.periods) {
-                const days = gridData.properties.periods.slice(0, 3);
-                document.getElementById('rainfall-forecast-1').textContent =
-                  `${days[0]?.name || 'Day1'}: ${days[0]?.shortForecast || 'N/A'}`;
-                document.getElementById('rainfall-forecast-2').textContent =
-                  `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
-                document.getElementById('rainfall-forecast-3').textContent =
-                  `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
-                // Removed fun rainfall graphic.
-              }
-            })
-            .catch(err => console.error('Error fetching rainfall forecast:', err));
-          if (alertZone) {
-            const zoneId = alertZone.split('/').pop();
-            const alertUrl = `https://api.weather.gov/alerts/active/zone/${zoneId}`;
-            fetch(alertUrl)
-              .then(res => res.json())
-              .then(alertData => {
-                if (alertData.features && alertData.features.length > 0) {
-                  const alertMsg = alertData.features.map(a => a.properties.headline).join(' | ');
-                  document.getElementById('alert-message').textContent = alertMsg;
-                } else {
-                  document.getElementById('alert-message').textContent = 'No alerts at this time.';
-                }
-              })
-              .catch(err => console.error('Error fetching alerts:', err));
-          }
-        })
-        .catch(err => console.error('Error fetching NWS points data:', err));
     }
     
     // ----------------------------------------------------------
