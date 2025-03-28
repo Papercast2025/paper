@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Place any @import rules at the very top -->
+  <!-- Place @import rules at the very top -->
   @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
-    /* All CSS rules start here */
+    /* All CSS starts here */
     body {
       background-color: #f0f0f0;
       color: #000;
@@ -82,7 +82,7 @@
     }
     /* Hide old river measurement element */
     #river-stage { display: none; }
-    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding (adjusted) */
+    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding adjusted */
     #river-graph {
       background-color: #cccccc;
       display: block;
@@ -157,8 +157,8 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Increase font sizes by 20% (to 43px) and add extra top margin (40px) above classification.
-       Vertical dividers between segments.
+       Increase font sizes by 20% (to 43px) and extra top margin (40px) above classification.
+       Add vertical dividers between segments.
     */
     #aqi-content {
       display: flex;
@@ -169,7 +169,7 @@
       position: relative;
       padding: 10px;
     }
-    /* Add vertical divider for each segment except the last */
+    /* Vertical divider for each segment except the last */
     #aqi-content > div:not(:last-child)::after {
       content: "";
       position: absolute;
@@ -196,6 +196,12 @@
       margin-top: 10px;
       color: #000;
     }
+    /* Water Bottle icon in Heat Risk section (left aligned) */
+    #water-bottle {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
@@ -209,7 +215,8 @@
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
       <div class="section-content" id="heat-risk-content">
-        <!-- When temperature is below 80°F, display minimal heat risk in a smaller font -->
+        <!-- Water Bottle icon added left of heat risk reading -->
+        <div id="water-bottle"></div>
         <div class="value" id="heat-risk-level">--</div>
       </div>
       <!-- Hydration and safety messaging -->
@@ -282,9 +289,12 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
   </div>
-  <!-- Footer: Placeholder logo (replace src with your actual logo URL) -->
+  <!-- Footer: Inline SVG logo (replace with your own optimized version) -->
   <div id="footer-logo" style="text-align: center; margin-top: 20px;">
-    <img src="https://example.com/chatham-county-parks-logo.png" alt="Chatham County Parks and Recreation Logo" style="max-width: 300px;">
+    <svg width="300" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="300" height="100" fill="#fff" stroke="#000" stroke-width="4"/>
+      <text x="150" y="60" font-size="36" text-anchor="middle" fill="#000">CCP Parks</text>
+    </svg>
   </div>
   
   <script>
@@ -295,6 +305,22 @@
     document.getElementById('header-lon').textContent = LON;
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
+    
+    // Function to get water bottle icon (same size as weather icon: 126x126)
+    function getWaterBottleIcon() {
+      const svgNS = "http://www.w3.org/2000/svg";
+      let svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "126");
+      svg.setAttribute("height", "126");
+      svg.setAttribute("viewBox", "0 0 64 64");
+      // A simple water bottle shape
+      svg.innerHTML = `<path d="M22 4 h20 v10 h4 v8 h-4 v30 a6 6 0 0 1 -6 6 h-12 a6 6 0 0 1 -6 -6 v-30 h-4 v-8 h4 z" fill="none" stroke="black" stroke-width="3"/>
+                       <circle cx="32" cy="40" r="4" fill="black"/>`;
+      return svg.outerHTML;
+    }
+    
+    // Insert water bottle icon in the Heat Risk section
+    document.getElementById('water-bottle').innerHTML = getWaterBottleIcon();
     
     // Fetch sunrise/sunset info and update #sunrise-sunset container
     function fetchSunriseSunset() {
@@ -586,7 +612,7 @@
       return iconSVG;
     }
     
-    // Fetch Weather Conditions & update Sunrise/Sunset
+    // Fetch Weather Conditions & update Sunrise/Sunset.
     function fetchNWSData() {
       const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
@@ -613,7 +639,7 @@
                 document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--'}%`;
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 updateHeatRisk(tempF, now.relativeHumidity ? now.relativeHumidity.value : 0);
-                // Update sunrise/sunset information
+                // Update sunrise/sunset info
                 fetchSunriseSunset();
               }
             })
@@ -651,7 +677,7 @@
         .catch(err => console.error('Error fetching NWS points data:', err));
     }
     
-    // Fetch River Data & Render River Graph
+    // Fetch River Data & Render River Graph.
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
@@ -889,7 +915,7 @@
       container.appendChild(svg);
     }
     
-    // Custom warning icon for Flood Stage (black triangle with white exclamation)
+    // Custom warning icon for Flood Stage
     function getWarningIcon() {
       const svgNS = "http://www.w3.org/2000/svg";
       let svg = document.createElementNS(svgNS, "svg");
