@@ -114,7 +114,7 @@
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- The Heat Risk card displays a dial gauge (if conditions exceed safe levels) or plain text otherwise -->
+      <!-- The Heat Risk card displays a dial gauge if conditions exceed safe levels -->
       <div class="section-content" id="heat-risk-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
@@ -174,7 +174,7 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- AQI card now shows a gauge for the AQI category -->
+      <!-- AQI card shows a dial gauge for the AQI category -->
       <div class="section-content" id="aqi-content">
         <div class="value" id="aqi-category">--</div>
       </div>
@@ -192,18 +192,18 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator --- (Dial scaled to 0.85 of previous size; scale factor now 5.1)
+    // --- Gauge Generator --- (Scale factor set to 5.1 for 0.85 of previous 6x size)
     function generateGauge(value, min, max, label, color) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
-      let angle = ratio * 180; // 0 to 180 degrees
-      let scale = 5.1; // previously 6; now reduced to 0.85 times that value
+      let angle = ratio * 180; // maps value to 0-180 degrees
+      let scale = 5.1; // Adjusted scale factor for desired gauge size
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
       let needleY = centerY + r * Math.sin(Math.PI - rad);
-      // Increase spacing by adjusting the text y-position to 85*scale
+      // Increase the spacing by positioning the label at y = 85*scale
       return `<svg width="${80 * scale}" height="${80 * scale}" viewBox="0 0 ${80 * scale} ${80 * scale}">
         <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5 * scale}"/>
         <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5 * scale}"/>
@@ -216,17 +216,17 @@
       category = category.toLowerCase();
       let value, color;
       if (category.includes("good")) {
-        value = 25; color = "#00FF00";
+        value = 25; color = "#00FF00"; // Green
       } else if (category.includes("moderate")) {
-        value = 75; color = "#FFFF00";
+        value = 75; color = "#FFFF00"; // Yellow
       } else if (category.includes("unhealthy for sensitive")) {
-        value = 125; color = "#FFA500";
+        value = 125; color = "#FFA500"; // Orange
       } else if (category.includes("unhealthy")) {
-        value = 175; color = "#FF0000";
+        value = 175; color = "#FF0000"; // Red
       } else if (category.includes("very unhealthy")) {
-        value = 225; color = "#8B0000";
+        value = 225; color = "#8B0000"; // Dark Red
       } else if (category.includes("hazardous")) {
-        value = 250; color = "#800080";
+        value = 250; color = "#800080"; // Purple
       } else {
         value = 25; color = "#00FF00";
       }
