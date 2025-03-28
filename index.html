@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- @import must be at the very top -->
+  @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
-    
     body {
       background-color: #f0f0f0;
       color: #000;
@@ -23,7 +24,7 @@
       flex-direction: column;
       gap: 28px;
     }
-    /* New utility class for row layout */
+    /* Utility class for row layout */
     .row {
       flex-direction: row !important;
       align-items: center;
@@ -87,7 +88,7 @@
     }
     /* Hide old river measurement element */
     #river-stage { display: none; }
-    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding adjusted */
+    /* River graph container: width reduced by 15% (to ~1001px) with adjusted left padding */
     #river-graph {
       background-color: #cccccc;
       display: block;
@@ -147,11 +148,11 @@
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
     #weather-details div { font-size: 40px; font-weight: bold; }
-    /* Sunrise/Sunset container: placed right of the temperature measurements, margin-left increased */
+    /* Sunrise/Sunset container: moved right by 20px extra (total margin-left: 60px) */
     #sunrise-sunset {
       display: inline-block;
       vertical-align: middle;
-      margin-left: 40px;
+      margin-left: 60px;
       font-size: 36px;
       font-weight: bold;
       color: #000;
@@ -162,7 +163,7 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Increase font sizes by 20% (to 43px) and extra top margin (40px) above classification.
+       Remove extra top margin so they all align horizontally.
        Add vertical dividers between segments.
     */
     #aqi-content {
@@ -173,6 +174,7 @@
     #aqi-content > div {
       position: relative;
       padding: 10px;
+      margin-top: 0; /* removed extra top margin */
     }
     /* Vertical divider for each segment except the last */
     #aqi-content > div:not(:last-child)::after {
@@ -190,7 +192,7 @@
       color: black;
       display: inline-block;
       vertical-align: middle;
-      margin: 40px 10px 0 10px;
+      margin-top: 0;
     }
     /* Remove heat risk graphic (not used) */
     #heat-risk-graphic { display: none; }
@@ -219,12 +221,12 @@
     <!-- Heat Risk Section -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- Use the .row class to force same-line display -->
+      <!-- Use .row to force same-line display -->
       <div class="section-content row" id="heat-risk-content">
         <div id="water-bottle"></div>
         <div class="value" id="heat-risk-level">--</div>
       </div>
-      <!-- Hydration and safety messaging -->
+      <!-- Hydration and safety messaging updated with each display update -->
       <div id="hydration-message">Remember to hydrate and take breaks in the shade!</div>
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
     </div>
@@ -249,7 +251,7 @@
             <div id="weather-temp-F">--°F</div>
             <div id="weather-temp-C">--°C</div>
           </div>
-          <!-- Sunrise/Sunset container -->
+          <!-- Sunrise/Sunset container (moved right 20px more) -->
           <div id="sunrise-sunset"></div>
         </div>
         <div id="weather-details">
@@ -276,9 +278,9 @@
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
       <div class="section-content" id="aqi-content">
-        <div id="aqi-classification"></div>
+        <div id="aqi-classification">GOOD</div>
         <div id="aqi-gauge-container"></div>
-        <div id="aqi-measurement"></div>
+        <div id="aqi-measurement">AQI: 42</div>
       </div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
     </div>
@@ -294,11 +296,11 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
   </div>
-  <!-- Footer: Rendered inline SVG logo -->
+  <!-- Footer: Inline SVG logo (rendered in black and white) -->
   <div id="footer-logo" style="text-align: center; margin-top: 20px;">
     <svg width="300" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
       <rect width="300" height="100" fill="#fff" stroke="#000" stroke-width="4"/>
-      <text x="150" y="60" font-size="36" text-anchor="middle" fill="#000">CCP Parks</text>
+      <text x="150" y="60" font-size="32" text-anchor="middle" fill="#000">CHATHAM COUNTY PARKS &amp; RECREATION</text>
     </svg>
   </div>
   
@@ -311,14 +313,25 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // Helper: Update all timestamps
+    // Hydration messages array – update with a random tip each refresh
+    const hydrationMessages = [
+      "Remember to hydrate and take breaks in the shade!",
+      "Drink water regularly for optimal performance.",
+      "Stay cool—sip water frequently.",
+      "Keep a water bottle handy and sip often."
+    ];
+    
+    // Helper: Update all timestamps and hydration message
     function updateAllTimestamps() {
       const now = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       const ids = ['heat-risk-timestamp', 'alerts-timestamp', 'weather-timestamp', 'rainfall-timestamp', 'aqi-timestamp'];
       ids.forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.textContent = "Last updated: " + now; }
+        if(el) { el.textContent = "Last updated: " + now; }
       });
+      // Update hydration message with a random tip
+      document.getElementById("hydration-message").textContent =
+        hydrationMessages[Math.floor(Math.random() * hydrationMessages.length)];
     }
     
     // Function to get water bottle icon (inline SVG)
@@ -328,13 +341,13 @@
       svg.setAttribute("width", "126");
       svg.setAttribute("height", "126");
       svg.setAttribute("viewBox", "0 0 64 64");
-      // Render a simple water bottle shape
+      // Render a simple water bottle with handle
       svg.innerHTML = `<path d="M22 4 h20 v10 h4 v8 h-4 v30 a6 6 0 0 1 -6 6 h-12 a6 6 0 0 1 -6 -6 v-30 h-4 v-8 h4 z" fill="none" stroke="black" stroke-width="3"/>
                        <circle cx="32" cy="40" r="4" fill="black"/>`;
       return svg.outerHTML;
     }
     
-    // Insert water bottle icon into Heat Risk section on the same line
+    // Insert water bottle icon into Heat Risk section on same line
     document.getElementById('water-bottle').innerHTML = getWaterBottleIcon();
     
     // Fetch sunrise/sunset info and update #sunrise-sunset container
@@ -513,7 +526,8 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = category.toUpperCase();
-            leftDiv.style.marginTop = "40px";
+            // Removed extra margin-top so that everything aligns horizontally.
+            leftDiv.style.marginTop = "0";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             const gauge = generateAirNowArcGauge(aqiValue, category);
@@ -534,7 +548,7 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = "GOOD";
-            leftDiv.style.marginTop = "40px";
+            leftDiv.style.marginTop = "0";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
@@ -560,7 +574,7 @@
           const leftDiv = document.createElement("div");
           leftDiv.id = "aqi-classification";
           leftDiv.textContent = "GOOD";
-          leftDiv.style.marginTop = "40px";
+          leftDiv.style.marginTop = "0";
           const centerDiv = document.createElement("div");
           centerDiv.id = "aqi-gauge-container";
           centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
@@ -728,6 +742,7 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           } else {
+            // Adjusted warning icon: larger triangle and centered exclamation mark.
             statusEl.innerHTML = getWarningIcon() + " BELOW FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "white";
@@ -895,8 +910,9 @@
           svg.appendChild(label);
         }
         if (i === dataPoints.length - 1) {
+          // Shift measurement text slightly left (subtract 10 from x)
           const measurement = document.createElementNS(svgNS, "text");
-          measurement.setAttribute("x", x);
+          measurement.setAttribute("x", x - 10);
           measurement.setAttribute("y", y + 45);
           measurement.setAttribute("font-size", "35");
           measurement.setAttribute("font-weight", "bold");
@@ -927,15 +943,17 @@
       container.appendChild(svg);
     }
     
-    // Custom warning icon for Flood Stage
+    // Custom warning icon for Flood Stage (adjusted)
     function getWarningIcon() {
       const svgNS = "http://www.w3.org/2000/svg";
       let svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", "40");
-      svg.setAttribute("height", "40");
+      // Increase triangle size slightly
+      svg.setAttribute("width", "48");
+      svg.setAttribute("height", "48");
       svg.setAttribute("viewBox", "0 0 64 64");
-      svg.innerHTML = `<polygon points="32,4 4,60 60,60" fill="black"/>
-                       <text x="32" y="50" font-size="32" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>`;
+      // Adjusted polygon points to enlarge the triangle
+      svg.innerHTML = `<polygon points="32,2 2,62 62,62" fill="black"/>
+                       <text x="32" y="42" font-size="36" text-anchor="middle" fill="white" font-family="Arial">!</text>`;
       return svg.outerHTML;
     }
     
