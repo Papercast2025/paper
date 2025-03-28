@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- @import must be at the very top -->
-  @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
     body {
       background-color: #f0f0f0;
       color: #000;
@@ -148,7 +147,7 @@
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
     #weather-details div { font-size: 40px; font-weight: bold; }
-    /* Sunrise/Sunset container: moved right by 20px extra (total margin-left: 60px) */
+    /* Sunrise/Sunset container: moved right by an extra 20px (total margin-left: 60px) */
     #sunrise-sunset {
       display: inline-block;
       vertical-align: middle;
@@ -163,8 +162,8 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Remove extra top margin so they all align horizontally.
-       Add vertical dividers between segments.
+       Elements now align horizontally with no extra top margin.
+       Vertical dividers between segments.
     */
     #aqi-content {
       display: flex;
@@ -174,7 +173,7 @@
     #aqi-content > div {
       position: relative;
       padding: 10px;
-      margin-top: 0; /* removed extra top margin */
+      margin-top: 0;
     }
     /* Vertical divider for each segment except the last */
     #aqi-content > div:not(:last-child)::after {
@@ -251,7 +250,7 @@
             <div id="weather-temp-F">--°F</div>
             <div id="weather-temp-C">--°C</div>
           </div>
-          <!-- Sunrise/Sunset container (moved right 20px more) -->
+          <!-- Sunrise/Sunset container (moved right extra 20px) -->
           <div id="sunrise-sunset"></div>
         </div>
         <div id="weather-details">
@@ -296,7 +295,7 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
   </div>
-  <!-- Footer: Inline SVG logo (rendered in black and white) -->
+  <!-- Footer: Inline SVG logo rendered in black and white -->
   <div id="footer-logo" style="text-align: center; margin-top: 20px;">
     <svg width="300" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
       <rect width="300" height="100" fill="#fff" stroke="#000" stroke-width="4"/>
@@ -327,7 +326,7 @@
       const ids = ['heat-risk-timestamp', 'alerts-timestamp', 'weather-timestamp', 'rainfall-timestamp', 'aqi-timestamp'];
       ids.forEach(id => {
         const el = document.getElementById(id);
-        if(el) { el.textContent = "Last updated: " + now; }
+        if (el) { el.textContent = "Last updated: " + now; }
       });
       // Update hydration message with a random tip
       document.getElementById("hydration-message").textContent =
@@ -526,7 +525,6 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = category.toUpperCase();
-            // Removed extra margin-top so that everything aligns horizontally.
             leftDiv.style.marginTop = "0";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
@@ -742,7 +740,7 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           } else {
-            // Adjusted warning icon: larger triangle and centered exclamation mark.
+            // Adjusted warning icon: larger triangle and repositioned exclamation mark.
             statusEl.innerHTML = getWarningIcon() + " BELOW FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "white";
@@ -951,9 +949,9 @@
       svg.setAttribute("width", "48");
       svg.setAttribute("height", "48");
       svg.setAttribute("viewBox", "0 0 64 64");
-      // Adjusted polygon points to enlarge the triangle
+      // Adjusted polygon points to enlarge the triangle and reposition the exclamation mark
       svg.innerHTML = `<polygon points="32,2 2,62 62,62" fill="black"/>
-                       <text x="32" y="42" font-size="36" text-anchor="middle" fill="white" font-family="Arial">!</text>`;
+                       <text x="32" y="42" font-size="36" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>`;
       return svg.outerHTML;
     }
     
