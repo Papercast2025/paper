@@ -183,7 +183,7 @@
   </div>
 
   <script>
-    // Global location – update these values in one place to change the location for all API calls.
+    // Global location – update these values in one place.
     let LAT = 35.77659;
     let LON = -79.14597;
     document.getElementById('header-lat').textContent = LAT;
@@ -192,21 +192,22 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator --- (Scaled 3×; 240x240; black strokes, light gray fill)
+    // --- Gauge Generator --- (Now 2x as big relative to the 80x80 original, i.e. scale = 6)
+    // The gauge is 80*scale by 80*scale (480x480), and the text label is positioned at y = 85*scale.
     function generateGauge(value, min, max, label, color) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // 0 to 180 degrees
-      let scale = 3;
+      let scale = 6;
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
       let needleY = centerY + r * Math.sin(Math.PI - rad);
-      return `<svg width="${80*scale}" height="${80*scale}" viewBox="0 0 ${80*scale} ${80*scale}">
-        <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5*scale}"/>
-        <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5*scale}"/>
-        <text x="${centerX}" y="${75*scale}" text-anchor="middle" font-size="${16*scale}" fill="#000">${label}</text>
+      return `<svg width="${80 * scale}" height="${80 * scale}" viewBox="0 0 ${80 * scale} ${80 * scale}">
+        <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5 * scale}"/>
+        <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5 * scale}"/>
+        <text x="${centerX}" y="${85 * scale}" text-anchor="middle" font-size="${16 * scale}" fill="#000">${label}</text>
       </svg>`;
     }
     
@@ -497,7 +498,7 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // Only show the AQI gauge (for the category) in the AQI card.
+            // For AQI, display a gauge if the category isn't "Good"
             document.getElementById('aqi-category').innerHTML = generateAQIGauge(main.Category.Name);
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
