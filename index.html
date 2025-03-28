@@ -79,16 +79,16 @@
     }
     /* Hide old river measurement element */
     #river-stage { display: none; }
-    /* River graph container: width reduced by 15% (to 1179px) and extend left with 5% padding */
+    /* River graph container: width reduced by 15% (to ~1001px) and extended left with 5% padding */
     #river-graph {
       background-color: #cccccc;
       display: block;
       margin: 12px auto 0 auto;
       position: relative;
-      width: 1179px;
+      width: 1001px;
       padding-left: 5%;
     }
-    /* USGS site info now full black */
+    /* USGS site info: full black */
     #usgs-site-info {
       width: 100%;
       text-align: right;
@@ -104,7 +104,7 @@
       display: inline-block;
       text-align: center;
     }
-    /* Y-axis label styling: increased to 18px and pushed down */
+    /* Y-axis label styling: increased to 18px */
     #y-axis-label {
       font-size: 18px;
       font-weight: bold;
@@ -141,7 +141,9 @@
     #weather-details div { font-size: 40px; font-weight: bold; }
     /* Alerts text bold */
     #alert-message { font-weight: bold; }
-    /* AQI Section layout: classification left, gauge center, measurement right, with font size 43px (20% increase) */
+    /* AQI Section layout: classification left, gauge center, measurement right.
+       Increase font sizes by 20% (to 43px) and add extra top margin above classification.
+    */
     #aqi-content {
       display: flex;
       align-items: center;
@@ -153,7 +155,7 @@
       color: black;
       display: inline-block;
       vertical-align: middle;
-      margin: 20px 10px 0 10px; /* extra top margin for spacing above classification */
+      margin: 40px 10px 0 10px;
     }
     /* Remove heat risk graphic */
     #heat-risk-graphic { display: none; }
@@ -189,7 +191,7 @@
       <div class="card-title">Weather Conditions</div>
       <div class="section-content">
         <div id="weather-temp-container">
-          <!-- Weather icon appears to the left -->
+          <!-- Weather icon to the left (126×126) -->
           <div id="weather-icon" style="margin-right: 10px;"></div>
           <div>
             <div id="weather-temp-F">--°F</div>
@@ -249,8 +251,8 @@
     let floodThreshold = 5.0;
 
     // ----------------------------------------------------------
-    // 1) Generate a semicircular AQI gauge in grayscale with 5 equal segments
-    // Double the stroke weight of the arc outline and pointer.
+    // 1) Generate a semicircular AQI gauge in grayscale with 5 equal segments.
+    // Double the stroke weight for the arc segments (set to 12) and pointer remains 12.
     // ----------------------------------------------------------
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
@@ -282,7 +284,7 @@
         path.setAttribute("d", d);
         path.setAttribute("fill", segmentColors[i]);
         path.setAttribute("stroke", "black");
-        path.setAttribute("stroke-width", "6"); // doubled from 3
+        path.setAttribute("stroke-width", "12");  // doubled from 6 to 12
         svg.appendChild(path);
       }
       
@@ -308,7 +310,7 @@
       pointerLine.setAttribute("x2", pointerX);
       pointerLine.setAttribute("y2", pointerY);
       pointerLine.setAttribute("stroke", "black");
-      pointerLine.setAttribute("stroke-width", "12"); // doubled from 6
+      pointerLine.setAttribute("stroke-width", "12");
       pointerLine.setAttribute("stroke-linecap", "round");
       svg.appendChild(pointerLine);
       
@@ -316,7 +318,7 @@
     }
     
     // ----------------------------------------------------------
-    // 2) Heat Risk Gauge (scale 3.0) – no graphic (blue dot removed)
+    // 2) Heat Risk Gauge (scale 3.0) – graphic removed.
     // ----------------------------------------------------------
     function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
       let ratio = (value - min) / (max - min);
@@ -338,7 +340,7 @@
     }
     
     function getHeatRiskGraphic(riskLevel) {
-      // Return an empty group (no graphic)
+      // Return an empty element (graphic removed)
       return document.createElementNS("http://www.w3.org/2000/svg", "g");
     }
     
@@ -371,8 +373,8 @@
     }
     
     // ----------------------------------------------------------
-    // 3) fetchAQIData: Updated layout with left/right divs and extra spacing above classification.
-    // The gauge is rendered in grayscale.
+    // 3) fetchAQIData: Update layout with left/right divs and extra spacing above classification.
+    // The gauge renders in grayscale.
     // ----------------------------------------------------------
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
@@ -387,11 +389,10 @@
             const main = data[0];
             const aqiValue = parseInt(main.AQI, 10) || 0;
             const category = main.Category.Name || "Unknown";
-            // Create left (classification), center (gauge), and right (measurement) divs.
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = category.toUpperCase();
-            leftDiv.style.marginTop = "20px"; // extra spacing above classification
+            leftDiv.style.marginTop = "40px"; // extra spacing above classification
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             const gauge = generateAirNowArcGauge(aqiValue, category);
@@ -412,7 +413,7 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = "GOOD";
-            leftDiv.style.marginTop = "20px";
+            leftDiv.style.marginTop = "40px";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
@@ -438,7 +439,7 @@
           const leftDiv = document.createElement("div");
           leftDiv.id = "aqi-classification";
           leftDiv.textContent = "GOOD";
-          leftDiv.style.marginTop = "20px";
+          leftDiv.style.marginTop = "40px";
           const centerDiv = document.createElement("div");
           centerDiv.id = "aqi-gauge-container";
           centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
@@ -458,7 +459,7 @@
     }
     
     // ----------------------------------------------------------
-    // 4) getWeatherIcon: Increase icon size by 20% (to 126x126, already set via CSS)
+    // 4) getWeatherIcon: Already set to 126×126 via CSS.
     // ----------------------------------------------------------
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
@@ -664,7 +665,7 @@
       const minDate = dataPoints[0].dateObj;
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
-      const svgWidth = 1179; // new reduced width
+      const svgWidth = 1001; // reduced width (1179 reduced by 15%)
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
@@ -695,7 +696,7 @@
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       }
       
-      // Y-axis ticks (every 1 ft)
+      // Y-axis ticks
       const startTick = Math.floor(minStage);
       const endTick = Math.ceil(maxStage);
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 1) {
