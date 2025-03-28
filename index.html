@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- @import must be at the very top -->
+  @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
-
+    
     body {
       background-color: #f0f0f0;
       color: #000;
@@ -28,6 +30,13 @@
       flex-direction: row !important;
       align-items: center;
       justify-content: center;
+    }
+    /* Force AQI children to be inline-block and vertically centered */
+    #aqi-content > div {
+      display: inline-block;
+      vertical-align: middle;
+      padding: 10px;
+      margin-top: 0;
     }
     /* Card frame */
     .section {
@@ -162,18 +171,12 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Elements now align horizontally with no extra top margin.
-       Vertical dividers between segments.
+       Elements now align horizontally.
     */
     #aqi-content {
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    #aqi-content > div {
-      position: relative;
-      padding: 10px;
-      margin-top: 0;
     }
     /* Vertical divider for each segment except the last */
     #aqi-content > div:not(:last-child)::after {
@@ -189,8 +192,6 @@
       font-size: 43px;
       font-weight: bold;
       color: black;
-      display: inline-block;
-      vertical-align: middle;
       margin-top: 0;
     }
     /* Remove heat risk graphic (not used) */
@@ -298,8 +299,12 @@
   <!-- Footer: Inline SVG logo rendered in black and white -->
   <div id="footer-logo" style="text-align: center; margin-top: 20px;">
     <svg width="300" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
-      <rect width="300" height="100" fill="#fff" stroke="#000" stroke-width="4"/>
-      <text x="150" y="60" font-size="32" text-anchor="middle" fill="#000">CHATHAM COUNTY PARKS &amp; RECREATION</text>
+      <!-- A simplified rendition of the Chatham County Parks & Recreation logo -->
+      <circle cx="50" cy="50" r="40" fill="none" stroke="black" stroke-width="4"/>
+      <path d="M50,15 L50,85" stroke="black" stroke-width="4"/>
+      <path d="M30,35 L50,15 L70,35" stroke="black" stroke-width="4" fill="none"/>
+      <path d="M30,65 L50,85 L70,65" stroke="black" stroke-width="4" fill="none"/>
+      <text x="120" y="55" font-size="24" font-family="Roboto, Arial, sans-serif" fill="black">Chatham County Parks &amp; Recreation</text>
     </svg>
   </div>
   
@@ -525,7 +530,6 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = category.toUpperCase();
-            leftDiv.style.marginTop = "0";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             const gauge = generateAirNowArcGauge(aqiValue, category);
@@ -533,12 +537,6 @@
             const rightDiv = document.createElement("div");
             rightDiv.id = "aqi-measurement";
             rightDiv.textContent = "AQI: " + aqiValue;
-            leftDiv.style.display = "inline-block";
-            leftDiv.style.verticalAlign = "middle";
-            centerDiv.style.display = "inline-block";
-            centerDiv.style.verticalAlign = "middle";
-            rightDiv.style.display = "inline-block";
-            rightDiv.style.verticalAlign = "middle";
             contentContainer.appendChild(leftDiv);
             contentContainer.appendChild(centerDiv);
             contentContainer.appendChild(rightDiv);
@@ -546,19 +544,12 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = "GOOD";
-            leftDiv.style.marginTop = "0";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
             const rightDiv = document.createElement("div");
             rightDiv.id = "aqi-measurement";
             rightDiv.textContent = "AQI: 42";
-            leftDiv.style.display = "inline-block";
-            leftDiv.style.verticalAlign = "middle";
-            centerDiv.style.display = "inline-block";
-            centerDiv.style.verticalAlign = "middle";
-            rightDiv.style.display = "inline-block";
-            rightDiv.style.verticalAlign = "middle";
             contentContainer.appendChild(leftDiv);
             contentContainer.appendChild(centerDiv);
             contentContainer.appendChild(rightDiv);
@@ -572,19 +563,12 @@
           const leftDiv = document.createElement("div");
           leftDiv.id = "aqi-classification";
           leftDiv.textContent = "GOOD";
-          leftDiv.style.marginTop = "0";
           const centerDiv = document.createElement("div");
           centerDiv.id = "aqi-gauge-container";
           centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
           const rightDiv = document.createElement("div");
           rightDiv.id = "aqi-measurement";
           rightDiv.textContent = "AQI: 42";
-          leftDiv.style.display = "inline-block";
-          leftDiv.style.verticalAlign = "middle";
-          centerDiv.style.display = "inline-block";
-          centerDiv.style.verticalAlign = "middle";
-          rightDiv.style.display = "inline-block";
-          rightDiv.style.verticalAlign = "middle";
           contentContainer.appendChild(leftDiv);
           contentContainer.appendChild(centerDiv);
           contentContainer.appendChild(rightDiv);
@@ -817,7 +801,8 @@
       
       function scaleX(dateObj) {
         const currentMillis = dateObj - minDate;
-        return graphOffsetX + (currentMillis / totalMillis) * graphWidth;
+        // Shift x coordinate left by 20 pixels
+        return graphOffsetX + (currentMillis / totalMillis) * graphWidth - 20;
       }
       function scaleY(stage) {
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
@@ -945,11 +930,11 @@
     function getWarningIcon() {
       const svgNS = "http://www.w3.org/2000/svg";
       let svg = document.createElementNS(svgNS, "svg");
-      // Increase triangle size slightly
+      // Increase triangle size to better contain the exclamation mark
       svg.setAttribute("width", "48");
       svg.setAttribute("height", "48");
       svg.setAttribute("viewBox", "0 0 64 64");
-      // Adjusted polygon points to enlarge the triangle and reposition the exclamation mark
+      // Adjusted polygon points and exclamation mark position
       svg.innerHTML = `<polygon points="32,2 2,62 62,62" fill="black"/>
                        <text x="32" y="42" font-size="36" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>`;
       return svg.outerHTML;
