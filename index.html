@@ -2,13 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- Place @import rules at the very top -->
+  @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
+    /* All CSS starts here */
     body {
       background-color: #f0f0f0;
       color: #000;
-      font-family: Arial, sans-serif;
+      font-family: 'Roboto', Arial, sans-serif;
       margin: 0;
       padding: 0;
       width: 1440px;
@@ -20,6 +23,12 @@
       display: flex;
       flex-direction: column;
       gap: 28px;
+    }
+    /* New utility class for row layout */
+    .row {
+      flex-direction: row !important;
+      align-items: center;
+      justify-content: center;
     }
     /* Card frame */
     .section {
@@ -79,14 +88,14 @@
     }
     /* Hide old river measurement element */
     #river-stage { display: none; }
-    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding */
+    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding adjusted */
     #river-graph {
       background-color: #cccccc;
       display: block;
       margin: 12px auto 0 auto;
       position: relative;
       width: 1001px;
-      padding-left: 5%;
+      padding-left: calc(5% - 4px);
     }
     /* USGS site info: full black */
     #usgs-site-info {
@@ -139,11 +148,11 @@
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
     #weather-details div { font-size: 40px; font-weight: bold; }
-    /* Sunrise/Sunset container: placed right of the temperature measurements */
+    /* Sunrise/Sunset container: placed right of the temperature measurements, margin-left increased */
     #sunrise-sunset {
       display: inline-block;
       vertical-align: middle;
-      margin-left: 20px;
+      margin-left: 40px;
       font-size: 36px;
       font-weight: bold;
       color: #000;
@@ -154,12 +163,27 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Increase font sizes by 20% (to 43px) and add extra top margin (40px) above classification.
+       Increase font sizes by 20% (to 43px) and extra top margin (40px) above classification.
+       Add vertical dividers between segments.
     */
     #aqi-content {
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+    #aqi-content > div {
+      position: relative;
+      padding: 10px;
+    }
+    /* Vertical divider for each segment except the last */
+    #aqi-content > div:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      right: 0;
+      width: 2px;
+      background-color: black;
     }
     #aqi-classification, #aqi-measurement {
       font-size: 43px;
@@ -169,8 +193,21 @@
       vertical-align: middle;
       margin: 40px 10px 0 10px;
     }
-    /* Remove heat risk graphic */
+    /* Remove heat risk graphic (not used) */
     #heat-risk-graphic { display: none; }
+    /* Hydration/safety messaging in Heat Risk section */
+    #hydration-message {
+      font-size: 32px;
+      text-align: center;
+      margin-top: 10px;
+      color: #000;
+    }
+    /* Water Bottle icon in Heat Risk section */
+    #water-bottle {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
@@ -183,9 +220,13 @@
     <!-- Heat Risk Section -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <div class="section-content" id="heat-risk-content">
+      <!-- Use the .row class to force same-line display -->
+      <div class="section-content row" id="heat-risk-content">
+        <div id="water-bottle"></div>
         <div class="value" id="heat-risk-level">--</div>
       </div>
+      <!-- Hydration and safety messaging -->
+      <div id="hydration-message">Remember to hydrate and take breaks in the shade!</div>
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
     </div>
 
@@ -232,7 +273,7 @@
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
 
-    <!-- AQI Section (above Rainfall Forecast) -->
+    <!-- AQI Section -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
       <div class="section-content" id="aqi-content">
@@ -254,7 +295,14 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
   </div>
-
+  <!-- Footer: Inline SVG logo (rendered directly) -->
+  <div id="footer-logo" style="text-align: center; margin-top: 20px;">
+    <svg width="300" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="300" height="100" fill="#fff" stroke="#000" stroke-width="4"/>
+      <text x="150" y="60" font-size="36" text-anchor="middle" fill="#000">CCP Parks</text>
+    </svg>
+  </div>
+  
   <script>
     // Global location
     let LAT = 35.77659;
@@ -263,6 +311,32 @@
     document.getElementById('header-lon').textContent = LON;
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
+    
+    // Helper: Update all timestamps
+    function updateAllTimestamps() {
+      const now = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+      const ids = ['heat-risk-timestamp', 'alerts-timestamp', 'weather-timestamp', 'rainfall-timestamp', 'aqi-timestamp'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) { el.textContent = "Last updated: " + now; }
+      });
+    }
+    
+    // Function to get water bottle icon (inline SVG rendered)
+    function getWaterBottleIcon() {
+      const svgNS = "http://www.w3.org/2000/svg";
+      let svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "126");
+      svg.setAttribute("height", "126");
+      svg.setAttribute("viewBox", "0 0 64 64");
+      // Render a water bottle shape with a handle (example design)
+      svg.innerHTML = `<path d="M22 4 h20 v10 h4 v8 h-4 v30 a6 6 0 0 1 -6 6 h-12 a6 6 0 0 1 -6 -6 v-30 h-4 v-8 h4 z" fill="none" stroke="black" stroke-width="3"/>
+                       <circle cx="32" cy="40" r="4" fill="black"/>`;
+      return svg.outerHTML;
+    }
+    
+    // Insert water bottle icon in the Heat Risk section on the same line as the text
+    document.getElementById('water-bottle').innerHTML = getWaterBottleIcon();
     
     // Fetch sunrise/sunset info and update #sunrise-sunset container
     function fetchSunriseSunset() {
@@ -295,8 +369,9 @@
     function getSunriseSunsetIcon(isDay) {
       const svgNS = "http://www.w3.org/2000/svg";
       let svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", "50");
-      svg.setAttribute("height", "50");
+      // Increase icon size by 25% from 70x70 to 88x88
+      svg.setAttribute("width", "88");
+      svg.setAttribute("height", "88");
       svg.setAttribute("viewBox", "0 0 64 64");
       if (isDay) {
         svg.innerHTML = `<circle cx="32" cy="32" r="12" fill="#e0e0e0" stroke="black" stroke-width="3"/>
@@ -311,7 +386,7 @@
     }
     
     // Generate a semicircular AQI gauge in grayscale with 5 segments.
-    // Arc and pointer stroke-width set to 8.
+    // Stroke weight is set to 8.
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
       const width = 250;
@@ -407,21 +482,19 @@
         HI = c1 + c2 * tempF + c3 * RH + c4 * tempF * RH + c5 * (tempF * tempF) + c6 * (RH * RH) +
              c7 * (tempF * tempF) * RH + c8 * tempF * (RH * RH) + c9 * (tempF * tempF) * (RH * RH);
       }
-      const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
-                        (HI < 90) ? "Moderate Heat Risk" :
-                        (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
-      const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
       if (tempF < 80) {
-        document.getElementById('heat-risk-level').textContent = riskLevel;
+        const elem = document.getElementById('heat-risk-level');
+        elem.textContent = "Minimal Heat Risk";
+        elem.style.fontSize = "70px";
       } else {
-        let color = (riskLevel === "Moderate Heat Risk") ? "#FFFF00"
-                  : (riskLevel === "High Heat Risk") ? "#FFA500"
-                  : (riskLevel === "Extreme Heat Risk") ? "#FF0000"
+        let riskLevelText = (HI < 90) ? "Moderate Heat Risk" :
+                            (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
+        let color = (riskLevelText === "Moderate Heat Risk") ? "#FFFF00"
+                  : (riskLevelText === "High Heat Risk") ? "#FFA500"
+                  : (riskLevelText === "Extreme Heat Risk") ? "#FF0000"
                   : "#000000";
-        document.getElementById('heat-risk-level').innerHTML = generateGauge(HI, 80, 120, riskLevel, color, false, 3.0);
+        document.getElementById('heat-risk-level').innerHTML = generateGauge(HI, 80, 120, riskLevelText, color, false, 3.0);
       }
-      // Removed updating heat-risk-graphic to fix error.
     }
     
     // Update AQI section: classification left, gauge center, measurement right.
@@ -507,7 +580,7 @@
         });
     }
     
-    // getWeatherIcon: Already set via CSS to 126×126.
+    // getWeatherIcon: Already set to 126×126 via CSS.
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
@@ -555,14 +628,9 @@
       return iconSVG;
     }
     
-    // ----------------------------------------------------------
-    // 5) fetchNWSData: Weather Conditions & update Sunrise/Sunset.
-    // ----------------------------------------------------------
+    // Fetch Weather Conditions & update Sunrise/Sunset.
     function fetchNWSData() {
-      const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
-      document.getElementById('alerts-timestamp').textContent = "Last updated: " + nwsTime;
-      document.getElementById('rainfall-timestamp').textContent = "Last updated: " + nwsTime;
+      updateAllTimestamps();
       const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
       fetch(pointUrl)
         .then(res => res.json())
@@ -584,7 +652,7 @@
                 document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--'}%`;
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 updateHeatRisk(tempF, now.relativeHumidity ? now.relativeHumidity.value : 0);
-                // Update sunrise/sunset information
+                // Update sunrise/sunset info
                 fetchSunriseSunset();
               }
             })
@@ -622,9 +690,7 @@
         .catch(err => console.error('Error fetching NWS points data:', err));
     }
     
-    // ----------------------------------------------------------
-    // 6) fetchRiverData & renderRiverGraph: River & Water Levels.
-    // ----------------------------------------------------------
+    // Fetch River Data & Render River Graph.
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
@@ -663,7 +729,7 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           } else {
-            statusEl.innerHTML = "&#9888; BELOW FLOOD STAGE";
+            statusEl.innerHTML = getWarningIcon() + " BELOW FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "white";
             statusEl.style.color = "black";
@@ -725,7 +791,7 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label (x=25 so it isn't cut off)
+      // Y-axis label (shifted right with x=25)
       const yLabel = document.createElementNS(svgNS, "text");
       yLabel.setAttribute("x", 25);
       yLabel.setAttribute("y", svgHeight / 2 + 30);
@@ -794,7 +860,7 @@
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
       
-      // Flood Stage label (32px, bold)
+      // Flood Stage label
       const floodLabel = document.createElementNS(svgNS, "text");
       floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
       floodLabel.setAttribute("y", floodY - 10);
@@ -862,15 +928,36 @@
       container.appendChild(svg);
     }
     
-    // ----------------------------------------------------------
-    // 13) Initial Data Fetch & Periodic Refresh
-    // ----------------------------------------------------------
+    // Custom warning icon for Flood Stage
+    function getWarningIcon() {
+      const svgNS = "http://www.w3.org/2000/svg";
+      let svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "40");
+      svg.setAttribute("height", "40");
+      svg.setAttribute("viewBox", "0 0 64 64");
+      svg.innerHTML = `<polygon points="32,4 4,60 60,60" fill="black"/>
+                       <text x="32" y="50" font-size="32" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>`;
+      return svg.outerHTML;
+    }
+    
+    // Update all timestamps
+    function updateAllTimestamps() {
+      const now = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+      const ids = ['heat-risk-timestamp', 'alerts-timestamp', 'weather-timestamp', 'rainfall-timestamp', 'aqi-timestamp'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) { el.textContent = "Last updated: " + now; }
+      });
+    }
+    
+    // Initial Data Fetch & Periodic Refresh
     function fetchAllData() {
+      updateAllTimestamps();
       fetchRiverData();
       fetchAQIData();
       fetchNWSData();
     }
-    fetchAllData();
+    window.onload = fetchAllData;
     setInterval(fetchAllData, 10 * 60 * 1000);
   </script>
 </body>
