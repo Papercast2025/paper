@@ -114,7 +114,7 @@
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- The Heat Risk card displays a dial gauge if conditions exceed safe levels -->
+      <!-- The Heat Risk card displays a dial gauge if conditions exceed safe levels, or plain text otherwise -->
       <div class="section-content" id="heat-risk-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
@@ -174,12 +174,12 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- New layout: AQI category text on the left, gauge in the center, numeric AQI on the right -->
+      <!-- New layout: AQI category text on the left, gauge in the center, and numeric AQI value on the right -->
       <div class="section-content" id="aqi-content">
         <div style="display: flex; align-items: center; justify-content: center;">
-          <div id="aqi-category-text" style="margin-right: 20px; font-size: 100px;">--</div>
+          <div id="aqi-category-text" style="margin-right: 20px; font-size: 200px; background-color: black; color: white; text-transform: uppercase; padding: 10px;">--</div>
           <div id="aqi-gauge"></div>
-          <div id="aqi-value" style="margin-left: 20px; font-size: 100px;">--</div>
+          <div id="aqi-value" style="margin-left: 20px; font-size: 300px; font-weight: bold;">--</div>
         </div>
       </div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
@@ -196,18 +196,18 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator --- (Scale factor is 5.1, as set previously)
+    // --- Gauge Generator --- (Scale factor set to 5.1)
     function generateGauge(value, min, max, label, color) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // maps value to 0-180 degrees
-      let scale = 5.1; // using scale factor of 5.1
+      let scale = 5.1; // Scale factor for desired gauge size
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
       let needleY = centerY + r * Math.sin(Math.PI - rad);
-      // Position label at 85 * scale for extra spacing
+      // Position label at 85*scale for extra spacing
       return `<svg width="${80 * scale}" height="${80 * scale}" viewBox="0 0 ${80 * scale} ${80 * scale}">
         <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5 * scale}"/>
         <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5 * scale}"/>
@@ -504,19 +504,19 @@
           document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
           if (data && data.length > 0) {
             const main = data[0];
-            // Update left-side category text, center gauge, and right-side numeric value.
+            // Populate the AQI section:
             document.getElementById('aqi-category-text').textContent = main.Category.Name;
             document.getElementById('aqi-value').textContent = main.AQI;
             document.getElementById('aqi-gauge').innerHTML = generateAQIGauge(main.Category.Name);
           } else {
-            document.getElementById('aqi-category-text').textContent = "Good";
+            document.getElementById('aqi-category-text').textContent = "GOOD";
             document.getElementById('aqi-value').textContent = "42";
             document.getElementById('aqi-gauge').innerHTML = generateAQIGauge("Good");
           }
         })
         .catch(err => {
           console.error('Error fetching AQI data:', err);
-          document.getElementById('aqi-category-text').textContent = "Good";
+          document.getElementById('aqi-category-text').textContent = "GOOD";
           document.getElementById('aqi-value').textContent = "42";
           const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
