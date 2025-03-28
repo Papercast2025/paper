@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Place @import rules at the very top -->
-  @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
-    /* All CSS starts here */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+    
     body {
       background-color: #f0f0f0;
       color: #000;
@@ -295,7 +294,7 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
   </div>
-  <!-- Footer: Inline SVG logo (rendered directly) -->
+  <!-- Footer: Rendered inline SVG logo -->
   <div id="footer-logo" style="text-align: center; margin-top: 20px;">
     <svg width="300" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
       <rect width="300" height="100" fill="#fff" stroke="#000" stroke-width="4"/>
@@ -318,24 +317,24 @@
       const ids = ['heat-risk-timestamp', 'alerts-timestamp', 'weather-timestamp', 'rainfall-timestamp', 'aqi-timestamp'];
       ids.forEach(id => {
         const el = document.getElementById(id);
-        if(el) { el.textContent = "Last updated: " + now; }
+        if (el) { el.textContent = "Last updated: " + now; }
       });
     }
     
-    // Function to get water bottle icon (inline SVG rendered)
+    // Function to get water bottle icon (inline SVG)
     function getWaterBottleIcon() {
       const svgNS = "http://www.w3.org/2000/svg";
       let svg = document.createElementNS(svgNS, "svg");
       svg.setAttribute("width", "126");
       svg.setAttribute("height", "126");
       svg.setAttribute("viewBox", "0 0 64 64");
-      // Render a water bottle shape with a handle (example design)
+      // Render a simple water bottle shape
       svg.innerHTML = `<path d="M22 4 h20 v10 h4 v8 h-4 v30 a6 6 0 0 1 -6 6 h-12 a6 6 0 0 1 -6 -6 v-30 h-4 v-8 h4 z" fill="none" stroke="black" stroke-width="3"/>
                        <circle cx="32" cy="40" r="4" fill="black"/>`;
       return svg.outerHTML;
     }
     
-    // Insert water bottle icon in the Heat Risk section on the same line as the text
+    // Insert water bottle icon into Heat Risk section on the same line
     document.getElementById('water-bottle').innerHTML = getWaterBottleIcon();
     
     // Fetch sunrise/sunset info and update #sunrise-sunset container
@@ -938,16 +937,6 @@
       svg.innerHTML = `<polygon points="32,4 4,60 60,60" fill="black"/>
                        <text x="32" y="50" font-size="32" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>`;
       return svg.outerHTML;
-    }
-    
-    // Update all timestamps
-    function updateAllTimestamps() {
-      const now = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      const ids = ['heat-risk-timestamp', 'alerts-timestamp', 'weather-timestamp', 'rainfall-timestamp', 'aqi-timestamp'];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if(el) { el.textContent = "Last updated: " + now; }
-      });
     }
     
     // Initial Data Fetch & Periodic Refresh
