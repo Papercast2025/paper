@@ -105,7 +105,7 @@
 </head>
 <body>
   <!-- Header displays county info with coordinates and a website link.
-       To change the location, update the global variables in the script below. -->
+       To change the location, update the LAT and LON values in the script below. -->
   <div id="header">
     Chatham County (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>) | 
     <a href="https://www.chathamcountync.gov/" target="_blank">chathamcountync.gov</a>
@@ -114,7 +114,7 @@
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- The Heat Risk card will display either plain text or a gauge dial when conditions are unsafe -->
+      <!-- The Heat Risk card displays a dial gauge (if conditions exceed safe levels) or plain text otherwise -->
       <div class="section-content" id="heat-risk-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
@@ -174,7 +174,7 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- AQI card now only shows the AQI category in large text (with a gauge if needed) -->
+      <!-- AQI card now only shows the AQI category gauge -->
       <div class="section-content" id="aqi-content">
         <div class="value" id="aqi-category">--</div>
       </div>
@@ -183,7 +183,7 @@
   </div>
 
   <script>
-    // Global location – update these values to change location for all API calls.
+    // Global location – update these values in one place to change the location for all API calls.
     let LAT = 35.77659;
     let LON = -79.14597;
     document.getElementById('header-lat').textContent = LAT;
@@ -192,41 +192,40 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator ---
-    // Generates a simple dial gauge SVG.
+    // --- Gauge Generator --- (Scaled 3×; 240x240; black strokes, light gray fill)
     function generateGauge(value, min, max, label, color) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // 0 to 180 degrees
-      let centerX = 40, centerY = 40, r = 30;
+      let scale = 3;
+      let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
-      // The needle points from the center towards the top (adjusted by pi)
       let needleX = centerX + r * Math.cos(Math.PI - rad);
       let needleY = centerY + r * Math.sin(Math.PI - rad);
-      return `<svg width="80" height="80" viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r="30" fill="none" stroke="${color}" stroke-width="5"/>
-        <line x1="40" y1="40" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="${color}" stroke-width="5"/>
-        <text x="40" y="75" text-anchor="middle" font-size="16" fill="#000">${label}</text>
+      return `<svg width="${80*scale}" height="${80*scale}" viewBox="0 0 ${80*scale} ${80*scale}">
+        <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5*scale}"/>
+        <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5*scale}"/>
+        <text x="${centerX}" y="${75*scale}" text-anchor="middle" font-size="${16*scale}" fill="#000">${label}</text>
       </svg>`;
     }
     
-    // For AQI, we map category to a numeric gauge value and color.
+    // --- AQI Gauge Generator ---
     function generateAQIGauge(category) {
       category = category.toLowerCase();
       let value, color;
       if (category.includes("good")) {
-        value = 25; color = "#00FF00"; // green
+        value = 25; color = "#00FF00";
       } else if (category.includes("moderate")) {
-        value = 75; color = "#FFFF00"; // yellow
+        value = 75; color = "#FFFF00";
       } else if (category.includes("unhealthy for sensitive")) {
-        value = 125; color = "#FFA500"; // orange
+        value = 125; color = "#FFA500";
       } else if (category.includes("unhealthy")) {
-        value = 175; color = "#FF0000"; // red
+        value = 175; color = "#FF0000";
       } else if (category.includes("very unhealthy")) {
-        value = 225; color = "#8B0000"; // dark red
+        value = 225; color = "#8B0000";
       } else if (category.includes("hazardous")) {
-        value = 250; color = "#800080"; // purple
+        value = 250; color = "#800080";
       } else {
         value = 25; color = "#00FF00";
       }
@@ -240,17 +239,15 @@
         const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127;
         const c4 = -0.22475541, c5 = -6.83783e-3, c6 = -5.481717e-2;
         const c7 = 1.22874e-3, c8 = 8.5282e-4, c9 = -1.99e-6;
-        HI = c1 + c2*tempF + c3*RH + c4*tempF*RH + c5*(tempF*tempF) + c6*(RH*RH) +
-             c7*(tempF*tempF)*RH + c8*tempF*(RH*RH) + c9*(tempF*tempF)*(RH*RH);
+        HI = c1 + c2 * tempF + c3 * RH + c4 * tempF * RH + c5 * (tempF * tempF) + c6 * (RH * RH) +
+             c7 * (tempF * tempF) * RH + c8 * tempF * (RH * RH) + c9 * (tempF * tempF) * (RH * RH);
       }
       const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
                         (HI < 90) ? "Moderate Heat Risk" :
                         (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
-      // If conditions are safe, just show text; if not, display a gauge.
       if (riskLevel === "Minimal Heat Risk") {
         document.getElementById('heat-risk-level').textContent = riskLevel;
       } else {
-        // Choose color based on risk
         let color = riskLevel === "Moderate Heat Risk" ? "#FFFF00" :
                     riskLevel === "High Heat Risk" ? "#FFA500" :
                     riskLevel === "Extreme Heat Risk" ? "#FF0000" : "#000000";
@@ -500,7 +497,7 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // For AQI, display a gauge only if the category is not "Good".
+            // Only show the AQI gauge (for the category) in the AQI card.
             document.getElementById('aqi-category').innerHTML = generateAQIGauge(main.Category.Name);
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
@@ -518,29 +515,7 @@
         });
     }
     
-    // --- Generate AQI Gauge for Air Quality ---
-    function generateAQIGauge(category) {
-      category = category.toLowerCase();
-      let value, color;
-      if (category.includes("good")) {
-        value = 25; color = "#00FF00"; // green
-      } else if (category.includes("moderate")) {
-        value = 75; color = "#FFFF00"; // yellow
-      } else if (category.includes("unhealthy for sensitive")) {
-        value = 125; color = "#FFA500"; // orange
-      } else if (category.includes("unhealthy")) {
-        value = 175; color = "#FF0000"; // red
-      } else if (category.includes("very unhealthy")) {
-        value = 225; color = "#8B0000"; // dark red
-      } else if (category.includes("hazardous")) {
-        value = 250; color = "#800080"; // purple
-      } else {
-        value = 25; color = "#00FF00";
-      }
-      return generateGauge(value, 0, 250, category.charAt(0).toUpperCase() + category.slice(1), color);
-    }
-    
-    // --- NWS Data (Weather Observations, Rainfall Forecast & Alerts) ---
+    // --- Weather, Rainfall Forecast & Alerts from NWS ---
     function fetchNWSData() {
       const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
