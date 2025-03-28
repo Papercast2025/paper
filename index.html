@@ -41,7 +41,7 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* For the River & Water Levels header, we want full width and centered text */
+    /* For the River & Water Levels header, full width and centered text */
     .river-header {
       background-color: black;
       color: white;
@@ -98,14 +98,6 @@
       font-size: 32px;
       margin-top: 8px;
     }
-    /* Styling for below-flood status: */
-    .below-flood {
-      font-size: 42px; /* 30% larger than 32px */
-      background-color: black;
-      color: white;
-      text-transform: uppercase;
-      padding: 5px;
-    }
     /* Header styling */
     #header {
       background-color: black;
@@ -122,13 +114,13 @@
   </style>
 </head>
 <body>
-  <!-- Header: update the global LAT and LON in the script to change location -->
+  <!-- Header: update LAT and LON in the script to change location -->
   <div id="header">
     Catham County Parks and Recreation (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>) | 
     <a href="https://www.chathamcountync.gov/parks-recreation" target="_blank">www.chathamcountync.gov/parks-recreation</a>
   </div>
   <div class="container">
-    <!-- Heat Risk Section (top card) -->
+    <!-- Heat Risk Section -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
       <div class="section-content" id="heat-risk-content">
@@ -137,7 +129,7 @@
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Alerts Section (centered) -->
+    <!-- Alerts Section -->
     <div class="section centered" id="alerts-section">
       <div class="card-title">Alerts</div>
       <div class="section-content">
@@ -146,7 +138,7 @@
       <div class="card-timestamp" id="alerts-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Weather Conditions Section (centered) -->
+    <!-- Weather Conditions Section -->
     <div class="section centered" id="weather-section">
       <div class="card-title">Weather Conditions</div>
       <div class="section-content">
@@ -163,12 +155,10 @@
 
     <!-- River & Water Levels Section -->
     <div class="section" id="river-section">
-      <!-- River header full width -->
       <div class="river-header">River & Water Levels</div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
-        <!-- Flood status appears first -->
+        <!-- Flood status appears above the river stage measurement -->
         <div class="label" id="flood-status"></div>
-        <!-- River measurement appears below, with reduced font size (70px) -->
         <div class="value" id="river-stage" style="font-size:70px;">Loading...</div>
       </div>
       <div id="river-graph"></div>
@@ -176,7 +166,7 @@
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Rainfall Forecast Section (centered) -->
+    <!-- Rainfall Forecast Section -->
     <div class="section centered" id="rainfall-forecast">
       <div class="card-title">Rainfall Forecast</div>
       <div class="section-content">
@@ -187,10 +177,10 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Air Quality Index (AQI) Section (centered) -->
+    <!-- Air Quality Index (AQI) Section -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- New layout: left-side category text, center gauge, right-side numeric value -->
+      <!-- AQI layout: left-side category text, center gauge, right-side numeric value -->
       <div class="section-content" id="aqi-content">
         <div style="display: flex; align-items: center; justify-content: center;">
           <div id="aqi-category-text" style="margin-right: 20px; font-size: 160px; background-color: black; color: white; text-transform: uppercase; padding: 10px;">--</div>
@@ -212,12 +202,12 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator --- (Scale factor set to 5.1; hideLabel optional)
+    // --- Gauge Generator --- (Scale factor set to 5.1; optional hideLabel parameter)
     function generateGauge(value, min, max, label, color, hideLabel = false) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
-      let angle = ratio * 180; // maps value to 0-180 degrees
+      let angle = ratio * 180; // maps value to 0–180 degrees
       let scale = 5.1; // Scale factor
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
@@ -252,7 +242,7 @@
       } else {
         value = 25; color = "#00FF00";
       }
-      // For the AQI gauge, hide the inner text label.
+      // Hide inner label for AQI gauge
       return generateGauge(value, 0, 250, category.charAt(0).toUpperCase() + category.slice(1), color, true);
     }
     
@@ -366,10 +356,15 @@
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
-            statusEl.classList.remove("below-flood");
+            statusEl.style = ""; // default style
           } else {
-            statusEl.textContent = "BELOW FLOOD STAGE";
-            statusEl.classList.add("below-flood");
+            // Set flood status with black text on white background and an alert symbol (⚠)
+            statusEl.innerHTML = "&#9888; BELOW FLOOD STAGE";
+            statusEl.style.fontSize = "42px";
+            statusEl.style.backgroundColor = "white";
+            statusEl.style.color = "black";
+            statusEl.style.textTransform = "uppercase";
+            statusEl.style.padding = "5px";
           }
           const groupedValues = groupBy3HourBlocks(floatValues);
           renderRiverGraph(groupedValues, floodThreshold);
@@ -440,7 +435,8 @@
         const tickLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
         tickLabel.setAttribute("x", graphOffsetX - 10);
         tickLabel.setAttribute("y", tickY + 4);
-        tickLabel.setAttribute("font-size", "22");
+        tickLabel.setAttribute("font-size", "26"); // Increased by 20% from 22px
+        tickLabel.setAttribute("font-weight", "bold");
         tickLabel.setAttribute("fill", "black");
         tickLabel.setAttribute("text-anchor", "end");
         tickLabel.textContent = tickVal.toFixed(1) + " ft";
@@ -526,9 +522,9 @@
           if (data && data.length > 0) {
             const main = data[0];
             // Populate the AQI section:
-            // Left-side category text (uppercase, 160px font, black bg, white text)
+            // Left-side category text (display in all caps, 160px, black bg, white text)
             document.getElementById('aqi-category-text').textContent = main.Category.Name;
-            // Right-side numeric value (300px, bold)
+            // Right-side numeric value, 300px, bold
             document.getElementById('aqi-value').textContent = main.AQI;
             // Center gauge (without inner text)
             document.getElementById('aqi-gauge').innerHTML = generateAQIGauge(main.Category.Name);
