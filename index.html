@@ -31,7 +31,7 @@
       flex-direction: column;
       position: relative;
     }
-    /* Card headers: left aligned with white text on black background by default */
+    /* Card headers: left aligned with white text on black background */
     .card-title {
       font-size: 36px;
       font-weight: bold;
@@ -98,7 +98,7 @@
       font-size: 32px;
       margin-top: 8px;
     }
-    /* Styling for below-flood status: only the status text gets the black background */
+    /* Styling for below-flood status: */
     .below-flood {
       font-size: 42px; /* 30% larger than 32px */
       background-color: black;
@@ -122,7 +122,7 @@
   </style>
 </head>
 <body>
-  <!-- Header: Update the global LAT and LON in the script to change location -->
+  <!-- Header: update the global LAT and LON in the script to change location -->
   <div id="header">
     Catham County Parks and Recreation (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>) | 
     <a href="https://www.chathamcountync.gov/parks-recreation" target="_blank">www.chathamcountync.gov/parks-recreation</a>
@@ -163,12 +163,13 @@
 
     <!-- River & Water Levels Section -->
     <div class="section" id="river-section">
-      <!-- River header now spans full width with black background -->
+      <!-- River header full width -->
       <div class="river-header">River & Water Levels</div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px;">
-        <div class="value" id="river-stage">Loading...</div>
-        <!-- Flood status text gets special styling if below flood stage -->
+        <!-- Flood status appears first -->
         <div class="label" id="flood-status"></div>
+        <!-- River measurement appears below, with reduced font size (70px) -->
+        <div class="value" id="river-stage" style="font-size:70px;">Loading...</div>
       </div>
       <div id="river-graph"></div>
       <div id="usgs-site-info">USGS Site #02096960 (Live)</div>
@@ -189,7 +190,7 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- New layout: left-side AQI category text, center gauge, right-side numeric value -->
+      <!-- New layout: left-side category text, center gauge, right-side numeric value -->
       <div class="section-content" id="aqi-content">
         <div style="display: flex; align-items: center; justify-content: center;">
           <div id="aqi-category-text" style="margin-right: 20px; font-size: 160px; background-color: black; color: white; text-transform: uppercase; padding: 10px;">--</div>
@@ -211,14 +212,13 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator --- (Scale factor set to 5.1)
-    // Optional parameter hideLabel: if true, the gauge does not display the inner text label.
+    // --- Gauge Generator --- (Scale factor set to 5.1; hideLabel optional)
     function generateGauge(value, min, max, label, color, hideLabel = false) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // maps value to 0-180 degrees
-      let scale = 5.1; // Scale factor for desired gauge size
+      let scale = 5.1; // Scale factor
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
@@ -238,17 +238,17 @@
       category = category.toLowerCase();
       let value, color;
       if (category.includes("good")) {
-        value = 25; color = "#00FF00"; // Green
+        value = 25; color = "#00FF00";
       } else if (category.includes("moderate")) {
-        value = 75; color = "#FFFF00"; // Yellow
+        value = 75; color = "#FFFF00";
       } else if (category.includes("unhealthy for sensitive")) {
-        value = 125; color = "#FFA500"; // Orange
+        value = 125; color = "#FFA500";
       } else if (category.includes("unhealthy")) {
-        value = 175; color = "#FF0000"; // Red
+        value = 175; color = "#FF0000";
       } else if (category.includes("very unhealthy")) {
-        value = 225; color = "#8B0000"; // Dark Red
+        value = 225; color = "#8B0000";
       } else if (category.includes("hazardous")) {
-        value = 250; color = "#800080"; // Purple
+        value = 250; color = "#800080";
       } else {
         value = 25; color = "#00FF00";
       }
@@ -526,9 +526,9 @@
           if (data && data.length > 0) {
             const main = data[0];
             // Populate the AQI section:
-            // Left-side category text
+            // Left-side category text (uppercase, 160px font, black bg, white text)
             document.getElementById('aqi-category-text').textContent = main.Category.Name;
-            // Right-side numeric value
+            // Right-side numeric value (300px, bold)
             document.getElementById('aqi-value').textContent = main.AQI;
             // Center gauge (without inner text)
             document.getElementById('aqi-gauge').innerHTML = generateAQIGauge(main.Category.Name);
