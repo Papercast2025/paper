@@ -41,14 +41,14 @@
       margin-bottom: 8px;
       text-align: left;
     }
-    /* River header */
+    /* River header: now left aligned */
     .river-header {
       background-color: black;
       color: white;
       font-size: 36px;
       font-weight: bold;
       padding: 10px 8px;
-      text-align: center;
+      text-align: left;
       margin-bottom: 8px;
     }
     /* Centered sections */
@@ -79,7 +79,7 @@
     }
     /* Hide old river measurement element */
     #river-stage { display: none; }
-    /* River graph container: width reduced by 15% (to ~1001px) and extended left with 5% padding */
+    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding */
     #river-graph {
       background-color: #cccccc;
       display: block;
@@ -104,13 +104,13 @@
       display: inline-block;
       text-align: center;
     }
-    /* Y-axis label styling: increased to 18px */
+    /* Y-axis label styling: increased to 18px and shifted right (x=25) */
     #y-axis-label {
       font-size: 18px;
       font-weight: bold;
       fill: black;
       text-anchor: start;
-      transform: rotate(-90 20,170);
+      transform: rotate(-90 25,170);
     }
     /* Header styling */
     #header {
@@ -139,8 +139,20 @@
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
     #weather-details div { font-size: 40px; font-weight: bold; }
-    /* Alerts text bold */
-    #alert-message { font-weight: bold; }
+    /* New Sunrise/Sunset container: placed next to temperature measurements */
+    #sunrise-sunset {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 20px;
+      font-size: 36px;
+      font-weight: bold;
+      color: #000;
+    }
+    /* Alerts text: allow line breaks */
+    #alert-message {
+      font-weight: bold;
+      white-space: pre-wrap;
+    }
     /* AQI Section layout: classification left, gauge center, measurement right.
        Increase font sizes by 20% (to 43px) and add extra top margin above classification.
     */
@@ -197,6 +209,8 @@
             <div id="weather-temp-F">--°F</div>
             <div id="weather-temp-C">--°C</div>
           </div>
+          <!-- Sunrise/Sunset container added right of the temperature measurements -->
+          <div id="sunrise-sunset"></div>
         </div>
         <div id="weather-details">
           <div id="weather-forecast">--</div>
@@ -250,9 +264,58 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
 
+    // NEW: Fetch sunrise/sunset info and update weather section
+    function fetchSunriseSunset() {
+      const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "OK") {
+            const sunriseUTC = new Date(data.results.sunrise);
+            const sunsetUTC = new Date(data.results.sunset);
+            // Convert to local time
+            const sunriseLocal = new Date(sunriseUTC.getTime() + (new Date().getTimezoneOffset() * 60000));
+            const sunsetLocal = new Date(sunsetUTC.getTime() + (new Date().getTimezoneOffset() * 60000));
+            // Format times (e.g., HH:MM AM/PM)
+            const options = { hour: 'numeric', minute: 'numeric' };
+            const sunriseStr = sunriseLocal.toLocaleTimeString(undefined, options);
+            const sunsetStr = sunsetLocal.toLocaleTimeString(undefined, options);
+            // Determine if it's day: current local time between sunrise and sunset?
+            const now = new Date();
+            const isDay = now >= sunriseLocal && now < sunsetLocal;
+            // Get SVG icon for sun or moon (in grayscale)
+            const icon = getSunriseSunsetIcon(isDay);
+            // Update the sunrise-sunset element
+            document.getElementById("sunrise-sunset").innerHTML = `<div style="display:inline-block; vertical-align:middle;">${icon}</div><div style="display:inline-block; vertical-align:middle; margin-left:10px;">Sunrise: ${sunriseStr}<br>Sunset: ${sunsetStr}</div>`;
+          }
+        })
+        .catch(err => console.error("Error fetching sunrise/sunset data:", err));
+    }
+    
+    // Returns an SVG icon for sunrise/sunset based on whether it is day
+    function getSunriseSunsetIcon(isDay) {
+      const svgNS = "http://www.w3.org/2000/svg";
+      let svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "50");
+      svg.setAttribute("height", "50");
+      svg.setAttribute("viewBox", "0 0 64 64");
+      if (isDay) {
+        // Simple sun icon (circle with rays)
+        svg.innerHTML = `<circle cx="32" cy="32" r="12" fill="#e0e0e0" stroke="black" stroke-width="3"/>
+          <line x1="32" y1="2" x2="32" y2="12" stroke="black" stroke-width="3"/>
+          <line x1="32" y1="52" x2="32" y2="62" stroke="black" stroke-width="3"/>
+          <line x1="2" y1="32" x2="12" y2="32" stroke="black" stroke-width="3"/>
+          <line x1="52" y1="32" x2="62" y2="32" stroke="black" stroke-width="3"/>`;
+      } else {
+        // Simple moon icon: a crescent shape
+        svg.innerHTML = `<path d="M40,32 A12,12 0 1,1 28,20 A10,10 0 1,0 40,32" fill="#e0e0e0" stroke="black" stroke-width="3"/>`;
+      }
+      return svg.outerHTML;
+    }
+    
     // ----------------------------------------------------------
     // 1) Generate a semicircular AQI gauge in grayscale with 5 equal segments.
-    // Double the stroke weight for the arc segments (set to 12) and pointer remains 12.
+    // Reduced stroke weight to 8 (instead of 12) so it doesn't get cut off.
     // ----------------------------------------------------------
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
@@ -284,7 +347,7 @@
         path.setAttribute("d", d);
         path.setAttribute("fill", segmentColors[i]);
         path.setAttribute("stroke", "black");
-        path.setAttribute("stroke-width", "12");  // doubled from 6 to 12
+        path.setAttribute("stroke-width", "8"); // reduced from 12 to 8
         svg.appendChild(path);
       }
       
@@ -310,7 +373,7 @@
       pointerLine.setAttribute("x2", pointerX);
       pointerLine.setAttribute("y2", pointerY);
       pointerLine.setAttribute("stroke", "black");
-      pointerLine.setAttribute("stroke-width", "12");
+      pointerLine.setAttribute("stroke-width", "8"); // reduced from 12 to 8
       pointerLine.setAttribute("stroke-linecap", "round");
       svg.appendChild(pointerLine);
       
@@ -373,8 +436,8 @@
     }
     
     // ----------------------------------------------------------
-    // 3) fetchAQIData: Update layout with left/right divs and extra spacing above classification.
-    // The gauge renders in grayscale.
+    // 3) fetchAQIData: Update AQI section layout.
+    // Render the gauge in grayscale and place classification left of the gauge and measurement right.
     // ----------------------------------------------------------
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
@@ -392,7 +455,7 @@
             const leftDiv = document.createElement("div");
             leftDiv.id = "aqi-classification";
             leftDiv.textContent = category.toUpperCase();
-            leftDiv.style.marginTop = "40px"; // extra spacing above classification
+            leftDiv.style.marginTop = "40px";
             const centerDiv = document.createElement("div");
             centerDiv.id = "aqi-gauge-container";
             const gauge = generateAirNowArcGauge(aqiValue, category);
@@ -459,7 +522,7 @@
     }
     
     // ----------------------------------------------------------
-    // 4) getWeatherIcon: Already set to 126×126 via CSS.
+    // 4) getWeatherIcon: (Already set to 126×126 via CSS)
     // ----------------------------------------------------------
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
@@ -509,7 +572,7 @@
     }
     
     // ----------------------------------------------------------
-    // 5) fetchNWSData: Weather Conditions
+    // 5) fetchNWSData: Weather Conditions & update Sunrise/Sunset info.
     // ----------------------------------------------------------
     function fetchNWSData() {
       const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
@@ -537,6 +600,8 @@
                 document.getElementById('weather-humidity').textContent = `Humidity: ${now.relativeHumidity && now.relativeHumidity.value ? now.relativeHumidity.value : '--'}%`;
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 updateHeatRisk(tempF, now.relativeHumidity ? now.relativeHumidity.value : 0);
+                // After updating weather, fetch sunrise/sunset info.
+                fetchSunriseSunset();
               }
             })
             .catch(err => console.error('Error fetching weather observations:', err));
@@ -561,7 +626,8 @@
               .then(res => res.json())
               .then(alertData => {
                 if (alertData.features && alertData.features.length > 0) {
-                  const alertMsg = alertData.features.map(a => a.properties.headline).join(' | ');
+                  // Join multiple alerts with a newline so they appear on separate lines.
+                  const alertMsg = alertData.features.map(a => a.properties.headline).join('\n');
                   document.getElementById('alert-message').textContent = alertMsg;
                 } else {
                   document.getElementById('alert-message').textContent = 'No alerts at this time.';
@@ -665,7 +731,7 @@
       const minDate = dataPoints[0].dateObj;
       const maxDate = dataPoints[dataPoints.length - 1].dateObj;
       const totalMillis = maxDate - minDate;
-      const svgWidth = 1001; // reduced width (1179 reduced by 15%)
+      const svgWidth = 1001; // new reduced width
       const svgHeight = 280;
       const graphHeight = 180;
       const graphOffsetX = 60;
@@ -676,15 +742,15 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label
+      // Y-axis label (x set to 25 to avoid cutoff)
       const yLabel = document.createElementNS(svgNS, "text");
-      yLabel.setAttribute("x", 5);
+      yLabel.setAttribute("x", 25);
       yLabel.setAttribute("y", svgHeight / 2 + 30);
       yLabel.setAttribute("font-size", "18");
       yLabel.setAttribute("font-weight", "bold");
       yLabel.setAttribute("fill", "black");
       yLabel.setAttribute("text-anchor", "start");
-      yLabel.setAttribute("transform", "rotate(-90 5," + (svgHeight / 2 + 30) + ")");
+      yLabel.setAttribute("transform", "rotate(-90 25," + (svgHeight / 2 + 30) + ")");
       yLabel.textContent = "Water Level (ft)";
       svg.appendChild(yLabel);
       
@@ -696,7 +762,7 @@
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       }
       
-      // Y-axis ticks
+      // Y-axis ticks (every 1 ft)
       const startTick = Math.floor(minStage);
       const endTick = Math.ceil(maxStage);
       for (let tickVal = startTick; tickVal <= endTick; tickVal += 1) {
