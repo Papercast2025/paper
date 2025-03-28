@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- Place any @import rules at the very top -->
+  @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   <meta name="viewport" content="width=1440, initial-scale=1.0" />
   <title>Environmental Snapshot</title>
   <style>
-    /* Any @import rules must be at the very top */
-    @import url('https://fonts.googleapis.com/css2?family=Arial&display=swap');
-
+    /* All CSS rules start here */
     body {
       background-color: #f0f0f0;
       color: #000;
-      font-family: Arial, sans-serif;
+      font-family: 'Roboto', Arial, sans-serif;
       margin: 0;
       padding: 0;
       width: 1440px;
@@ -82,7 +82,7 @@
     }
     /* Hide old river measurement element */
     #river-stage { display: none; }
-    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding reduced by 4px */
+    /* River graph container: width reduced by 15% (to ~1001px) with 5% left padding (adjusted) */
     #river-graph {
       background-color: #cccccc;
       display: block;
@@ -142,11 +142,11 @@
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
     #weather-details div { font-size: 40px; font-weight: bold; }
-    /* Sunrise/Sunset container: placed right of the temperature measurements, moved right 20px */
+    /* Sunrise/Sunset container: placed right of the temperature measurements, margin-left increased */
     #sunrise-sunset {
       display: inline-block;
       vertical-align: middle;
-      margin-left: 40px; /* increased by 20px compared to before */
+      margin-left: 40px;
       font-size: 36px;
       font-weight: bold;
       color: #000;
@@ -157,8 +157,8 @@
       white-space: pre-wrap;
     }
     /* AQI Section layout: classification left, gauge center, measurement right.
-       Increase font sizes by 20% (to 43px) and extra top margin (40px) above classification.
-       Add vertical dividers between segments.
+       Increase font sizes by 20% (to 43px) and add extra top margin (40px) above classification.
+       Vertical dividers between segments.
     */
     #aqi-content {
       display: flex;
@@ -169,7 +169,7 @@
       position: relative;
       padding: 10px;
     }
-    /* Vertical divider for each segment except the last */
+    /* Add vertical divider for each segment except the last */
     #aqi-content > div:not(:last-child)::after {
       content: "";
       position: absolute;
@@ -209,7 +209,7 @@
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
       <div class="section-content" id="heat-risk-content">
-        <!-- When temperature is below 80°F, display minimal heat risk in a smaller font (70px instead of 100px) -->
+        <!-- When temperature is below 80°F, display minimal heat risk in a smaller font -->
         <div class="value" id="heat-risk-level">--</div>
       </div>
       <!-- Hydration and safety messaging -->
@@ -237,7 +237,7 @@
             <div id="weather-temp-F">--°F</div>
             <div id="weather-temp-C">--°C</div>
           </div>
-          <!-- Sunrise/Sunset container (moved right) -->
+          <!-- Sunrise/Sunset container -->
           <div id="sunrise-sunset"></div>
         </div>
         <div id="weather-details">
@@ -282,7 +282,7 @@
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
   </div>
-  <!-- Footer: Chatham County Parks and Recreation logo (update src with your logo URL) -->
+  <!-- Footer: Placeholder logo (replace src with your actual logo URL) -->
   <div id="footer-logo" style="text-align: center; margin-top: 20px;">
     <img src="https://example.com/chatham-county-parks-logo.png" alt="Chatham County Parks and Recreation Logo" style="max-width: 300px;">
   </div>
@@ -327,7 +327,7 @@
     function getSunriseSunsetIcon(isDay) {
       const svgNS = "http://www.w3.org/2000/svg";
       let svg = document.createElementNS(svgNS, "svg");
-      // Increase icon size to 70x70
+      // Increased icon size to 70x70
       svg.setAttribute("width", "70");
       svg.setAttribute("height", "70");
       svg.setAttribute("viewBox", "0 0 64 64");
@@ -440,7 +440,6 @@
         HI = c1 + c2 * tempF + c3 * RH + c4 * tempF * RH + c5 * (tempF * tempF) + c6 * (RH * RH) +
              c7 * (tempF * tempF) * RH + c8 * tempF * (RH * RH) + c9 * (tempF * tempF) * (RH * RH);
       }
-      // If temperature is below 80°F, use "Minimal Heat Risk" in a reduced size (70px)
       if (tempF < 80) {
         const elem = document.getElementById('heat-risk-level');
         elem.textContent = "Minimal Heat Risk";
@@ -454,10 +453,9 @@
                   : "#000000";
         document.getElementById('heat-risk-level').innerHTML = generateGauge(HI, 80, 120, riskLevelText, color, false, 3.0);
       }
-      // (No heat-risk-graphic update, as it is removed)
     }
     
-    // Update AQI section: classification left, gauge center, measurement right, with vertical dividers.
+    // Update AQI section: classification left, gauge center, measurement right.
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
       fetch(url)
@@ -588,9 +586,7 @@
       return iconSVG;
     }
     
-    // ----------------------------------------------------------
-    // 5) fetchNWSData: Weather Conditions & update Sunrise/Sunset.
-    // ----------------------------------------------------------
+    // Fetch Weather Conditions & update Sunrise/Sunset
     function fetchNWSData() {
       const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
@@ -655,9 +651,7 @@
         .catch(err => console.error('Error fetching NWS points data:', err));
     }
     
-    // ----------------------------------------------------------
-    // 6) fetchRiverData & renderRiverGraph: River & Water Levels.
-    // ----------------------------------------------------------
+    // Fetch River Data & Render River Graph
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
@@ -696,7 +690,6 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           } else {
-            // Use a custom warning icon (solid black triangle with white exclamation mark)
             statusEl.innerHTML = getWarningIcon() + " BELOW FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "white";
@@ -896,7 +889,7 @@
       container.appendChild(svg);
     }
     
-    // Custom warning icon: solid black triangle with a white exclamation mark.
+    // Custom warning icon for Flood Stage (black triangle with white exclamation)
     function getWarningIcon() {
       const svgNS = "http://www.w3.org/2000/svg";
       let svg = document.createElementNS(svgNS, "svg");
@@ -908,7 +901,7 @@
       return svg.outerHTML;
     }
     
-    // Initial Data Fetch & Refresh
+    // Initial Data Fetch & Periodic Refresh
     function fetchAllData() {
       fetchRiverData();
       fetchAQIData();
