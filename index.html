@@ -102,13 +102,13 @@
       display: inline-block;
       text-align: center;
     }
-    /* Y-axis label styling: reduced to ~15px and left aligned */
+    /* Y-axis label styling: reduced to ~15px and pushed further down */
     #y-axis-label {
       font-size: 15px;
       font-weight: bold;
       fill: black;
       text-anchor: start;
-      transform: rotate(-90 20,140);
+      transform: rotate(-90 20,170);
     }
     /* Header styling */
     #header {
@@ -131,6 +131,8 @@
       align-items: center;
       text-align: left;
     }
+    /* Increase weather icon size by 5% (from 100 to 105) */
+    #weather-icon { width: 105px; height: 105px; }
     #weather-temp-F { font-size: 100px; font-weight: bold; }
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
@@ -170,7 +172,7 @@
       <div class="card-title">Weather Conditions</div>
       <div class="section-content">
         <div id="weather-temp-container">
-          <!-- Weather icon on same line as Fahrenheit -->
+          <!-- Weather icon appears to the left (now 105×105) -->
           <div id="weather-icon" style="margin-right: 10px;"></div>
           <div>
             <div id="weather-temp-F">--°F</div>
@@ -190,7 +192,6 @@
     <div class="section" id="river-section">
       <div class="river-header">River & Water Levels</div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px; text-align: center;">
-        <!-- Flood status (centered) -->
         <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
@@ -216,7 +217,7 @@
         <div class="label" id="rainfall-forecast-2">--</div>
         <div class="label" id="rainfall-forecast-3">--</div>
       </div>
-      <!-- Fun graphic appended in rainfall forecast section -->
+      <!-- Fun rainfall graphic (increased 30% in size, thicker lines) -->
       <div id="rainfall-graphic" style="margin-top: 10px;"></div>
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
@@ -233,19 +234,20 @@
 
     // ----------------------------------------------------------
     // 1) Generate a semicircular AQI gauge with five equal segments
-    // Left side represents 0 and right side represents 300.
-    // Draw segments and then overlay a white mask for unfilled portion.
+    // The gauge is divided into 5 segments (each 36°) from 0 to 300.
+    // Unfilled area is masked in white; a pointer indicates the current AQI.
+    // Line weights increased.
     // ----------------------------------------------------------
     function generateAirNowArcGauge(aqi, category) {
       const svgNS = "http://www.w3.org/2000/svg";
       const width = 250;
       const height = 125;
       const centerX = width / 2;
-      const centerY = height; // flat side at bottom
+      const centerY = height;
       const radius = width / 2; // 125
       const segmentAngle = 36; // 180/5
       
-      // Colors for the 5 segments (from 0 to 300)
+      // Colors for segments (0 to 300)
       const segmentColors = ["#00e400", "#ffff00", "#ff7e00", "#ff0000", "#8f3f97"];
       
       const svg = document.createElementNS(svgNS, "svg");
@@ -253,7 +255,7 @@
       svg.setAttribute("height", height);
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       
-      // Draw 5 segments
+      // Draw segments with thicker stroke widths
       for (let i = 0; i < 5; i++) {
         let startAngle = 180 - i * segmentAngle;
         let endAngle = 180 - (i + 1) * segmentAngle;
@@ -268,16 +270,13 @@
         path.setAttribute("d", d);
         path.setAttribute("fill", segmentColors[i]);
         path.setAttribute("stroke", "black");
-        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-width", "3"); // increased from 2 to 3
         svg.appendChild(path);
       }
       
-      // Overlay a white mask for unfilled portion.
-      // Filled portion corresponds to AQI from 0 to current aqi.
-      // Mapping: currentAQI/300 * 180 = fillAngle from left.
+      // Overlay white mask for unfilled portion
       let fillProportion = Math.min(Math.max(aqi, 0), 300) / 300;
-      let fillAngle = fillProportion * 180; // degrees from left (0 means no fill, 180 means full)
-      // The unfilled portion is an arc from (180 - fillAngle) to 0 degrees.
+      let fillAngle = fillProportion * 180;
       let maskStartAngle = 180 - fillAngle;
       let maskStartRad = maskStartAngle * Math.PI / 180;
       let maskStartX = centerX + radius * Math.cos(maskStartRad);
@@ -288,7 +287,7 @@
       maskPath.setAttribute("fill", "white");
       svg.appendChild(maskPath);
       
-      // Draw pointer line at the boundary
+      // Draw pointer at boundary
       let pointerAngle = 180 - fillAngle;
       let pointerRad = pointerAngle * Math.PI / 180;
       let pointerX = centerX + radius * Math.cos(pointerRad);
@@ -299,7 +298,7 @@
       pointerLine.setAttribute("x2", pointerX);
       pointerLine.setAttribute("y2", pointerY);
       pointerLine.setAttribute("stroke", "black");
-      pointerLine.setAttribute("stroke-width", "4");
+      pointerLine.setAttribute("stroke-width", "6"); // increased
       pointerLine.setAttribute("stroke-linecap", "round");
       svg.appendChild(pointerLine);
       
@@ -307,7 +306,7 @@
     }
     
     // ----------------------------------------------------------
-    // 2) Generate a gauge for Heat Risk (scale 3.0) – unchanged except scale remains 3.0
+    // 2) Heat Risk Gauge (scale 3.0) and graphic
     // ----------------------------------------------------------
     function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
       let ratio = (value - min) / (max - min);
@@ -380,8 +379,7 @@
     }
     
     // ----------------------------------------------------------
-    // 3) fetchAQIData: use new semicircular AQI gauge with 5 segments
-    // and display AQI info below it.
+    // 3) fetchAQIData: use new semicircular AQI gauge with 5 segments and display info below
     // ----------------------------------------------------------
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
@@ -419,13 +417,13 @@
     }
     
     // ----------------------------------------------------------
-    // 4) getWeatherIcon: Update to 100×100 so it matches the Fahrenheit text size.
+    // 4) getWeatherIcon: Increase weather icon size by 5% (to 105×105)
     // ----------------------------------------------------------
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
       if (forecast.includes("sunny") || forecast.includes("clear")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
+        iconSVG = `<svg width="105" height="105" viewBox="0 0 64 64">
           <circle cx="32" cy="32" r="12" fill="black" stroke="black" stroke-width="3"/>
           <g stroke="black" stroke-width="3">
             <line x1="32" y1="4" x2="32" y2="14"/>
@@ -439,11 +437,11 @@
           </g>
         </svg>`;
       } else if (forecast.includes("cloud")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
+        iconSVG = `<svg width="105" height="105" viewBox="0 0 64 64">
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
         </svg>`;
       } else if (forecast.includes("rain")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
+        iconSVG = `<svg width="105" height="105" viewBox="0 0 64 64">
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
           <g stroke="black" stroke-width="3">
             <line x1="22" y1="48" x2="22" y2="58"/>
@@ -452,7 +450,7 @@
           </g>
         </svg>`;
       } else if (forecast.includes("snow")) {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
+        iconSVG = `<svg width="105" height="105" viewBox="0 0 64 64">
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
           <g stroke="black" stroke-width="3">
             <line x1="32" y1="48" x2="32" y2="60"/>
@@ -460,7 +458,7 @@
           </g>
         </svg>`;
       } else {
-        iconSVG = `<svg width="100" height="100" viewBox="0 0 64 64">
+        iconSVG = `<svg width="105" height="105" viewBox="0 0 64 64">
           <circle cx="22" cy="22" r="10" fill="black" stroke="black" stroke-width="3"/>
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
         </svg>`;
@@ -469,40 +467,48 @@
     }
     
     // ----------------------------------------------------------
-    // 5) Fun Rainfall Graphic: a playful cloud with raindrops
+    // 5) Fun Rainfall Graphic: a playful, larger cloud with raindrops
+    // Increased 30% in size and with thicker line weight.
     // ----------------------------------------------------------
     function getRainfallGraphic() {
       const svgNS = "http://www.w3.org/2000/svg";
       const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", "150");
-      svg.setAttribute("height", "100");
-      svg.setAttribute("viewBox", "0 0 150 100");
+      svg.setAttribute("width", "195"); // increased 30% from 150
+      svg.setAttribute("height", "130"); // increased 30% from 100
+      svg.setAttribute("viewBox", "0 0 195 130");
       // Draw a cloud
       const cloud = document.createElementNS(svgNS, "ellipse");
-      cloud.setAttribute("cx", "75");
-      cloud.setAttribute("cy", "40");
-      cloud.setAttribute("rx", "50");
-      cloud.setAttribute("ry", "25");
+      cloud.setAttribute("cx", "97.5");
+      cloud.setAttribute("cy", "65");
+      cloud.setAttribute("rx", "65"); // 50*1.3=65
+      cloud.setAttribute("ry", "32.5"); // 25*1.3=32.5
       cloud.setAttribute("fill", "#e0e0e0");
       cloud.setAttribute("stroke", "black");
-      cloud.setAttribute("stroke-width", "2");
+      cloud.setAttribute("stroke-width", "3"); // thicker line weight
       svg.appendChild(cloud);
-      // Draw some raindrops
+      // Draw a smile
+      const smile = document.createElementNS(svgNS, "path");
+      smile.setAttribute("d", "M50 65 Q97.5 100, 145 65");
+      smile.setAttribute("fill", "none");
+      smile.setAttribute("stroke", "black");
+      smile.setAttribute("stroke-width", "4");
+      svg.appendChild(smile);
+      // Draw 3 raindrops with thicker stroke
       for (let i = 0; i < 3; i++) {
         const drop = document.createElementNS(svgNS, "path");
-        // Simple teardrop shape
-        const dropPath = "M" + (50 + i * 30) + " 60 Q" + (50 + i * 30 - 5) + " 75," + (50 + i * 30) + " 80 Q" + (50 + i * 30 + 5) + " 75," + (50 + i * 30) + " 60 Z";
+        const dropX = 50 + i * 45; // 30*1.3=39, so roughly spaced out
+        const dropPath = `M ${dropX} 85 Q ${dropX - 6} 105, ${dropX} 115 Q ${dropX + 6} 105, ${dropX} 85 Z`;
         drop.setAttribute("d", dropPath);
         drop.setAttribute("fill", "#a0c4ff");
         drop.setAttribute("stroke", "black");
-        drop.setAttribute("stroke-width", "1");
+        drop.setAttribute("stroke-width", "1.5"); // increased 30%
         svg.appendChild(drop);
       }
       return svg;
     }
     
     // ----------------------------------------------------------
-    // 6) fetchAQIData: use the new half‑circle AQI gauge with shading
+    // 6) fetchAQIData: use new semicircular AQI gauge with shading and 5 segments
     // ----------------------------------------------------------
     function fetchAQIData() {
       const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
@@ -582,6 +588,10 @@
                   `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
                 document.getElementById('rainfall-forecast-3').textContent =
                   `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
+                // Append fun rainfall graphic below forecast text
+                const rainfallGraphicContainer = document.getElementById("rainfall-graphic");
+                rainfallGraphicContainer.innerHTML = "";
+                rainfallGraphicContainer.appendChild(getRainfallGraphic());
               }
             })
             .catch(err => console.error('Error fetching rainfall forecast:', err));
@@ -689,7 +699,7 @@
       if (!dataPoints.length) return;
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
-      maxStage = Math.max(maxStage, 6); // Ensure at least 6 ft
+      maxStage = Math.max(maxStage, 6);
       minStage = Math.min(minStage, floodThreshold);
       maxStage = Math.max(maxStage, floodThreshold);
       const stageRange = (maxStage - minStage) || 1;
@@ -707,15 +717,15 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label (reduced to 15px and left aligned)
+      // Y-axis label, adjusted
       const yLabel = document.createElementNS(svgNS, "text");
       yLabel.setAttribute("x", 5);
-      yLabel.setAttribute("y", svgHeight / 2);
+      yLabel.setAttribute("y", svgHeight / 2 + 30); // pushed further down
       yLabel.setAttribute("font-size", "15");
       yLabel.setAttribute("font-weight", "bold");
       yLabel.setAttribute("fill", "black");
       yLabel.setAttribute("text-anchor", "start");
-      yLabel.setAttribute("transform", "rotate(-90 5," + (svgHeight / 2) + ")");
+      yLabel.setAttribute("transform", "rotate(-90 5," + (svgHeight / 2 + 30) + ")");
       yLabel.textContent = "Water Level (ft)";
       svg.appendChild(yLabel);
       
@@ -751,7 +761,7 @@
         svg.appendChild(tickLabel);
       }
       
-      // Data path with stroke-width increased by 10% (6.6)
+      // Data path with stroke-width 6.6
       const pathData = dataPoints.map((pt, i) => {
         const x = scaleX(pt.dateObj);
         const y = scaleY(pt.stage);
@@ -764,7 +774,7 @@
       polyline.setAttribute("stroke-width", "6.6");
       svg.appendChild(polyline);
       
-      // Flood line (dotted) with label; increase flood stage label text by 50% and bold it.
+      // Flood line (dotted)
       const floodY = graphHeight - ((floodThreshold - minStage) / stageRange) * graphHeight + 20;
       const floodLine = document.createElementNS(svgNS, "line");
       floodLine.setAttribute("x1", graphOffsetX);
@@ -775,10 +785,12 @@
       floodLine.setAttribute("stroke-dasharray", "6,3");
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
+      
+      // Flood Stage label (32px, bold)
       const floodLabel = document.createElementNS(svgNS, "text");
       floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
       floodLabel.setAttribute("y", floodY - 10);
-      floodLabel.setAttribute("font-size", "32"); // increased by 50% (from 21)
+      floodLabel.setAttribute("font-size", "32");
       floodLabel.setAttribute("font-weight", "bold");
       floodLabel.setAttribute("fill", "black");
       floodLabel.setAttribute("text-anchor", "end");
@@ -843,33 +855,40 @@
     }
     
     // ----------------------------------------------------------
-    // 9) Fun Rainfall Graphic: a playful cloud with raindrops
+    // 9) Fun Rainfall Graphic: increased 30% in size and thicker lines.
     // ----------------------------------------------------------
     function getRainfallGraphic() {
       const svgNS = "http://www.w3.org/2000/svg";
       const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", "150");
-      svg.setAttribute("height", "100");
-      svg.setAttribute("viewBox", "0 0 150 100");
-      // Draw a cloud
+      svg.setAttribute("width", "195"); // increased 30%
+      svg.setAttribute("height", "130"); // increased 30%
+      svg.setAttribute("viewBox", "0 0 195 130");
+      // Draw a playful, smiling cloud
       const cloud = document.createElementNS(svgNS, "ellipse");
-      cloud.setAttribute("cx", "75");
-      cloud.setAttribute("cy", "40");
-      cloud.setAttribute("rx", "50");
-      cloud.setAttribute("ry", "25");
+      cloud.setAttribute("cx", "97.5");
+      cloud.setAttribute("cy", "65");
+      cloud.setAttribute("rx", "65");
+      cloud.setAttribute("ry", "32.5");
       cloud.setAttribute("fill", "#e0e0e0");
       cloud.setAttribute("stroke", "black");
-      cloud.setAttribute("stroke-width", "2");
+      cloud.setAttribute("stroke-width", "3");
       svg.appendChild(cloud);
-      // Draw 3 raindrops
+      // Draw a smile
+      const smile = document.createElementNS(svgNS, "path");
+      smile.setAttribute("d", "M50 65 Q97.5 90, 145 65");
+      smile.setAttribute("fill", "none");
+      smile.setAttribute("stroke", "black");
+      smile.setAttribute("stroke-width", "4");
+      svg.appendChild(smile);
+      // Draw 3 raindrops with thicker stroke
       for (let i = 0; i < 3; i++) {
         const drop = document.createElementNS(svgNS, "path");
-        const dropX = 50 + i * 30;
-        const dropPath = `M ${dropX} 60 Q ${dropX - 5} 75, ${dropX} 80 Q ${dropX + 5} 75, ${dropX} 60 Z`;
+        const dropX = 50 + i * 45;
+        const dropPath = `M ${dropX} 85 Q ${dropX - 6} 105, ${dropX} 115 Q ${dropX + 6} 105, ${dropX} 85 Z`;
         drop.setAttribute("d", dropPath);
         drop.setAttribute("fill", "#a0c4ff");
         drop.setAttribute("stroke", "black");
-        drop.setAttribute("stroke-width", "1");
+        drop.setAttribute("stroke-width", "1.5");
         svg.appendChild(drop);
       }
       return svg;
@@ -918,7 +937,6 @@
                   `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
                 document.getElementById('rainfall-forecast-3').textContent =
                   `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
-                // Append fun rainfall graphic below the forecast text
                 const rainfallGraphicContainer = document.getElementById("rainfall-graphic");
                 rainfallGraphicContainer.innerHTML = "";
                 rainfallGraphicContainer.appendChild(getRainfallGraphic());
@@ -1029,7 +1047,7 @@
       if (!dataPoints.length) return;
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
-      maxStage = Math.max(maxStage, 6); // ensure at least 6 ft
+      maxStage = Math.max(maxStage, 6);
       minStage = Math.min(minStage, floodThreshold);
       maxStage = Math.max(maxStage, floodThreshold);
       const stageRange = (maxStage - minStage) || 1;
@@ -1047,15 +1065,15 @@
       svg.setAttribute("height", svgHeight);
       svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
       
-      // Y-axis label (reduced to 15px and left aligned)
+      // Y-axis label (15px, left aligned, moved further down)
       const yLabel = document.createElementNS(svgNS, "text");
       yLabel.setAttribute("x", 5);
-      yLabel.setAttribute("y", svgHeight / 2);
+      yLabel.setAttribute("y", svgHeight / 2 + 30);
       yLabel.setAttribute("font-size", "15");
       yLabel.setAttribute("font-weight", "bold");
       yLabel.setAttribute("fill", "black");
       yLabel.setAttribute("text-anchor", "start");
-      yLabel.setAttribute("transform", "rotate(-90 5," + (svgHeight / 2) + ")");
+      yLabel.setAttribute("transform", "rotate(-90 5," + (svgHeight / 2 + 30) + ")");
       yLabel.textContent = "Water Level (ft)";
       svg.appendChild(yLabel);
       
@@ -1116,7 +1134,7 @@
       floodLine.setAttribute("stroke-width", "4");
       svg.appendChild(floodLine);
       
-      // Flood Stage label (increased by 50% to 32px, bold)
+      // Flood Stage label (32px, bold)
       const floodLabel = document.createElementNS(svgNS, "text");
       floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
       floodLabel.setAttribute("y", floodY - 10);
@@ -1185,40 +1203,40 @@
     }
     
     // ----------------------------------------------------------
-    // 10) Fun Rainfall Graphic: a playful cloud with raindrops
+    // 10) Fun Rainfall Graphic: a playful, larger cloud with raindrops
     // ----------------------------------------------------------
     function getRainfallGraphic() {
       const svgNS = "http://www.w3.org/2000/svg";
       const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", "150");
-      svg.setAttribute("height", "100");
-      svg.setAttribute("viewBox", "0 0 150 100");
+      svg.setAttribute("width", "195");
+      svg.setAttribute("height", "130");
+      svg.setAttribute("viewBox", "0 0 195 130");
       // Draw a fun, smiling cloud
       const cloud = document.createElementNS(svgNS, "ellipse");
-      cloud.setAttribute("cx", "75");
-      cloud.setAttribute("cy", "40");
-      cloud.setAttribute("rx", "50");
-      cloud.setAttribute("ry", "25");
+      cloud.setAttribute("cx", "97.5");
+      cloud.setAttribute("cy", "65");
+      cloud.setAttribute("rx", "65");
+      cloud.setAttribute("ry", "32.5");
       cloud.setAttribute("fill", "#e0e0e0");
       cloud.setAttribute("stroke", "black");
-      cloud.setAttribute("stroke-width", "2");
+      cloud.setAttribute("stroke-width", "3");
       svg.appendChild(cloud);
-      // Draw a smile using a path
+      // Draw a smile
       const smile = document.createElementNS(svgNS, "path");
-      smile.setAttribute("d", "M50 40 Q75 60, 100 40");
+      smile.setAttribute("d", "M50 65 Q97.5 90, 145 65");
       smile.setAttribute("fill", "none");
       smile.setAttribute("stroke", "black");
-      smile.setAttribute("stroke-width", "3");
+      smile.setAttribute("stroke-width", "4");
       svg.appendChild(smile);
-      // Draw 3 raindrops
+      // Draw 3 raindrops with thicker stroke
       for (let i = 0; i < 3; i++) {
         const drop = document.createElementNS(svgNS, "path");
-        const dropX = 50 + i * 30;
-        const dropPath = `M ${dropX} 60 Q ${dropX - 5} 75, ${dropX} 80 Q ${dropX + 5} 75, ${dropX} 60 Z`;
+        const dropX = 50 + i * 45;
+        const dropPath = `M ${dropX} 85 Q ${dropX - 6} 105, ${dropX} 115 Q ${dropX + 6} 105, ${dropX} 85 Z`;
         drop.setAttribute("d", dropPath);
         drop.setAttribute("fill", "#a0c4ff");
         drop.setAttribute("stroke", "black");
-        drop.setAttribute("stroke-width", "1");
+        drop.setAttribute("stroke-width", "1.5");
         svg.appendChild(drop);
       }
       return svg;
@@ -1267,7 +1285,6 @@
                   `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
                 document.getElementById('rainfall-forecast-3').textContent =
                   `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
-                // Append fun graphic to rainfall forecast section
                 const rainfallGraphicContainer = document.getElementById("rainfall-graphic");
                 rainfallGraphicContainer.innerHTML = "";
                 rainfallGraphicContainer.appendChild(getRainfallGraphic());
