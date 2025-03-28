@@ -105,7 +105,7 @@
 </head>
 <body>
   <!-- Header displays county info with coordinates and a website link.
-       To change the location, update the LAT and LON values in the script below. -->
+       To change the location, update the global variables in the script below. -->
   <div id="header">
     Chatham County (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>) | 
     <a href="https://www.chathamcountync.gov/" target="_blank">chathamcountync.gov</a>
@@ -114,8 +114,8 @@
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- Only shows the risk level in large text -->
-      <div class="section-content">
+      <!-- The Heat Risk card will display either plain text or a gauge dial when conditions are unsafe -->
+      <div class="section-content" id="heat-risk-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
       <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
@@ -174,8 +174,8 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- AQI card now only shows the AQI category in large text -->
-      <div class="section-content">
+      <!-- AQI card now only shows the AQI category in large text (with a gauge if needed) -->
+      <div class="section-content" id="aqi-content">
         <div class="value" id="aqi-category">--</div>
       </div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
@@ -183,18 +183,55 @@
   </div>
 
   <script>
-    // Set location by modifying these global variables.
+    // Global location – update these values to change location for all API calls.
     let LAT = 35.77659;
     let LON = -79.14597;
-    
-    // Update the header display with the current latitude and longitude.
     document.getElementById('header-lat').textContent = LAT;
     document.getElementById('header-lon').textContent = LON;
     
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
-    
-    // Global flood threshold (default 5.0 ft)
     let floodThreshold = 5.0;
+    
+    // --- Gauge Generator ---
+    // Generates a simple dial gauge SVG.
+    function generateGauge(value, min, max, label, color) {
+      let ratio = (value - min) / (max - min);
+      if (ratio < 0) ratio = 0;
+      if (ratio > 1) ratio = 1;
+      let angle = ratio * 180; // 0 to 180 degrees
+      let centerX = 40, centerY = 40, r = 30;
+      let rad = angle * Math.PI / 180;
+      // The needle points from the center towards the top (adjusted by pi)
+      let needleX = centerX + r * Math.cos(Math.PI - rad);
+      let needleY = centerY + r * Math.sin(Math.PI - rad);
+      return `<svg width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="30" fill="none" stroke="${color}" stroke-width="5"/>
+        <line x1="40" y1="40" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="${color}" stroke-width="5"/>
+        <text x="40" y="75" text-anchor="middle" font-size="16" fill="#000">${label}</text>
+      </svg>`;
+    }
+    
+    // For AQI, we map category to a numeric gauge value and color.
+    function generateAQIGauge(category) {
+      category = category.toLowerCase();
+      let value, color;
+      if (category.includes("good")) {
+        value = 25; color = "#00FF00"; // green
+      } else if (category.includes("moderate")) {
+        value = 75; color = "#FFFF00"; // yellow
+      } else if (category.includes("unhealthy for sensitive")) {
+        value = 125; color = "#FFA500"; // orange
+      } else if (category.includes("unhealthy")) {
+        value = 175; color = "#FF0000"; // red
+      } else if (category.includes("very unhealthy")) {
+        value = 225; color = "#8B0000"; // dark red
+      } else if (category.includes("hazardous")) {
+        value = 250; color = "#800080"; // purple
+      } else {
+        value = 25; color = "#00FF00";
+      }
+      return generateGauge(value, 0, 250, category.charAt(0).toUpperCase() + category.slice(1), color);
+    }
     
     // --- Heat Risk Card Update ---
     function updateHeatRisk(tempF, RH) {
@@ -209,12 +246,21 @@
       const riskLevel = (tempF < 80) ? "Minimal Heat Risk" :
                         (HI < 90) ? "Moderate Heat Risk" :
                         (HI < 105) ? "High Heat Risk" : "Extreme Heat Risk";
-      document.getElementById('heat-risk-level').textContent = riskLevel;
+      // If conditions are safe, just show text; if not, display a gauge.
+      if (riskLevel === "Minimal Heat Risk") {
+        document.getElementById('heat-risk-level').textContent = riskLevel;
+      } else {
+        // Choose color based on risk
+        let color = riskLevel === "Moderate Heat Risk" ? "#FFFF00" :
+                    riskLevel === "High Heat Risk" ? "#FFA500" :
+                    riskLevel === "Extreme Heat Risk" ? "#FF0000" : "#000000";
+        document.getElementById('heat-risk-level').innerHTML = generateGauge(HI, 80, 120, riskLevel, color);
+      }
       const heatTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       document.getElementById('heat-risk-timestamp').textContent = "Last updated: " + heatTime;
     }
     
-    // --- Helper functions for dynamic icons (black & white) ---
+    // --- Helper function for dynamic weather icon (unchanged) ---
     function getWeatherIcon(forecast) {
       forecast = forecast.toLowerCase();
       let iconSVG = "";
@@ -454,25 +500,47 @@
         .then(data => {
           if (data && data.length > 0) {
             const main = data[0];
-            // Only show the AQI category (e.g., "Good") in large text.
-            document.getElementById('aqi-category').textContent = main.Category.Name;
+            // For AQI, display a gauge only if the category is not "Good".
+            document.getElementById('aqi-category').innerHTML = generateAQIGauge(main.Category.Name);
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
           } else {
-            document.getElementById('aqi-category').textContent = "Good";
+            document.getElementById('aqi-category').innerHTML = generateAQIGauge("Good");
             const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
           }
         })
         .catch(err => {
           console.error('Error fetching AQI data:', err);
-          document.getElementById('aqi-category').textContent = "Good";
+          document.getElementById('aqi-category').innerHTML = generateAQIGauge("Good");
           const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
         });
     }
     
-    // --- Weather, Rainfall Forecast & Alerts from NWS ---
+    // --- Generate AQI Gauge for Air Quality ---
+    function generateAQIGauge(category) {
+      category = category.toLowerCase();
+      let value, color;
+      if (category.includes("good")) {
+        value = 25; color = "#00FF00"; // green
+      } else if (category.includes("moderate")) {
+        value = 75; color = "#FFFF00"; // yellow
+      } else if (category.includes("unhealthy for sensitive")) {
+        value = 125; color = "#FFA500"; // orange
+      } else if (category.includes("unhealthy")) {
+        value = 175; color = "#FF0000"; // red
+      } else if (category.includes("very unhealthy")) {
+        value = 225; color = "#8B0000"; // dark red
+      } else if (category.includes("hazardous")) {
+        value = 250; color = "#800080"; // purple
+      } else {
+        value = 25; color = "#00FF00";
+      }
+      return generateGauge(value, 0, 250, category.charAt(0).toUpperCase() + category.slice(1), color);
+    }
+    
+    // --- NWS Data (Weather Observations, Rainfall Forecast & Alerts) ---
     function fetchNWSData() {
       const nwsTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       document.getElementById('weather-timestamp').textContent = "Last updated: " + nwsTime;
