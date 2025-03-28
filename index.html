@@ -80,13 +80,21 @@
       color: #666;
       margin-top: 8px;
     }
-    /* Flood status text styling remains unchanged */
+    /* Flood status text styling */
     #flood-status {
       font-weight: bold;
       text-align: center;
       width: 100%;
       font-size: 32px;
       margin-top: 8px;
+    }
+    /* Additional styling for below-flood status */
+    .below-flood {
+      font-size: 42px; /* 30% larger than 32px */
+      background-color: black;
+      color: white;
+      text-transform: uppercase;
+      padding: 5px;
     }
     /* Header styling */
     #header {
@@ -114,7 +122,7 @@
     <!-- Heat Risk Section (top card) -->
     <div class="section centered" id="heat-risk-section">
       <div class="card-title">Heat Risk</div>
-      <!-- The Heat Risk card displays a dial gauge if conditions exceed safe levels, or plain text otherwise -->
+      <!-- The Heat Risk card displays a dial gauge if conditions exceed safe levels -->
       <div class="section-content" id="heat-risk-content">
         <div class="value" id="heat-risk-level">--</div>
       </div>
@@ -177,7 +185,7 @@
       <!-- New layout: AQI category text on the left, gauge in the center, and numeric AQI value on the right -->
       <div class="section-content" id="aqi-content">
         <div style="display: flex; align-items: center; justify-content: center;">
-          <div id="aqi-category-text" style="margin-right: 20px; font-size: 200px; background-color: black; color: white; text-transform: uppercase; padding: 10px;">--</div>
+          <div id="aqi-category-text" style="margin-right: 20px; font-size: 160px; background-color: black; color: white; text-transform: uppercase; padding: 10px;">--</div>
           <div id="aqi-gauge"></div>
           <div id="aqi-value" style="margin-left: 20px; font-size: 300px; font-weight: bold;">--</div>
         </div>
@@ -197,22 +205,25 @@
     let floodThreshold = 5.0;
     
     // --- Gauge Generator --- (Scale factor set to 5.1)
-    function generateGauge(value, min, max, label, color) {
+    // Optional parameter hideLabel: if true, the gauge does not display the inner text label.
+    function generateGauge(value, min, max, label, color, hideLabel = false) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // maps value to 0-180 degrees
-      let scale = 5.1; // Scale factor for desired gauge size
+      let scale = 5.1; // Scale factor
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
       let needleY = centerY + r * Math.sin(Math.PI - rad);
-      // Position label at 85*scale for extra spacing
-      return `<svg width="${80 * scale}" height="${80 * scale}" viewBox="0 0 ${80 * scale} ${80 * scale}">
+      let svg = `<svg width="${80 * scale}" height="${80 * scale}" viewBox="0 0 ${80 * scale} ${80 * scale}">
         <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5 * scale}"/>
-        <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5 * scale}"/>
-        <text x="${centerX}" y="${85 * scale}" text-anchor="middle" font-size="${16 * scale}" fill="#000">${label}</text>
-      </svg>`;
+        <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5 * scale}"/>`;
+      if (!hideLabel) {
+        svg += `<text x="${centerX}" y="${85 * scale}" text-anchor="middle" font-size="${16 * scale}" fill="#000">${label}</text>`;
+      }
+      svg += `</svg>`;
+      return svg;
     }
     
     // --- AQI Gauge Generator ---
@@ -234,7 +245,8 @@
       } else {
         value = 25; color = "#00FF00";
       }
-      return generateGauge(value, 0, 250, category.charAt(0).toUpperCase() + category.slice(1), color);
+      // For the AQI gauge, hide the inner text label (redundant "good")
+      return generateGauge(value, 0, 250, category.charAt(0).toUpperCase() + category.slice(1), color, true);
     }
     
     // --- Heat Risk Card Update ---
@@ -347,8 +359,10 @@
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
+            statusEl.classList.remove("below-flood");
           } else {
-            statusEl.textContent = "Below Flood Stage";
+            statusEl.textContent = "BELOW FLOOD STAGE";
+            statusEl.classList.add("below-flood");
           }
           const groupedValues = groupBy3HourBlocks(floatValues);
           renderRiverGraph(groupedValues, floodThreshold);
@@ -505,8 +519,11 @@
           if (data && data.length > 0) {
             const main = data[0];
             // Populate the AQI section:
+            // Left-side category text (reduced in size by 20% from 200px to 160px)
             document.getElementById('aqi-category-text').textContent = main.Category.Name;
+            // Right-side numeric value, increased 3x and bold
             document.getElementById('aqi-value').textContent = main.AQI;
+            // Center gauge (without inner text)
             document.getElementById('aqi-gauge').innerHTML = generateAQIGauge(main.Category.Name);
           } else {
             document.getElementById('aqi-category-text').textContent = "GOOD";
