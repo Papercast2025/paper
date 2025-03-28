@@ -174,9 +174,13 @@
     <!-- Air Quality Index (AQI) Section (centered) -->
     <div class="section centered" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <!-- AQI card shows a dial gauge for the AQI category -->
+      <!-- New layout: AQI category text on the left, gauge in the center, numeric AQI on the right -->
       <div class="section-content" id="aqi-content">
-        <div class="value" id="aqi-category">--</div>
+        <div style="display: flex; align-items: center; justify-content: center;">
+          <div id="aqi-category-text" style="margin-right: 20px; font-size: 100px;">--</div>
+          <div id="aqi-gauge"></div>
+          <div id="aqi-value" style="margin-left: 20px; font-size: 100px;">--</div>
+        </div>
       </div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
     </div>
@@ -192,18 +196,18 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
     
-    // --- Gauge Generator --- (Scale factor set to 5.1 for 0.85 of previous 6x size)
+    // --- Gauge Generator --- (Scale factor is 5.1, as set previously)
     function generateGauge(value, min, max, label, color) {
       let ratio = (value - min) / (max - min);
       if (ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
       let angle = ratio * 180; // maps value to 0-180 degrees
-      let scale = 5.1; // Adjusted scale factor for desired gauge size
+      let scale = 5.1; // using scale factor of 5.1
       let centerX = 40 * scale, centerY = 40 * scale, r = 30 * scale;
       let rad = angle * Math.PI / 180;
       let needleX = centerX + r * Math.cos(Math.PI - rad);
       let needleY = centerY + r * Math.sin(Math.PI - rad);
-      // Increase the spacing by positioning the label at y = 85*scale
+      // Position label at 85 * scale for extra spacing
       return `<svg width="${80 * scale}" height="${80 * scale}" viewBox="0 0 ${80 * scale} ${80 * scale}">
         <circle cx="${centerX}" cy="${centerY}" r="${r}" fill="#d3d3d3" stroke="black" stroke-width="${5 * scale}"/>
         <line x1="${centerX}" y1="${centerY}" x2="${needleX.toFixed(0)}" y2="${needleY.toFixed(0)}" stroke="black" stroke-width="${5 * scale}"/>
@@ -496,23 +500,27 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
+          const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+          document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
           if (data && data.length > 0) {
             const main = data[0];
-            // Display the AQI gauge for the category.
-            document.getElementById('aqi-category').innerHTML = generateAQIGauge(main.Category.Name);
-            const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-            document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
+            // Update left-side category text, center gauge, and right-side numeric value.
+            document.getElementById('aqi-category-text').textContent = main.Category.Name;
+            document.getElementById('aqi-value').textContent = main.AQI;
+            document.getElementById('aqi-gauge').innerHTML = generateAQIGauge(main.Category.Name);
           } else {
-            document.getElementById('aqi-category').innerHTML = generateAQIGauge("Good");
-            const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-            document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
+            document.getElementById('aqi-category-text').textContent = "Good";
+            document.getElementById('aqi-value').textContent = "42";
+            document.getElementById('aqi-gauge').innerHTML = generateAQIGauge("Good");
           }
         })
         .catch(err => {
           console.error('Error fetching AQI data:', err);
-          document.getElementById('aqi-category').innerHTML = generateAQIGauge("Good");
+          document.getElementById('aqi-category-text').textContent = "Good";
+          document.getElementById('aqi-value').textContent = "42";
           const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
+          document.getElementById('aqi-gauge').innerHTML = generateAQIGauge("Good");
         });
     }
     
