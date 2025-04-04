@@ -308,7 +308,7 @@
       forecast = forecast.toLowerCase();
       let iconSVG = "";
       if (forecast.includes("sunny") || forecast.includes("clear")) {
-        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
           <circle cx="32" cy="32" r="12" fill="black" stroke="black" stroke-width="3"/>
           <g stroke="black" stroke-width="3">
             <line x1="32" y1="4" x2="32" y2="14"/>
@@ -320,40 +320,40 @@
             <line x1="12" y1="52" x2="18" y2="46"/>
             <line x1="46" y1="18" x2="52" y2="12"/>
           </g>
-        </svg>;
+        </svg>`;
       } else if (forecast.includes("cloud")) {
-        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
-        </svg>;
+        </svg>`;
       } else if (forecast.includes("rain")) {
-        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
           <g stroke="black" stroke-width="3">
             <line x1="22" y1="48" x2="22" y2="58"/>
             <line x1="32" y1="48" x2="32" y2="58"/>
             <line x1="42" y1="48" x2="42" y2="58"/>
           </g>
-        </svg>;
+        </svg>`;
       } else if (forecast.includes("snow")) {
-        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
           <g stroke="black" stroke-width="3">
             <line x1="32" y1="48" x2="32" y2="60"/>
             <line x1="26" y1="52" x2="38" y2="52"/>
           </g>
-        </svg>;
+        </svg>`;
       } else {
-        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
           <circle cx="22" cy="22" r="10" fill="black" stroke="black" stroke-width="3"/>
           <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
-        </svg>;
+        </svg>`;
       }
       return iconSVG;
     }
 
     /* ============== SUNRISE/SUNSET ============== */
     function fetchSunriseSunset() {
-      const url = https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0;
+      const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -368,12 +368,12 @@
             const now = new Date();
             const isDay = now >= sunriseLocal && now < sunsetLocal;
             const icon = getSunriseSunsetIcon(isDay);
-            document.getElementById("sunrise-sunset").innerHTML = 
+            document.getElementById("sunrise-sunset").innerHTML = `
               <div style="display:inline-block; vertical-align:middle;">${icon}</div>
               <div style="display:inline-block; vertical-align:middle; margin-left:10px; text-align:left;">
                 Sunrise: ${sunriseStr}<br/>Sunset: ${sunsetStr}
               </div>
-            ;
+            `;
           }
         })
         .catch(err => console.error("Sunrise/Sunset fetch error:", err));
@@ -385,18 +385,18 @@
       svg.setAttribute("height", "88");
       svg.setAttribute("viewBox", "0 0 64 64");
       if (isDay) {
-        svg.innerHTML = 
+        svg.innerHTML = `
           <circle cx="32" cy="32" r="12" fill="#e0e0e0" stroke="black" stroke-width="3"/>
           <line x1="32" y1="2" x2="32" y2="12" stroke="black" stroke-width="3"/>
           <line x1="32" y1="52" x2="32" y2="62" stroke="black" stroke-width="3"/>
           <line x1="2" y1="32" x2="12" y2="32" stroke="black" stroke-width="3"/>
           <line x1="52" y1="32" x2="62" y2="32" stroke="black" stroke-width="3"/>
-        ;
+        `;
       } else {
-        svg.innerHTML = 
+        svg.innerHTML = `
           <path d="M40,32 A12,12 0 1,1 28,20 A10,10 0 1,0 40,32"
                 fill="#e0e0e0" stroke="black" stroke-width="3"/>
-        ;
+        `;
       }
       return svg.outerHTML;
     }
@@ -415,7 +415,7 @@
       const svg = document.createElementNS(svgNS, "svg");
       svg.setAttribute("width", width);
       svg.setAttribute("height", height);
-      svg.setAttribute("viewBox", 0 0 ${width} ${height});
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
       for (let i = 0; i < 5; i++) {
         const startAngle = 180 - i * segmentAngle;
@@ -426,7 +426,7 @@
         const startY = centerY - radius * Math.sin(startRad);
         const endX = centerX + radius * Math.cos(endRad);
         const endY = centerY - radius * Math.sin(endRad);
-        const d = M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY} L ${centerX} ${centerY} Z;
+        const d = `M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY} L ${centerX} ${centerY} Z`;
         const path = document.createElementNS(svgNS, "path");
         path.setAttribute("d", d);
         path.setAttribute("fill", segmentColors[i]);
@@ -441,7 +441,7 @@
       const maskStartRad = maskStartAngle * Math.PI / 180;
       const maskStartX = centerX + radius * Math.cos(maskStartRad);
       const maskStartY = centerY - radius * Math.sin(maskStartRad);
-      const dMask = M ${maskStartX} ${maskStartY} A ${radius} ${radius} 0 0 1 ${centerX + radius} ${centerY} L ${centerX} ${centerY} Z;
+      const dMask = `M ${maskStartX} ${maskStartY} A ${radius} ${radius} 0 0 1 ${centerX + radius} ${centerY} L ${centerX} ${centerY} Z`;
       const maskPath = document.createElementNS(svgNS, "path");
       maskPath.setAttribute("d", dMask);
       maskPath.setAttribute("fill", "white");
@@ -466,7 +466,7 @@
 
     /* ============== HEAT RISK GAUGE (REMOVED) ============== */
     function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
-      return <svg>...</svg>;
+      return `<svg>...</svg>`;
     }
     function updateHeatRisk(tempF, RH) {
       let HI = tempF;
@@ -484,7 +484,7 @@
 
     /* ============== AQI FETCH ============== */
     function fetchAQIData() {
-      const url = https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY};
+      const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -546,7 +546,7 @@
     /* ============== WEATHER (NWS) ============== */
     function fetchNWSData() {
       updateAllTimestamps();
-      const pointUrl = https://api.weather.gov/points/${LAT},${LON};
+      const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
       fetch(pointUrl)
         .then(res => res.json())
         .then(pointData => {
@@ -560,12 +560,12 @@
                 const now = obsData.properties.periods[0];
                 const tempF = now.temperature;
                 const tempC = ((tempF - 32) * 5/9).toFixed(1);
-                document.getElementById('weather-temp-F').textContent = ${tempF ?? '--'}°F;
-                document.getElementById('weather-temp-C').textContent = ${tempC}°C;
+                document.getElementById('weather-temp-F').textContent = `${tempF ?? '--'}°F`;
+                document.getElementById('weather-temp-C').textContent = `${tempC}°C`;
                 document.getElementById('weather-forecast').textContent = now.shortForecast || 'N/A';
-                document.getElementById('weather-wind').textContent = Wind: ${now.windSpeed || '--'} mph;
+                document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed || '--'} mph`;
                 const humidityVal = (now.relativeHumidity && now.relativeHumidity.value) ? now.relativeHumidity.value : '--';
-                document.getElementById('weather-humidity').textContent = Humidity: ${humidityVal}%;
+                document.getElementById('weather-humidity').textContent = `Humidity: ${humidityVal}%`;
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 updateHeatRisk(tempF, humidityVal);
                 fetchSunriseSunset();
@@ -578,17 +578,17 @@
               if (gridData.properties?.periods) {
                 const days = gridData.properties.periods.slice(0, 3);
                 document.getElementById('rainfall-forecast-1').textContent =
-                  ${days[0]?.name || 'Day1'}: ${days[0]?.shortForecast || 'N/A'};
+                  `${days[0]?.name || 'Day1'}: ${days[0]?.shortForecast || 'N/A'}`;
                 document.getElementById('rainfall-forecast-2').textContent =
-                  ${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'};
+                  `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
                 document.getElementById('rainfall-forecast-3').textContent =
-                  ${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'};
+                  `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
               }
             })
             .catch(err => console.error('Rainfall forecast error:', err));
           if (alertZone) {
             const zoneId = alertZone.split('/').pop();
-            const alertUrl = https://api.weather.gov/alerts/active/zone/${zoneId};
+            const alertUrl = `https://api.weather.gov/alerts/active/zone/${zoneId}`;
             fetch(alertUrl)
               .then(res => res.json())
               .then(alertData => {
@@ -611,7 +611,7 @@
       const start = new Date();
       start.setDate(end.getDate() - 4);
       const format = d => d.toISOString().split('.')[0];
-      const url = https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all;
+      const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -632,7 +632,7 @@
             return;
           }
           const lastReading = floatValues[floatValues.length - 1].stage;
-          const lastReadingStr = ${lastReading.toFixed(2)} ft;
+          const lastReadingStr = `${lastReading.toFixed(2)} ft`;
           document.getElementById("river-timestamp").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
@@ -702,7 +702,7 @@
       const svg = document.createElementNS(svgNS, "svg");
       svg.setAttribute("width", svgWidth);
       svg.setAttribute("height", svgHeight);
-      svg.setAttribute("viewBox", 0 0 ${svgWidth} ${svgHeight});
+      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
       // Y-axis label
       const yLabel = document.createElementNS(svgNS, "text");
@@ -712,7 +712,7 @@
       yLabel.setAttribute("font-weight", "bold");
       yLabel.setAttribute("fill", "black");
       yLabel.setAttribute("text-anchor", "start");
-      yLabel.setAttribute("transform", rotate(-90 25,${svgHeight / 2 + 30}));
+      yLabel.setAttribute("transform", `rotate(-90 25,${svgHeight / 2 + 30})`);
       yLabel.textContent = "Water Level (ft)";
       svg.appendChild(yLabel);
 
@@ -820,7 +820,7 @@
           measurement.setAttribute("font-weight", "bold");
           measurement.setAttribute("fill", "white");
           measurement.setAttribute("text-anchor", "middle");
-          measurement.textContent =  ${lastReadingStr} ;
+          measurement.textContent = ` ${lastReadingStr} `;
           const rect = document.createElementNS(svgNS, "rect");
           setTimeout(() => {
             const bbox = measurement.getBBox();
@@ -852,10 +852,10 @@
       svg.setAttribute("width", "48");
       svg.setAttribute("height", "48");
       svg.setAttribute("viewBox", "0 0 64 64");
-      svg.innerHTML = 
+      svg.innerHTML = `
         <polygon points="32,2 2,62 62,62" fill="black"/>
         <text x="32" y="42" font-size="36" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>
-      ;
+      `;
       return svg.outerHTML;
     }
 
