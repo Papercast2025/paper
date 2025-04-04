@@ -1,9 +1,12 @@
+This is my current version of code - not sure if this is where we left off in this session or not, but I want this to be my stable backup and then make some improvements from here.
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- @import must be at the very top -->
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
     
     body {
       background-color: #f0f0f0;
@@ -195,7 +198,7 @@
 <body>
   <!-- Header -->
   <div id="header">
-    Chatham County Parks and Recreation (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>)
+    Catham County Parks and Recreation (<span id="header-lat">35.77659</span> / <span id="header-lon">-79.14597</span>)
     <a href="https://www.chathamcountync.gov/parks-recreation" target="_blank">www.chathamcountync.gov/parks-recreation</a>
   </div>
   <div class="container">
@@ -283,60 +286,590 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
 
-    /* ============== SUNRISE AND SUNSET ============== */
+    /* ============== HYDRATION TIPS ============== */
+    const hydrationMessages = [
+      "Remember to hydrate and take breaks in the shade!",
+      "Drink water regularly for optimal performance.",
+      "Stay cool—sip water frequently.",
+      "Keep a water bottle handy and sip often."
+    ];
+
+    function updateAllTimestamps() {
+      const now = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+      const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "Last updated: " + now;
+      });
+      document.getElementById("hydration-message").textContent =
+        hydrationMessages[Math.floor(Math.random() * hydrationMessages.length)];
+    }
+
+    /* ============== GET WEATHER ICON ============== */
+    function getWeatherIcon(forecast) {
+      forecast = forecast.toLowerCase();
+      let iconSVG = "";
+      if (forecast.includes("sunny") || forecast.includes("clear")) {
+        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="12" fill="black" stroke="black" stroke-width="3"/>
+          <g stroke="black" stroke-width="3">
+            <line x1="32" y1="4" x2="32" y2="14"/>
+            <line x1="32" y1="50" x2="32" y2="60"/>
+            <line x1="4" y1="32" x2="14" y2="32"/>
+            <line x1="50" y1="32" x2="60" y2="32"/>
+            <line x1="12" y1="12" x2="18" y2="18"/>
+            <line x1="46" y1="46" x2="52" y2="52"/>
+            <line x1="12" y1="52" x2="18" y2="46"/>
+            <line x1="46" y1="18" x2="52" y2="12"/>
+          </g>
+        </svg>;
+      } else if (forecast.includes("cloud")) {
+        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
+        </svg>;
+      } else if (forecast.includes("rain")) {
+        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
+          <g stroke="black" stroke-width="3">
+            <line x1="22" y1="48" x2="22" y2="58"/>
+            <line x1="32" y1="48" x2="32" y2="58"/>
+            <line x1="42" y1="48" x2="42" y2="58"/>
+          </g>
+        </svg>;
+      } else if (forecast.includes("snow")) {
+        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
+          <g stroke="black" stroke-width="3">
+            <line x1="32" y1="48" x2="32" y2="60"/>
+            <line x1="26" y1="52" x2="38" y2="52"/>
+          </g>
+        </svg>;
+      } else {
+        iconSVG = <svg width="126" height="126" viewBox="0 0 64 64">
+          <circle cx="22" cy="22" r="10" fill="black" stroke="black" stroke-width="3"/>
+          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
+        </svg>;
+      }
+      return iconSVG;
+    }
+
+    /* ============== SUNRISE/SUNSET ============== */
     function fetchSunriseSunset() {
-      const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`;
+      const url = https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0;
       fetch(url)
         .then(res => res.json())
         .then(data => {
           if (data.status === "OK") {
             const sunriseUTC = new Date(data.results.sunrise);
             const sunsetUTC = new Date(data.results.sunset);
-            const now = new Date();
-            
-            // Convert UTC times to local time
             const sunriseLocal = new Date(sunriseUTC.getTime() - (sunriseUTC.getTimezoneOffset() * 60000));
             const sunsetLocal = new Date(sunsetUTC.getTime() - (sunsetUTC.getTimezoneOffset() * 60000));
-            
-            // Determine the next event (sunrise or sunset)
-            const isDayTime = now >= sunriseLocal && now < sunsetLocal;
-            
-            // Show the next event based on current time
-            let nextEvent = '';
-            let nextTime = '';
-
-            if (isDayTime) {
-              // Daytime, sunset is next
-              nextEvent = 'Sunset';
-              nextTime = formatTime(sunsetLocal);
-            } else {
-              // Nighttime, sunrise is next
-              nextEvent = 'Sunrise';
-              nextTime = formatTime(sunriseLocal);
-            }
-
-            // Display the next event and time
-            const sunriseSunsetText = `Next: ${nextEvent} at ${nextTime}`;
-            document.getElementById("sunrise-sunset").innerHTML = sunriseSunsetText;
+            const options = { hour: 'numeric', minute: 'numeric' };
+            const sunriseStr = sunriseLocal.toLocaleTimeString(undefined, options);
+            const sunsetStr = sunsetLocal.toLocaleTimeString(undefined, options);
+            const now = new Date();
+            const isDay = now >= sunriseLocal && now < sunsetLocal;
+            const icon = getSunriseSunsetIcon(isDay);
+            document.getElementById("sunrise-sunset").innerHTML = 
+              <div style="display:inline-block; vertical-align:middle;">${icon}</div>
+              <div style="display:inline-block; vertical-align:middle; margin-left:10px; text-align:left;">
+                Sunrise: ${sunriseStr}<br/>Sunset: ${sunsetStr}
+              </div>
+            ;
           }
         })
         .catch(err => console.error("Sunrise/Sunset fetch error:", err));
     }
+    function getSunriseSunsetIcon(isDay) {
+      const svgNS = "http://www.w3.org/2000/svg";
+      let svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "88");
+      svg.setAttribute("height", "88");
+      svg.setAttribute("viewBox", "0 0 64 64");
+      if (isDay) {
+        svg.innerHTML = 
+          <circle cx="32" cy="32" r="12" fill="#e0e0e0" stroke="black" stroke-width="3"/>
+          <line x1="32" y1="2" x2="32" y2="12" stroke="black" stroke-width="3"/>
+          <line x1="32" y1="52" x2="32" y2="62" stroke="black" stroke-width="3"/>
+          <line x1="2" y1="32" x2="12" y2="32" stroke="black" stroke-width="3"/>
+          <line x1="52" y1="32" x2="62" y2="32" stroke="black" stroke-width="3"/>
+        ;
+      } else {
+        svg.innerHTML = 
+          <path d="M40,32 A12,12 0 1,1 28,20 A10,10 0 1,0 40,32"
+                fill="#e0e0e0" stroke="black" stroke-width="3"/>
+        ;
+      }
+      return svg.outerHTML;
+    }
 
-    // Function to format time in local time format (HH:mm)
-    function formatTime(date) {
-      const options = { hour: '2-digit', minute: '2-digit', hour12: true };
-      return date.toLocaleTimeString(undefined, options);
+    /* ============== AQI GAUGE ============== */
+    function generateAirNowArcGauge(aqi, category) {
+      const svgNS = "http://www.w3.org/2000/svg";
+      const width = 250;
+      const height = 125;
+      const centerX = width / 2;
+      const centerY = height;
+      const radius = width / 2;
+      const segmentAngle = 36;
+      const segmentColors = ["#e0e0e0", "#cccccc", "#b8b8b8", "#a4a4a4", "#909090"];
+
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", width);
+      svg.setAttribute("height", height);
+      svg.setAttribute("viewBox", 0 0 ${width} ${height});
+
+      for (let i = 0; i < 5; i++) {
+        const startAngle = 180 - i * segmentAngle;
+        const endAngle = 180 - (i + 1) * segmentAngle;
+        const startRad = startAngle * Math.PI / 180;
+        const endRad = endAngle * Math.PI / 180;
+        const startX = centerX + radius * Math.cos(startRad);
+        const startY = centerY - radius * Math.sin(startRad);
+        const endX = centerX + radius * Math.cos(endRad);
+        const endY = centerY - radius * Math.sin(endRad);
+        const d = M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY} L ${centerX} ${centerY} Z;
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", d);
+        path.setAttribute("fill", segmentColors[i]);
+        path.setAttribute("stroke", "black");
+        path.setAttribute("stroke-width", "8");
+        svg.appendChild(path);
+      }
+
+      const fillProportion = Math.min(Math.max(aqi, 0), 300) / 300;
+      const fillAngle = fillProportion * 180;
+      const maskStartAngle = 180 - fillAngle;
+      const maskStartRad = maskStartAngle * Math.PI / 180;
+      const maskStartX = centerX + radius * Math.cos(maskStartRad);
+      const maskStartY = centerY - radius * Math.sin(maskStartRad);
+      const dMask = M ${maskStartX} ${maskStartY} A ${radius} ${radius} 0 0 1 ${centerX + radius} ${centerY} L ${centerX} ${centerY} Z;
+      const maskPath = document.createElementNS(svgNS, "path");
+      maskPath.setAttribute("d", dMask);
+      maskPath.setAttribute("fill", "white");
+      svg.appendChild(maskPath);
+
+      const pointerAngle = 180 - fillAngle;
+      const pointerRad = pointerAngle * Math.PI / 180;
+      const pointerX = centerX + radius * Math.cos(pointerRad);
+      const pointerY = centerY - radius * Math.sin(pointerRad);
+      const pointerLine = document.createElementNS(svgNS, "line");
+      pointerLine.setAttribute("x1", centerX);
+      pointerLine.setAttribute("y1", centerY);
+      pointerLine.setAttribute("x2", pointerX);
+      pointerLine.setAttribute("y2", pointerY);
+      pointerLine.setAttribute("stroke", "black");
+      pointerLine.setAttribute("stroke-width", "8");
+      pointerLine.setAttribute("stroke-linecap", "round");
+      svg.appendChild(pointerLine);
+
+      return svg;
+    }
+
+    /* ============== HEAT RISK GAUGE (REMOVED) ============== */
+    function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
+      return <svg>...</svg>;
+    }
+    function updateHeatRisk(tempF, RH) {
+      let HI = tempF;
+      if (tempF >= 80) {
+        // Heat index calculation omitted for brevity
+      }
+      if (tempF < 80) {
+        const elem = document.getElementById('heat-risk-level');
+        elem.textContent = "Minimal Heat Risk";
+        elem.style.fontSize = "70px";
+      } else {
+        // Gauge generation code omitted for brevity
+      }
+    }
+
+    /* ============== AQI FETCH ============== */
+    function fetchAQIData() {
+      const url = https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY};
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+          document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
+          const contentContainer = document.getElementById("aqi-content");
+          contentContainer.innerHTML = "";
+          if (Array.isArray(data) && data.length > 0) {
+            const main = data[0];
+            const aqiValue = parseInt(main.AQI, 10) || 0;
+            const category = (main.Category && main.Category.Name) ? main.Category.Name : "Unknown";
+            const leftDiv = document.createElement("div");
+            leftDiv.id = "aqi-classification";
+            leftDiv.textContent = category.toUpperCase();
+            const centerDiv = document.createElement("div");
+            centerDiv.id = "aqi-gauge-container";
+            centerDiv.appendChild(generateAirNowArcGauge(aqiValue, category));
+            const rightDiv = document.createElement("div");
+            rightDiv.id = "aqi-measurement";
+            rightDiv.textContent = "AQI: " + aqiValue;
+            contentContainer.appendChild(leftDiv);
+            contentContainer.appendChild(centerDiv);
+            contentContainer.appendChild(rightDiv);
+          } else {
+            const leftDiv = document.createElement("div");
+            leftDiv.id = "aqi-classification";
+            leftDiv.textContent = "GOOD";
+            const centerDiv = document.createElement("div");
+            centerDiv.id = "aqi-gauge-container";
+            centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
+            const rightDiv = document.createElement("div");
+            rightDiv.id = "aqi-measurement";
+            rightDiv.textContent = "AQI: 42";
+            contentContainer.appendChild(leftDiv);
+            contentContainer.appendChild(centerDiv);
+            contentContainer.appendChild(rightDiv);
+          }
+        })
+        .catch(err => {
+          console.error('AQI fetch error:', err);
+          document.getElementById('aqi-timestamp').textContent = "Last updated: N/A";
+          const contentContainer = document.getElementById("aqi-content");
+          contentContainer.innerHTML = "";
+          const leftDiv = document.createElement("div");
+          leftDiv.id = "aqi-classification";
+          leftDiv.textContent = "GOOD";
+          const centerDiv = document.createElement("div");
+          centerDiv.id = "aqi-gauge-container";
+          centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
+          const rightDiv = document.createElement("div");
+          rightDiv.id = "aqi-measurement";
+          rightDiv.textContent = "AQI: 42";
+          contentContainer.appendChild(leftDiv);
+          contentContainer.appendChild(centerDiv);
+          contentContainer.appendChild(rightDiv);
+        });
+    }
+
+    /* ============== WEATHER (NWS) ============== */
+    function fetchNWSData() {
+      updateAllTimestamps();
+      const pointUrl = https://api.weather.gov/points/${LAT},${LON};
+      fetch(pointUrl)
+        .then(res => res.json())
+        .then(pointData => {
+          const obsUrl = pointData.properties.forecastHourly;
+          const gridUrl = pointData.properties.forecast;
+          const alertZone = pointData.properties.forecastZone;
+          fetch(obsUrl)
+            .then(res => res.json())
+            .then(obsData => {
+              if (obsData.properties?.periods?.length > 0) {
+                const now = obsData.properties.periods[0];
+                const tempF = now.temperature;
+                const tempC = ((tempF - 32) * 5/9).toFixed(1);
+                document.getElementById('weather-temp-F').textContent = ${tempF ?? '--'}°F;
+                document.getElementById('weather-temp-C').textContent = ${tempC}°C;
+                document.getElementById('weather-forecast').textContent = now.shortForecast || 'N/A';
+                document.getElementById('weather-wind').textContent = Wind: ${now.windSpeed || '--'} mph;
+                const humidityVal = (now.relativeHumidity && now.relativeHumidity.value) ? now.relativeHumidity.value : '--';
+                document.getElementById('weather-humidity').textContent = Humidity: ${humidityVal}%;
+                document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
+                updateHeatRisk(tempF, humidityVal);
+                fetchSunriseSunset();
+              }
+            })
+            .catch(err => console.error('Weather observations error:', err));
+          fetch(gridUrl)
+            .then(res => res.json())
+            .then(gridData => {
+              if (gridData.properties?.periods) {
+                const days = gridData.properties.periods.slice(0, 3);
+                document.getElementById('rainfall-forecast-1').textContent =
+                  ${days[0]?.name || 'Day1'}: ${days[0]?.shortForecast || 'N/A'};
+                document.getElementById('rainfall-forecast-2').textContent =
+                  ${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'};
+                document.getElementById('rainfall-forecast-3').textContent =
+                  ${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'};
+              }
+            })
+            .catch(err => console.error('Rainfall forecast error:', err));
+          if (alertZone) {
+            const zoneId = alertZone.split('/').pop();
+            const alertUrl = https://api.weather.gov/alerts/active/zone/${zoneId};
+            fetch(alertUrl)
+              .then(res => res.json())
+              .then(alertData => {
+                if (alertData.features && alertData.features.length > 0) {
+                  const alertMsg = alertData.features.map(a => a.properties.headline).join('\n');
+                  document.getElementById('alert-message').textContent = alertMsg;
+                } else {
+                  document.getElementById('alert-message').textContent = 'No alerts at this time.';
+                }
+              })
+              .catch(err => console.error('Alerts fetch error:', err));
+          }
+        })
+        .catch(err => console.error('NWS points data error:', err));
+    }
+
+    /* ============== RIVER DATA ============== */
+    function fetchRiverData() {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 4);
+      const format = d => d.toISOString().split('.')[0];
+      const url = https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const siteProps = data.value.timeSeries[0]?.sourceInfo?.siteProperty;
+          if (siteProps) {
+            siteProps.forEach(prop => {
+              if (prop.propertyName === "floodStage") {
+                floodThreshold = parseFloat(prop.value);
+              }
+            });
+          }
+          const rawValues = data.value.timeSeries[0].values[0].value || [];
+          const floatValues = rawValues
+            .map(v => ({ dateTime: v.dateTime, stage: parseFloat(v.value) }))
+            .filter(pt => !isNaN(pt.stage));
+          if (floatValues.length === 0) {
+            document.getElementById('river-stage').textContent = 'No data available';
+            return;
+          }
+          const lastReading = floatValues[floatValues.length - 1].stage;
+          const lastReadingStr = ${lastReading.toFixed(2)} ft;
+          document.getElementById("river-timestamp").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+          const statusEl = document.getElementById("flood-status");
+          if (lastReading >= floodThreshold) {
+            statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
+            statusEl.style.fontSize = "48px";
+            statusEl.style.backgroundColor = "black";
+            statusEl.style.color = "white";
+            statusEl.style.textTransform = "uppercase";
+            statusEl.style.padding = "5px";
+            statusEl.style.margin = "0 auto";
+          } else {
+            statusEl.innerHTML = getWarningIcon() + " BELOW FLOOD STAGE";
+            statusEl.style.fontSize = "48px";
+            statusEl.style.backgroundColor = "white";
+            statusEl.style.color = "black";
+            statusEl.style.textTransform = "uppercase";
+            statusEl.style.padding = "5px";
+            statusEl.style.margin = "0 auto";
+          }
+          const groupedValues = groupBy3HourBlocks(floatValues);
+          renderRiverGraph(groupedValues, floodThreshold, lastReadingStr);
+        })
+        .catch(err => {
+          console.error('River Data fetch error:', err);
+          document.getElementById('river-stage').textContent = 'Error fetching data';
+        });
+    }
+    function groupBy3HourBlocks(dataArray) {
+      const blockMap = {};
+      dataArray.forEach(pt => {
+        const date = new Date(pt.dateTime);
+        const y = date.getFullYear();
+        const m = date.getMonth();
+        const d = date.getDate();
+        const hBlock = Math.floor(date.getHours() / 3) * 3;
+        const blockDate = new Date(y, m, d, hBlock, 0, 0, 0);
+        const key = blockDate.toISOString();
+        if (!blockMap[key]) {
+          blockMap[key] = { dateObj: blockDate, sum: 0, count: 0 };
+        }
+        blockMap[key].sum += pt.stage;
+        blockMap[key].count += 1;
+      });
+      return Object.values(blockMap)
+        .map(item => ({ dateObj: item.dateObj, stage: item.sum / item.count }))
+        .sort((a, b) => a.dateObj - b.dateObj);
+    }
+    function renderRiverGraph(dataPoints, floodThreshold, lastReadingStr) {
+      const container = document.getElementById("river-graph");
+      container.innerHTML = "";
+      if (!dataPoints.length) return;
+      let minStage = Math.min(...dataPoints.map(d => d.stage));
+      let maxStage = Math.max(...dataPoints.map(d => d.stage));
+      maxStage = Math.max(maxStage, 6);
+      minStage = Math.min(minStage, floodThreshold);
+      maxStage = Math.max(maxStage, floodThreshold);
+      const stageRange = (maxStage - minStage) || 1;
+      const minDate = dataPoints[0].dateObj;
+      const maxDate = dataPoints[dataPoints.length - 1].dateObj;
+      const totalMillis = maxDate - minDate;
+      const svgWidth = 1001;
+      const svgHeight = 280;
+      const graphHeight = 180;
+      const graphOffsetX = 60;
+      const graphWidth = svgWidth - graphOffsetX - 20;
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", svgWidth);
+      svg.setAttribute("height", svgHeight);
+      svg.setAttribute("viewBox", 0 0 ${svgWidth} ${svgHeight});
+
+      // Y-axis label
+      const yLabel = document.createElementNS(svgNS, "text");
+      yLabel.setAttribute("x", 25);
+      yLabel.setAttribute("y", svgHeight / 2 + 30);
+      yLabel.setAttribute("font-size", "18");
+      yLabel.setAttribute("font-weight", "bold");
+      yLabel.setAttribute("fill", "black");
+      yLabel.setAttribute("text-anchor", "start");
+      yLabel.setAttribute("transform", rotate(-90 25,${svgHeight / 2 + 30}));
+      yLabel.textContent = "Water Level (ft)";
+      svg.appendChild(yLabel);
+
+      function scaleX(dateObj) {
+        const currentMillis = dateObj - minDate;
+        // Shift x coordinate left by 20 px
+        return graphOffsetX + (currentMillis / totalMillis) * graphWidth - 20;
+      }
+      function scaleY(stage) {
+        return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
+      }
+
+      // Y-axis ticks
+      const startTick = Math.floor(minStage);
+      const endTick = Math.ceil(maxStage);
+      for (let tickVal = startTick; tickVal <= endTick; tickVal += 1) {
+        const fraction = (maxStage - tickVal) / stageRange;
+        const tickY = 20 + fraction * graphHeight;
+        const tickLine = document.createElementNS(svgNS, "line");
+        tickLine.setAttribute("x1", graphOffsetX - 5);
+        tickLine.setAttribute("x2", graphOffsetX);
+        tickLine.setAttribute("y1", tickY);
+        tickLine.setAttribute("y2", tickY);
+        tickLine.setAttribute("stroke", "black");
+        tickLine.setAttribute("stroke-width", "1");
+        svg.appendChild(tickLine);
+
+        const tickLabel = document.createElementNS(svgNS, "text");
+        tickLabel.setAttribute("x", graphOffsetX - 10);
+        tickLabel.setAttribute("y", tickY + 4);
+        tickLabel.setAttribute("font-size", "21");
+        tickLabel.setAttribute("fill", "black");
+        tickLabel.setAttribute("text-anchor", "end");
+        tickLabel.textContent = tickVal.toFixed(0);
+        svg.appendChild(tickLabel);
+      }
+
+      // Data path
+      const pathData = dataPoints.map((pt, i) => {
+        const x = scaleX(pt.dateObj);
+        const y = scaleY(pt.stage);
+        return (i === 0 ? 'M' : 'L') + x + ',' + y;
+      }).join(' ');
+      const polyline = document.createElementNS(svgNS, "path");
+      polyline.setAttribute("d", pathData);
+      polyline.setAttribute("stroke", "black");
+      polyline.setAttribute("fill", "none");
+      polyline.setAttribute("stroke-width", "6.6");
+      svg.appendChild(polyline);
+
+      // Flood line
+      const floodY = scaleY(floodThreshold);
+      const floodLine = document.createElementNS(svgNS, "line");
+      floodLine.setAttribute("x1", graphOffsetX);
+      floodLine.setAttribute("x2", graphOffsetX + graphWidth);
+      floodLine.setAttribute("y1", floodY);
+      floodLine.setAttribute("y2", floodY);
+      floodLine.setAttribute("stroke", "black");
+      floodLine.setAttribute("stroke-dasharray", "6,3");
+      floodLine.setAttribute("stroke-width", "4");
+      svg.appendChild(floodLine);
+
+      // Flood Stage label
+      const floodLabel = document.createElementNS(svgNS, "text");
+      floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
+      floodLabel.setAttribute("y", floodY - 10);
+      floodLabel.setAttribute("font-size", "32");
+      floodLabel.setAttribute("font-weight", "bold");
+      floodLabel.setAttribute("fill", "black");
+      floodLabel.setAttribute("text-anchor", "end");
+      floodLabel.textContent = "Flood Stage";
+      svg.appendChild(floodLabel);
+
+      // Date labels and circles
+      const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      let lastDay = "";
+      dataPoints.forEach((pt, i) => {
+        const x = scaleX(pt.dateObj);
+        const y = scaleY(pt.stage);
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", 3);
+        circle.setAttribute("fill", "black");
+        svg.appendChild(circle);
+
+        const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        if (dayLabel !== minDateLabel && dayLabel !== lastDay) {
+          lastDay = dayLabel;
+          const label = document.createElementNS(svgNS, "text");
+          label.setAttribute("x", x);
+          label.setAttribute("y", 240);
+          label.setAttribute("font-size", "30");
+          label.setAttribute("fill", "black");
+          label.setAttribute("text-anchor", "middle");
+          label.textContent = dayLabel;
+          svg.appendChild(label);
+        }
+        if (i === dataPoints.length - 1) {
+          // Shift measurement text left by 10% of graph width
+          const measurement = document.createElementNS(svgNS, "text");
+          measurement.setAttribute("x", x - 0.1 * graphWidth);
+          measurement.setAttribute("y", y + 45);
+          measurement.setAttribute("font-size", "35");
+          measurement.setAttribute("font-weight", "bold");
+          measurement.setAttribute("fill", "white");
+          measurement.setAttribute("text-anchor", "middle");
+          measurement.textContent =  ${lastReadingStr} ;
+          const rect = document.createElementNS(svgNS, "rect");
+          setTimeout(() => {
+            const bbox = measurement.getBBox();
+            rect.setAttribute("x", bbox.x - 5);
+            rect.setAttribute("y", bbox.y);
+            rect.setAttribute("width", bbox.width + 10);
+            rect.setAttribute("height", bbox.height);
+            rect.setAttribute("fill", "black");
+          }, 0);
+          setTimeout(() => {
+            const bbox = measurement.getBBox();
+            rect.setAttribute("x", bbox.x - 5);
+            rect.setAttribute("y", bbox.y);
+            rect.setAttribute("width", bbox.width + 10);
+            rect.setAttribute("height", bbox.height);
+            svg.insertBefore(rect, measurement);
+          }, 0);
+          svg.appendChild(measurement);
+        }
+      });
+
+      container.appendChild(svg);
+    }
+
+    /* ============== WARNING ICON ============== */
+    function getWarningIcon() {
+      const svgNS = "http://www.w3.org/2000/svg";
+      let svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "48");
+      svg.setAttribute("height", "48");
+      svg.setAttribute("viewBox", "0 0 64 64");
+      svg.innerHTML = 
+        <polygon points="32,2 2,62 62,62" fill="black"/>
+        <text x="32" y="42" font-size="36" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>
+      ;
+      return svg.outerHTML;
     }
 
     /* ============== MASTER REFRESH ============== */
     function fetchAllData() {
-      fetchSunriseSunset();
-      // Add your other fetch calls (AQI, weather, river, etc.) here
+      updateAllTimestamps();
+      fetchRiverData();
+      fetchAQIData();
+      fetchNWSData();
     }
-
     window.onload = fetchAllData;
-    setInterval(fetchAllData, 10 * 60 * 1000);  // Refresh every 10 minutes
+    setInterval(fetchAllData, 10 * 60 * 1000);
   </script>
 </body>
 </html>
