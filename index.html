@@ -563,7 +563,7 @@
                 document.getElementById('weather-temp-F').textContent = `${tempF ?? '--'}°F`;
                 document.getElementById('weather-temp-C').textContent = `${tempC}°C`;
                 document.getElementById('weather-forecast').textContent = now.shortForecast || 'N/A';
-                document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed || '--'} mph`;
+                document.getElementById('weather-wind').textContent = `Wind: ${now.windSpeed || '--'}`;
                 const humidityVal = (now.relativeHumidity && now.relativeHumidity.value) ? now.relativeHumidity.value : '--';
                 document.getElementById('weather-humidity').textContent = `Humidity: ${humidityVal}%`;
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
