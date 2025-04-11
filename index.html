@@ -636,7 +636,7 @@
           document.getElementById("river-timestamp").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
-            statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
+            statusEl.textContent = "WARNING - RIVER AT OR ABOVE FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "black";
             statusEl.style.color = "white";
