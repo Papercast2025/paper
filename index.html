@@ -600,7 +600,7 @@
                   const alertMsg = alertData.features.map(a => a.properties.headline).join('\n');
                   document.getElementById('alert-message').textContent = alertMsg;
                 } else {
-                  document.getElementById('alert-message').textContent = 'No alerts at this time.';
+                  document.getElementById('alert-message').textContent = 'No alerts at this time / Sin alertas en este momento';
                 }
               })
               .catch(err => console.error('Alerts fetch error:', err));
