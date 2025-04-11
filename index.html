@@ -636,7 +636,7 @@
           document.getElementById("river-timestamp").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
-            statusEl.textContent = "AT OR ABOVE FLOOD STAGE";
+            statusEl.textContent = getWarningIcon() + "AT OR ABOVE FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "black";
             statusEl.style.color = "white";
@@ -644,7 +644,7 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           } else {
-            statusEl.innerHTML = getWarningIcon() + " BELOW FLOOD STAGE";
+            statusEl.innerHTML = " BELOW FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "white";
             statusEl.style.color = "black";
