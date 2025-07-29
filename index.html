@@ -357,7 +357,7 @@
 
     /* ============== SUNRISE/SUNSET ============== */
     function fetchSunriseSunset() {
-      const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`;
+      const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=1`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
