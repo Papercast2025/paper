@@ -367,8 +367,8 @@
             const sunriseLocal = new Date(sunriseUTC.getTime() - (sunriseUTC.getTimezoneOffset() * 60000));
             const sunsetLocal = new Date(sunsetUTC.getTime() - (sunsetUTC.getTimezoneOffset() * 60000));
             const options = { hour: 'numeric', minute: 'numeric' };
-            const sunriseStr = sunriseLocal.toLocaleTimeString(undefined, options);
-            const sunsetStr = sunsetLocal.toLocaleTimeString(undefined, options);
+            const sunriseStr = sunriseLocal.toLocaleTimeString(en-US, options);
+            const sunsetStr = sunsetLocal.toLocaleTimeString(en-US, options);
             const now = new Date();
             const isDay = now >= sunriseLocal && now < sunsetLocal;
             const icon = getSunriseSunsetIcon(isDay);
