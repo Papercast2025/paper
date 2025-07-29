@@ -490,7 +490,7 @@
 
     /* ============== AQI FETCH ============== */
     function fetchAQIData() {
-      const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${26158E56-5836-46D3-B819-92969016332B}`;
+      const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
