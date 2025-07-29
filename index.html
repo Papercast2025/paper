@@ -474,10 +474,12 @@
     }
     function updateHeatRisk(tempF, RH) {
       let HI = tempF;
-      if (tempF <= 80) {
-        // Heat index calculation omitted for brevity
+      if (tempF >= 80) {
+        const elem = document.getElementById('heat-risk-level');
+        elem.textContent = "Moderate Heat Risk";
+        elem.style.fontSize = "50px";
       }
-      if (tempF > 80) {
+      if (tempF < 80) {
         const elem = document.getElementById('heat-risk-level');
         elem.textContent = "Minimal Heat Risk / Calor: Riesgo mínimo";
         elem.style.fontSize = "50px";
