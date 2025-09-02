@@ -883,6 +883,23 @@
       `;
       return svg.outerHTML;
     }
+    
+    /* ====== CARD PRIORITIZATION / FITTER ====== */
+
+    /* Fixed canvas size of the ePaper */
+    const VIEWPORT_W = 1440;
+    const VIEWPORT_H = 2560;
+    
+    /* Edit this list to set priority (index 0 = highest priority, keep first) */
+    const CARD_PRIORITY = [
+      'heat-risk-section',
+      'alerts-section',
+      'weather-section',
+      'river-section',
+      'rainfall-forecast',
+      'swim-us64',
+      'aqi-section'
+    ];
 
     /* ============== MASTER REFRESH ============== */
     function fetchAllData() {
