@@ -297,6 +297,13 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
 
+    // NEW: force all times to a specific zone (fallback)
+    let TIME_ZONE = 'America/New_York';
+    const fmtDateTime = (d = new Date()) =>
+      new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short', timeZone: TIME_ZONE }).format(d);
+    const fmtTime = (d) =>
+      new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', timeZone: TIME_ZONE }).format(d);
+
     /* ============== HYDRATION TIPS ============== */
     const hydrationMessages = [
       "Remember to hydrate and take breaks in the shade!",
