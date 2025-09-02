@@ -900,6 +900,61 @@
       'swim-us64',
       'aqi-section'
     ];
+/* How many top cards are "protected" (never hidden).
+   Set to 0 if you want everything hideable. */
+const ALWAYS_KEEP_FIRST = 3;
+
+/* --- helpers --- */
+function cardPriority(el) {
+  const id = el.id || '';
+  const idx = CARD_PRIORITY.indexOf(id);
+  return idx === -1 ? 999 : idx;
+}
+function outerHeight(el) {
+  const cs = getComputedStyle(el);
+  // height + vertical margins
+  return el.getBoundingClientRect().height +
+         (parseFloat(cs.marginTop) || 0) +
+         (parseFloat(cs.marginBottom) || 0);
+}
+
+/* Hide lowest-priority cards until everything fits in 1440x2560 */
+function fitCardsToViewport() {
+  const header = document.getElementById('header');
+  const container = document.querySelector('.container');
+  if (!header || !container) return;
+
+  const cs = getComputedStyle(container);
+  const padTop = parseFloat(cs.paddingTop) || 0;
+  const padBottom = parseFloat(cs.paddingBottom) || 0;
+  const gap = parseFloat(cs.rowGap || cs.gap) || 0;
+
+  const cards = Array.from(container.querySelectorAll('.section'));
+
+  // Show everything first to measure true heights
+  cards.forEach(c => { c.style.display = 'flex'; });
+
+  function totalHeightIfVisible() {
+    let used = header.offsetHeight + padTop + padBottom;
+    const visible = cards.filter(c => c.style.display !== 'none');
+    visible.forEach((c, i) => {
+      used += outerHeight(c);
+      if (i > 0) used += gap; // account for flex column gap
+    });
+    return used;
+  }
+
+  // Hide from the bottom of the priority list upward until it fits
+  while (totalHeightIfVisible() > VIEWPORT_H) {
+    const candidates = cards
+      .filter(c => c.style.display !== 'none')
+      .filter(c => cardPriority(c) >= ALWAYS_KEEP_FIRST)
+      .sort((a, b) => cardPriority(b) - cardPriority(a)); // lowest priority first
+    if (!candidates.length) break; // can't hide more
+    candidates[0].style.display = 'none';
+  }
+}
+    
 
     /* ============== MASTER REFRESH ============== */
     function fetchAllData() {
