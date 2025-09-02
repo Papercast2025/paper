@@ -311,7 +311,7 @@
 
     function updateAllTimestamps() {
       const now = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp'];
+      const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp','swim-timestamp'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = "Last updated: " + now;
