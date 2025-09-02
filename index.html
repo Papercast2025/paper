@@ -297,6 +297,7 @@
     document.getElementById('header-lon').textContent = LON;
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
+    let LAST_AQI = null; // store last good AQI so we don't overwrite on errors
 
     // NEW: force all times to a specific zone (fallback)
     let TIME_ZONE = 'America/New_York';
@@ -441,7 +442,8 @@
 
       for (let i = 0; i < 5; i++) {
         const startAngle = 180 - i * segmentAngle;
-        const endAngle = 180 - (i + 1) * segmentAngle;
+        a = 180 - (i + 1) * segmentAngle;
+        const endAngle = a;
         const startRad = startAngle * Math.PI / 180;
         const endRad = endAngle * Math.PI / 180;
         const startX = centerX + radius * Math.cos(startRad);
@@ -491,7 +493,6 @@
       return `<svg>...</svg>`;
     }
     function updateHeatRisk(tempF, RH) {
-      let HI = tempF;
       const elem = document.getElementById('heat-risk-level');
       if (tempF >= 80) {
         elem.textContent = "Moderate Heat Risk / Calor: Riesgo moderado";
@@ -502,66 +503,82 @@
       }
     }
 
-    /* ============== AQI FETCH ============== */
-    function fetchAQIData() {
-      const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('aqi-timestamp').textContent = "Last updated: " + fmtDateTime();
-          const contentContainer = document.getElementById("aqi-content");
-          contentContainer.innerHTML = "";
-          if (Array.isArray(data) && data.length > 0) {
-            const main = data[0];
-            const aqiValue = parseInt(main.AQI, 10) || 0;
-            const category = (main.Category && main.Category.Name) ? main.Category.Name : "Unknown";
-            const leftDiv = document.createElement("div");
-            leftDiv.id = "aqi-classification";
-            leftDiv.textContent = category.toUpperCase();
-            const centerDiv = document.createElement("div");
-            centerDiv.id = "aqi-gauge-container";
-            centerDiv.appendChild(generateAirNowArcGauge(aqiValue, category));
-            const rightDiv = document.createElement("div");
-            rightDiv.id = "aqi-measurement";
-            rightDiv.textContent = "AQI: " + aqiValue;
-            contentContainer.appendChild(leftDiv);
-            contentContainer.appendChild(centerDiv);
-            contentContainer.appendChild(rightDiv);
-          } else {
-            const leftDiv = document.createElement("div");
-            leftDiv.id = "aqi-classification";
-            leftDiv.textContent = "GOOD";
-            const centerDiv = document.createElement("div");
-            centerDiv.id = "aqi-gauge-container";
-            centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
-            const rightDiv = document.createElement("div");
-            rightDiv.id = "aqi-measurement";
-            rightDiv.textContent = "AQI: 42";
-            contentContainer.appendChild(leftDiv);
-            contentContainer.appendChild(centerDiv);
-            contentContainer.appendChild(rightDiv);
-          }
-          setTimeout(fitCardsToViewport, 0);
-        })
-        .catch(err => {
-          console.error('AQI fetch error:', err);
-          document.getElementById('aqi-timestamp').textContent = "Last updated: N/A";
-          const contentContainer = document.getElementById("aqi-content");
-          contentContainer.innerHTML = "";
-          const leftDiv = document.createElement("div");
-          leftDiv.id = "aqi-classification";
-          leftDiv.textContent = "GOOD";
-          const centerDiv = document.createElement("div");
-          centerDiv.id = "aqi-gauge-container";
-          centerDiv.appendChild(generateAirNowArcGauge(42, "Good"));
-          const rightDiv = document.createElement("div");
-          rightDiv.id = "aqi-measurement";
-          rightDiv.textContent = "AQI: 42";
-          contentContainer.appendChild(leftDiv);
-          contentContainer.appendChild(centerDiv);
-          contentContainer.appendChild(rightDiv);
-          setTimeout(fitCardsToViewport, 0);
+    /* ============== AQI HELPERS/FETCH (FIXED) ============== */
+    function aqiCategoryFromValue(n) {
+      if (n <= 50) return "Good";
+      if (n <= 100) return "Moderate";
+      if (n <= 150) return "Unhealthy for Sensitive Groups";
+      if (n <= 200) return "Unhealthy";
+      if (n <= 300) return "Very Unhealthy";
+      return "Hazardous";
+    }
+
+    function renderAQI(state, isCached = false) {
+      const content = document.getElementById("aqi-content");
+      content.innerHTML = "";
+
+      const leftDiv = document.createElement("div");
+      leftDiv.id = "aqi-classification";
+      const centerDiv = document.createElement("div");
+      centerDiv.id = "aqi-gauge-container";
+      const rightDiv = document.createElement("div");
+      rightDiv.id = "aqi-measurement";
+
+      if (!state) {
+        leftDiv.textContent = "DATA UNAVAILABLE";
+        centerDiv.appendChild(generateAirNowArcGauge(0, "Unknown"));
+        rightDiv.textContent = "AQI: —";
+      } else {
+        const { aqiValue, category } = state;
+        leftDiv.textContent = category.toUpperCase() + (isCached ? " (CACHED)" : "");
+        centerDiv.appendChild(generateAirNowArcGauge(aqiValue, category));
+        rightDiv.textContent = "AQI: " + aqiValue;
+      }
+
+      content.appendChild(leftDiv);
+      content.appendChild(centerDiv);
+      content.appendChild(rightDiv);
+
+      document.getElementById("aqi-timestamp").textContent = "Last updated: " + fmtDateTime();
+      setTimeout(fitCardsToViewport, 0);
+    }
+
+    async function fetchAQIData() {
+      const url =
+        `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json` +
+        `&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}&_=${Date.now()}`;
+
+      try {
+        const res = await fetch(url, { cache: "no-store", headers: { "Accept": "application/json" } });
+        if (!res.ok) throw new Error(`AirNow HTTP ${res.status}`);
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) throw new Error("No observations");
+
+        // Prefer PM2.5, then O3, then PM10; otherwise take the highest AQI available.
+        const prefer = ["PM2.5", "O3", "PM10"];
+        const sorted = data.slice().sort((a, b) => {
+          const ai = prefer.indexOf((a.ParameterName || "").toUpperCase() === "PM2.5" ? "PM2.5" : (a.ParameterName || ""));
+          const bi = prefer.indexOf((b.ParameterName || "").toUpperCase() === "PM2.5" ? "PM2.5" : (b.ParameterName || ""));
+          const ap = ai === -1 ? 999 : ai;
+          const bp = bi === -1 ? 999 : bi;
+          if (ap !== bp) return ap - bp;
+          return (b.AQI || 0) - (a.AQI || 0);
         });
+
+        const best = sorted[0];
+        const aqiValue = Math.round(Number(best.AQI));
+        const category = (best.Category && best.Category.Name) ? best.Category.Name : aqiCategoryFromValue(aqiValue);
+
+        LAST_AQI = { aqiValue, category };
+        renderAQI(LAST_AQI);
+      } catch (err) {
+        console.error("AQI fetch error:", err);
+        if (LAST_AQI) {
+          renderAQI(LAST_AQI, true);
+        } else {
+          renderAQI(null);
+        }
+      }
     }
 
     /* ============== WEATHER (NWS) ============== */
@@ -902,7 +919,6 @@
       'swim-us64',
       'aqi-section',
       'rainfall-forecast'
-
     ];
 
     /* How many top cards are protected (never hidden) */
