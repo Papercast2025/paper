@@ -375,10 +375,8 @@
         .then(res => res.json())
         .then(data => {
           if (data.status === "OK") {
-            const sunriseUTC = new Date(data.results.sunrise);
-            const sunsetUTC = new Date(data.results.sunset);
-            const sunriseLocal = new Date(sunriseUTC.getTime() - (sunriseUTC.getTimezoneOffset() * 60000));
-            const sunsetLocal = new Date(sunsetUTC.getTime() - (sunsetUTC.getTimezoneOffset() * 60000));
+            const sunriseLocal = new Date(data.results.sunrise);
+            const sunsetLocal = new Date(data.results.sunset);
             const options = { hour: 'numeric', minute: 'numeric' };
             const sunriseStr = sunriseLocal.toLocaleTimeString('en-US', options);
             const sunsetStr = sunsetLocal.toLocaleTimeString('en-US', options);
