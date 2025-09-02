@@ -889,6 +889,8 @@
     /* Fixed canvas size of the ePaper */
     const VIEWPORT_W = 1440;
     const VIEWPORT_H = 2560;
+    if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => setTimeout(fitCardsToViewport, 0));
     
     /* Edit this list to set priority (index 0 = highest priority, keep first) */
     const CARD_PRIORITY = [
