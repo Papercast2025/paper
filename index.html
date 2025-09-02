@@ -314,23 +314,22 @@
       "Stay cool—sip water frequently.",
       "Lleva contigo una botella de agua y toma sorbos con frecuencia.",
       "Keep a water bottle handy and sip often."
-
     ];
 
     function updateAllTimestamps() {
-  const nowStr = fmtDateTime();
-  const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp','swim-timestamp'];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = "Last updated: " + nowStr;
-  });
-  document.getElementById("hydration-message").textContent =
-    hydrationMessages[Math.floor(Math.random() * hydrationMessages.length)];
+      const nowStr = fmtDateTime();
+      const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp','swim-timestamp'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "Last updated: " + nowStr;
+      });
+      document.getElementById("hydration-message").textContent =
+        hydrationMessages[Math.floor(Math.random() * hydrationMessages.length)];
     }
 
     /* ============== GET WEATHER ICON ============== */
     function getWeatherIcon(forecast) {
-      forecast = forecast.toLowerCase();
+      forecast = (forecast || '').toLowerCase();
       let iconSVG = "";
       if (forecast.includes("sunny") || forecast.includes("clear")) {
         iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
@@ -385,7 +384,6 @@
           if (data.status === "OK") {
             const sunriseLocal = new Date(data.results.sunrise);
             const sunsetLocal = new Date(data.results.sunset);
-            const options = { hour: 'numeric', minute: 'numeric' };
             const sunriseStr = fmtTime(sunriseLocal);
             const sunsetStr  = fmtTime(sunsetLocal);
             const now = new Date();
@@ -397,6 +395,7 @@
                 Sunrise: ${sunriseStr}<br/>Sunset: ${sunsetStr}
               </div>
             `;
+            setTimeout(fitCardsToViewport, 0);
           }
         })
         .catch(err => console.error("Sunrise/Sunset fetch error:", err));
@@ -487,23 +486,19 @@
       return svg;
     }
 
-    /* ============== HEAT RISK GAUGE (REMOVED) ============== */
+    /* ============== HEAT RISK ============== */
     function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
       return `<svg>...</svg>`;
     }
     function updateHeatRisk(tempF, RH) {
       let HI = tempF;
+      const elem = document.getElementById('heat-risk-level');
       if (tempF >= 80) {
-        const elem = document.getElementById('heat-risk-level');
         elem.textContent = "Moderate Heat Risk / Calor: Riesgo moderado";
         elem.style.fontSize = "50px";
-      }
-      if (tempF < 80) {
-        const elem = document.getElementById('heat-risk-level');
+      } else {
         elem.textContent = "Minimal Heat Risk / Calor: Riesgo mínimo";
         elem.style.fontSize = "50px";
-      } else {
-        // Gauge generation code omitted for brevity
       }
     }
 
@@ -513,7 +508,6 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
           document.getElementById('aqi-timestamp').textContent = "Last updated: " + fmtDateTime();
           const contentContainer = document.getElementById("aqi-content");
           contentContainer.innerHTML = "";
@@ -547,6 +541,7 @@
             contentContainer.appendChild(centerDiv);
             contentContainer.appendChild(rightDiv);
           }
+          setTimeout(fitCardsToViewport, 0);
         })
         .catch(err => {
           console.error('AQI fetch error:', err);
@@ -565,6 +560,7 @@
           contentContainer.appendChild(leftDiv);
           contentContainer.appendChild(centerDiv);
           contentContainer.appendChild(rightDiv);
+          setTimeout(fitCardsToViewport, 0);
         });
     }
 
@@ -578,6 +574,7 @@
           const obsUrl = pointData.properties.forecastHourly;
           const gridUrl = pointData.properties.forecast;
           const alertZone = pointData.properties.forecastZone;
+
           fetch(obsUrl)
             .then(res => res.json())
             .then(obsData => {
@@ -594,9 +591,11 @@
                 document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
                 updateHeatRisk(tempF, humidityVal);
                 fetchSunriseSunset();
+                setTimeout(fitCardsToViewport, 0);
               }
             })
             .catch(err => console.error('Weather observations error:', err));
+
           fetch(gridUrl)
             .then(res => res.json())
             .then(gridData => {
@@ -608,9 +607,11 @@
                   `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
                 document.getElementById('rainfall-forecast-3').textContent =
                   `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
+                setTimeout(fitCardsToViewport, 0);
               }
             })
             .catch(err => console.error('Rainfall forecast error:', err));
+
           if (alertZone) {
             const zoneId = alertZone.split('/').pop();
             const alertUrl = `https://api.weather.gov/alerts/active/zone/${zoneId}`;
@@ -623,6 +624,7 @@
                 } else {
                   document.getElementById('alert-message').textContent = 'No alerts at this time / Sin alertas en este momento';
                 }
+                setTimeout(fitCardsToViewport, 0);
               })
               .catch(err => console.error('Alerts fetch error:', err));
           }
@@ -868,6 +870,7 @@
       });
 
       container.appendChild(svg);
+      setTimeout(fitCardsToViewport, 0);
     }
 
     /* ============== WARNING ICON ============== */
@@ -889,10 +892,8 @@
     /* Fixed canvas size of the ePaper */
     const VIEWPORT_W = 1440;
     const VIEWPORT_H = 2560;
-    if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(() => setTimeout(fitCardsToViewport, 0));
-    
-    /* Edit this list to set priority (index 0 = highest priority, keep first) */
+
+    /* Edit this list to set priority (index 0 = highest = keep first) */
     const CARD_PRIORITY = [
       'heat-risk-section',
       'alerts-section',
@@ -902,61 +903,69 @@
       'swim-us64',
       'aqi-section'
     ];
-/* How many top cards are "protected" (never hidden).
-   Set to 0 if you want everything hideable. */
-const ALWAYS_KEEP_FIRST = 3;
 
-/* --- helpers --- */
-function cardPriority(el) {
-  const id = el.id || '';
-  const idx = CARD_PRIORITY.indexOf(id);
-  return idx === -1 ? 999 : idx;
-}
-function outerHeight(el) {
-  const cs = getComputedStyle(el);
-  // height + vertical margins
-  return el.getBoundingClientRect().height +
-         (parseFloat(cs.marginTop) || 0) +
-         (parseFloat(cs.marginBottom) || 0);
-}
+    /* How many top cards are protected (never hidden) */
+    const ALWAYS_KEEP_FIRST = 3;
 
-/* Hide lowest-priority cards until everything fits in 1440x2560 */
-function fitCardsToViewport() {
-  const header = document.getElementById('header');
-  const container = document.querySelector('.container');
-  if (!header || !container) return;
+    /* --- helpers --- */
+    function cardPriority(el) {
+      const id = el.id || '';
+      const idx = CARD_PRIORITY.indexOf(id);
+      return idx === -1 ? 999 : idx;
+    }
+    function outerHeight(el) {
+      const cs = getComputedStyle(el);
+      // height + vertical margins
+      return el.getBoundingClientRect().height +
+             (parseFloat(cs.marginTop) || 0) +
+             (parseFloat(cs.marginBottom) || 0);
+    }
 
-  const cs = getComputedStyle(container);
-  const padTop = parseFloat(cs.paddingTop) || 0;
-  const padBottom = parseFloat(cs.paddingBottom) || 0;
-  const gap = parseFloat(cs.rowGap || cs.gap) || 0;
+    /* Hide lowest-priority cards until everything fits in 1440x2560 */
+    function fitCardsToViewport() {
+      const header = document.getElementById('header');
+      const container = document.querySelector('.container');
+      if (!header || !container) return;
 
-  const cards = Array.from(container.querySelectorAll('.section'));
+      const cs = getComputedStyle(container);
+      const padTop = parseFloat(cs.paddingTop) || 0;
+      const padBottom = parseFloat(cs.paddingBottom) || 0;
+      const gap = parseFloat(cs.rowGap || cs.gap) || 0;
 
-  // Show everything first to measure true heights
-  cards.forEach(c => { c.style.display = 'flex'; });
+      const cards = Array.from(container.querySelectorAll('.section'));
 
-  function totalHeightIfVisible() {
-    let used = header.offsetHeight + padTop + padBottom;
-    const visible = cards.filter(c => c.style.display !== 'none');
-    visible.forEach((c, i) => {
-      used += outerHeight(c);
-      if (i > 0) used += gap; // account for flex column gap
-    });
-    return used;
-  }
+      // Show everything first to measure true heights
+      cards.forEach(c => { c.style.display = 'flex'; });
 
-  // Hide from the bottom of the priority list upward until it fits
-  while (totalHeightIfVisible() > VIEWPORT_H) {
-    const candidates = cards
-      .filter(c => c.style.display !== 'none')
-      .filter(c => cardPriority(c) >= ALWAYS_KEEP_FIRST)
-      .sort((a, b) => cardPriority(b) - cardPriority(a)); // lowest priority first
-    if (!candidates.length) break; // can't hide more
-    candidates[0].style.display = 'none';
-  }
-}
-    
+      function totalHeightIfVisible() {
+        let used = header.offsetHeight + padTop + padBottom;
+        const visible = cards.filter(c => c.style.display !== 'none');
+        visible.forEach((c, i) => {
+          used += outerHeight(c);
+          if (i > 0) used += gap; // account for flex column gap
+        });
+        return used;
+      }
+
+      // Hide from the lowest priority upward until it fits
+      while (totalHeightIfVisible() > VIEWPORT_H) {
+        const candidates = cards
+          .filter(c => c.style.display !== 'none')
+          .filter(c => cardPriority(c) >= ALWAYS_KEEP_FIRST)
+          .sort((a, b) => cardPriority(b) - cardPriority(a)); // lowest priority first
+        if (!candidates.length) break; // can't hide more
+        candidates[0].style.display = 'none';
+      }
+    }
+
+    function fitNowAndLater() {
+      [0, 80, 600, 1600].forEach(ms => setTimeout(fitCardsToViewport, ms));
+    }
+
+    // Re-fit once fonts are loaded (Roboto changes metrics)
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => fitNowAndLater());
+    }
 
     /* ============== MASTER REFRESH ============== */
     function fetchAllData() {
@@ -964,11 +973,15 @@ function fitCardsToViewport() {
       fetchRiverData();
       fetchAQIData();
       fetchNWSData();
-      setTimeout(fitCardsToViewport, 50);
+      fitNowAndLater();
     }
-    window.onload = fetchAllData;
+
+    window.onload = () => {
+      fetchAllData();
+      fitNowAndLater();
+    };
+
     setInterval(fetchAllData, 10 * 60 * 1000);
-    setTimeout(fitCardsToViewport, 100);
   </script>
 </body>
 </html>
