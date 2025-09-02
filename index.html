@@ -962,9 +962,11 @@ function fitCardsToViewport() {
       fetchRiverData();
       fetchAQIData();
       fetchNWSData();
+      setTimeout(fitCardsToViewport, 50);
     }
     window.onload = fetchAllData;
     setInterval(fetchAllData, 10 * 60 * 1000);
+    setTimeout(fitCardsToViewport, 100);
   </script>
 </body>
 </html>
