@@ -317,14 +317,14 @@
     ];
 
     function updateAllTimestamps() {
-      const now = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp','swim-timestamp'];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = "Last updated: " + now;
-      });
-      document.getElementById("hydration-message").textContent =
-        hydrationMessages[Math.floor(Math.random() * hydrationMessages.length)];
+  const nowStr = fmtDateTime();
+  const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp','swim-timestamp'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = "Last updated: " + nowStr;
+  });
+  document.getElementById("hydration-message").textContent =
+    hydrationMessages[Math.floor(Math.random() * hydrationMessages.length)];
     }
 
     /* ============== GET WEATHER ICON ============== */
@@ -385,8 +385,8 @@
             const sunriseLocal = new Date(data.results.sunrise);
             const sunsetLocal = new Date(data.results.sunset);
             const options = { hour: 'numeric', minute: 'numeric' };
-            const sunriseStr = sunriseLocal.toLocaleTimeString('en-US', options);
-            const sunsetStr = sunsetLocal.toLocaleTimeString('en-US', options);
+            const sunriseStr = fmtTime(sunriseLocal);
+            const sunsetStr  = fmtTime(sunsetLocal);
             const now = new Date();
             const isDay = now >= sunriseLocal && now < sunsetLocal;
             const icon = getSunriseSunsetIcon(isDay);
@@ -513,7 +513,7 @@
         .then(res => res.json())
         .then(data => {
           const aqiTime = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-          document.getElementById('aqi-timestamp').textContent = "Last updated: " + aqiTime;
+          document.getElementById('aqi-timestamp').textContent = "Last updated: " + fmtDateTime();
           const contentContainer = document.getElementById("aqi-content");
           contentContainer.innerHTML = "";
           if (Array.isArray(data) && data.length > 0) {
@@ -657,7 +657,7 @@
           }
           const lastReading = floatValues[floatValues.length - 1].stage;
           const lastReadingStr = `${lastReading.toFixed(2)} ft`;
-          document.getElementById("river-timestamp").textContent = new Date().toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+          document.getElementById("river-timestamp").textContent = fmtDateTime();
           const statusEl = document.getElementById("flood-status");
           if (lastReading >= floodThreshold) {
             statusEl.textContent = "WARNING - RIVER AT OR ABOVE FLOOD STAGE";
