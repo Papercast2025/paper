@@ -440,10 +440,10 @@
       svg.setAttribute("height", height);
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
+      /* FIXED: removed accidental global "a =" */
       for (let i = 0; i < 5; i++) {
         const startAngle = 180 - i * segmentAngle;
-        a = 180 - (i + 1) * segmentAngle;
-        const endAngle = a;
+        const endAngle = 180 - (i + 1) * segmentAngle;
         const startRad = startAngle * Math.PI / 180;
         const endRad = endAngle * Math.PI / 180;
         const startX = centerX + radius * Math.cos(startRad);
@@ -503,7 +503,7 @@
       }
     }
 
-    /* ============== AQI HELPERS/FETCH (FIXED) ============== */
+    /* ============== AQI HELPERS/FETCH (WITH FALLBACK) ============== */
     function aqiCategoryFromValue(n) {
       if (n <= 50) return "Good";
       if (n <= 100) return "Moderate";
@@ -543,40 +543,79 @@
       setTimeout(fitCardsToViewport, 0);
     }
 
+    // Fallback source that supports CORS in the browser
+    async function fetchAQIFromOpenMeteo() {
+      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi,pm2_5,pm10,ozone&timezone=auto&_=${Date.now()}`;
+
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+      const data = await res.json();
+
+      const times = data?.hourly?.time || [];
+      const values = data?.hourly?.us_aqi || [];
+      if (!times.length || !values.length) throw new Error("Open-Meteo missing hourly/us_aqi");
+
+      // Use latest available hour <= now; else last entry
+      const now = new Date();
+      let idx = times.length - 1;
+      for (let i = times.length - 1; i >= 0; i--) {
+        if (new Date(times[i]) <= now) { idx = i; break; }
+      }
+
+      const aqiValue = Math.round(Number(values[idx]));
+      if (!Number.isFinite(aqiValue)) throw new Error("Open-Meteo AQI not finite");
+
+      const category = aqiCategoryFromValue(aqiValue);
+      LAST_AQI = { aqiValue, category };
+      renderAQI(LAST_AQI);
+    }
+
     async function fetchAQIData() {
-      const url =
+      const airnowUrl =
         `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json` +
         `&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}&_=${Date.now()}`;
 
       try {
-        const res = await fetch(url, { cache: "no-store", headers: { "Accept": "application/json" } });
+        const res = await fetch(airnowUrl, { mode: "cors", cache: "no-store", headers: { "Accept": "application/json" } });
         if (!res.ok) throw new Error(`AirNow HTTP ${res.status}`);
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) throw new Error("No observations");
 
-        // Prefer PM2.5, then O3, then PM10; otherwise take the highest AQI available.
-        const prefer = ["PM2.5", "O3", "PM10"];
-        const sorted = data.slice().sort((a, b) => {
-          const ai = prefer.indexOf((a.ParameterName || "").toUpperCase() === "PM2.5" ? "PM2.5" : (a.ParameterName || ""));
-          const bi = prefer.indexOf((b.ParameterName || "").toUpperCase() === "PM2.5" ? "PM2.5" : (b.ParameterName || ""));
+        const rows = Array.isArray(data) ? data.filter(r => Number.isFinite(Number(r?.AQI))) : [];
+        if (rows.length === 0) throw new Error("AirNow empty/invalid");
+
+        // Prefer PM2.5, then O3, then PM10; else highest AQI
+        const PREFER = ["PM2.5", "O3", "PM10"];
+        const norm = (s) => {
+          const x = (s || "").toUpperCase().replace(/\s+/g, "");
+          if (x === "PM2.5" || x === "PM25") return "PM2.5";
+          return x;
+        };
+        rows.sort((a, b) => {
+          const ai = PREFER.indexOf(norm(a.ParameterName));
+          const bi = PREFER.indexOf(norm(b.ParameterName));
           const ap = ai === -1 ? 999 : ai;
           const bp = bi === -1 ? 999 : bi;
-          if (ap !== bp) return ap - bp;
-          return (b.AQI || 0) - (a.AQI || 0);
+          if (ap !== bp) return ap - bp;                        // preferred first
+          return (Number(b.AQI) || 0) - (Number(a.AQI) || 0);   // then higher AQI
         });
 
-        const best = sorted[0];
+        const best = rows[0];
         const aqiValue = Math.round(Number(best.AQI));
-        const category = (best.Category && best.Category.Name) ? best.Category.Name : aqiCategoryFromValue(aqiValue);
+        const category = best?.Category?.Name || aqiCategoryFromValue(aqiValue);
 
         LAST_AQI = { aqiValue, category };
         renderAQI(LAST_AQI);
       } catch (err) {
-        console.error("AQI fetch error:", err);
-        if (LAST_AQI) {
-          renderAQI(LAST_AQI, true);
-        } else {
-          renderAQI(null);
+        console.warn("AirNow failed (likely CORS). Falling back to Open-Meteo →", err);
+        try {
+          await fetchAQIFromOpenMeteo();
+        } catch (fallbackErr) {
+          console.error("Open-Meteo fallback failed →", fallbackErr);
+          if (LAST_AQI) {
+            renderAQI(LAST_AQI, true); // show last known value
+          } else {
+            renderAQI(null);           // show DATA UNAVAILABLE
+          }
         }
       }
     }
