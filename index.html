@@ -504,6 +504,24 @@
     }
 
     /* ============== AQI HELPERS/FETCH (WITH FALLBACK) ============== */
+    
+    function aqiAdviceText(aqi, category, pollutant) {
+      const cat = (category || "").toLowerCase();
+      if (aqi == null || !Number.isFinite(aqi)) return "";
+      if (cat.includes("good")) return "Air quality is good for outdoor activities.";
+      if (cat.includes("moderate"))
+        return "Okay for most; unusually sensitive people may consider shorter outdoor exertion.";
+      if (cat.includes("sensitive"))
+        return "Sensitive groups: limit prolonged outdoor exertion; consider moving activities indoors.";
+      if (cat.includes("unhealthy"))
+        return "Everyone: reduce prolonged or heavy outdoor exertion; consider moving activities indoors.";
+      if (cat.includes("very"))
+        return "Avoid outdoor exertion; move activities indoors if possible.";
+      if (cat.includes("hazard"))
+        return "Stay indoors; avoid outdoor activity.";
+      return "";
+    }
+    
     function aqiCategoryFromValue(n) {
       if (n <= 50) return "Good";
       if (n <= 100) return "Moderate";
