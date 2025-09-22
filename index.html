@@ -200,6 +200,14 @@
       vertical-align: middle;
       margin-right: 5px;
     }
+    /* Paddle advisory line */
+    #paddle-advisory {
+      text-align: center;
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 8px;
+      padding: 4px 8px;
+    }
   </style>
 </head>
 <body>
@@ -259,10 +267,12 @@
         <div class="label" id="flood-status"></div>
       </div>
       <div id="river-graph"></div>
-      <!-- NEW: Centered stats BELOW the graph -->
+      <!-- Centered stats BELOW the graph -->
       <div id="river-stats" class="label" style="text-align:center; margin-top:8px;">
         <span id="river-stage-line"></span> &nbsp;•&nbsp; <span id="river-flow-line"></span>
       </div>
+      <!-- NEW: Paddling advisory based on CFS -->
+      <div id="paddle-advisory" class="label">—</div>
       <div id="usgs-site-info">USGS Site #02096960 (Live)</div>
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
@@ -325,6 +335,16 @@
       new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short', timeZone: TIME_ZONE }).format(d);
     const fmtTime = (d) =>
       new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', timeZone: TIME_ZONE }).format(d);
+
+    /* ======= CFS→Paddling classification (tunable) =======
+       Adjust these thresholds to match local guidance.
+       Categories are evaluated in order; flood stage always closes access. */
+    const FLOW_CLASS_THRESHOLDS = {
+      too_low_max: 150,   // <150 cfs → too low
+      novice_max: 700,    // 150–700 → beginner/novice
+      expert_max: 1500,   // 701–1500 → expert paddlers
+      closed_min: 2500    // ≥2500 → ACCESS CLOSED (even if stage below flood)
+    };
 
     /* ============== HYDRATION TIPS ============== */
     const hydrationMessages = [
@@ -645,8 +665,8 @@
           const bi = PREFER.indexOf(norm(b.ParameterName));
           const ap = ai === -1 ? 999 : ai;
           const bp = bi === -1 ? 999 : bi;
-          if (ap !== bp) return ap - bp;                        // preferred first
-          return (Number(b.AQI) || 0) - (Number(a.AQI) || 0);   // then higher AQI
+          if (ap !== bp) return ap - bp;
+          return (Number(b.AQI) || 0) - (Number(a.AQI) || 0);
         });
 
         // Gauge/topline
@@ -683,9 +703,9 @@
         } catch (fallbackErr) {
           console.error("Open-Meteo fallback failed →", fallbackErr);
           if (LAST_AQI) {
-            renderAQI(LAST_AQI, true); // show last known value
+            renderAQI(LAST_AQI, true);
           } else {
-            renderAQI(null);           // show DATA UNAVAILABLE
+            renderAQI(null);
           }
         }
       }
@@ -822,14 +842,14 @@
         const lastTime = new Date(flowValues[flowValues.length - 1].dateTime).getTime();
         const windowStart = lastTime - 3 * 3600 * 1000; // last ~3 hours
         let subset = flowValues.filter(p => new Date(p.dateTime).getTime() >= windowStart);
-        if (subset.length < 2) subset = flowValues.slice(-6); // fallback to recent few
+        if (subset.length < 2) subset = flowValues.slice(-6);
 
         const first = subset[0].flow;
         const last  = subset[subset.length - 1].flow;
         const diff  = last - first;
         const pct   = Math.abs(diff) / Math.max(1, first);
-        const THRESH_CFS = 30;   // ignore tiny wiggles
-        const THRESH_PCT = 0.05; // 5%
+        const THRESH_CFS = 30;
+        const THRESH_PCT = 0.05;
 
         if (Math.abs(diff) < THRESH_CFS && pct < THRESH_PCT) return { arrow: '→', label: 'steady' };
         if (diff > 0) return { arrow: '▲', label: 'rising' };
@@ -845,16 +865,16 @@
           return { arrow: '→', label: 'steady' };
         }
         const lastTime = new Date(stageValues[stageValues.length - 1].dateTime).getTime();
-        const windowStart = lastTime - 3 * 3600 * 1000; // last ~3 hours
+        const windowStart = lastTime - 3 * 3600 * 1000;
         let subset = stageValues.filter(p => new Date(p.dateTime).getTime() >= windowStart);
-        if (subset.length < 2) subset = stageValues.slice(-6); // fallback
+        if (subset.length < 2) subset = stageValues.slice(-6);
 
         const first = subset[0].stage;
         const last  = subset[subset.length - 1].stage;
         const diff  = last - first;
         const pct   = Math.abs(diff) / Math.max(0.01, first);
-        const THRESH_FT  = 0.20; // ~2.4 inches
-        const THRESH_PCT = 0.02; // 2%
+        const THRESH_FT  = 0.20;
+        const THRESH_PCT = 0.02;
 
         if (Math.abs(diff) < THRESH_FT && pct < THRESH_PCT) return { arrow: '→', label: 'steady' };
         if (diff > 0) return { arrow: '▲', label: 'rising' };
@@ -864,7 +884,33 @@
       }
     }
 
-    /* ============== RIVER DATA (Stage ft + Discharge cfs + Trends) ============== */
+    /* ====== FLOW CLASSIFIER ====== */
+    function classifyFlow(cfs, stage, floodStage) {
+      // Stage-based automatic closure
+      if (Number.isFinite(stage) && Number.isFinite(floodStage) && stage >= floodStage) {
+        return { label: "ACCESS CLOSED, STAY OFF THE RIVER!", severity: 3 };
+      }
+      if (!Number.isFinite(cfs)) {
+        return { label: "—", severity: -1 };
+      }
+      const t = FLOW_CLASS_THRESHOLDS;
+      if (cfs < t.too_low_max) {
+        return { label: "Flow too low to paddle", severity: 0 };
+      }
+      if (cfs <= t.novice_max) {
+        return { label: "Beginner to Novice Paddlers", severity: 1 };
+      }
+      if (cfs <= t.expert_max) {
+        return { label: "Expert Paddlers", severity: 2 };
+      }
+      if (cfs >= t.closed_min) {
+        return { label: "ACCESS CLOSED, STAY OFF THE RIVER!", severity: 3 };
+      }
+      // If between expert_max and closed_min, treat as expert
+      return { label: "Expert Paddlers", severity: 2 };
+    }
+
+    /* ============== RIVER DATA (Stage ft + Discharge cfs + Trends + Classification) ============== */
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
@@ -906,9 +952,14 @@
             .map(v => ({ dateTime: v.dateTime, flow: parseFloat(v.value) }))
             .filter(pt => Number.isFinite(pt.flow));
 
+          const stageEl = document.getElementById('river-stage-line');
+          const flowEl  = document.getElementById('river-flow-line');
+          const padEl   = document.getElementById('paddle-advisory');
+
           if (stageValues.length === 0) {
-            document.getElementById('river-stage-line').textContent = 'Stage: —';
-            document.getElementById('river-flow-line').textContent  = 'Discharge: —';
+            stageEl.textContent = 'Stage: —';
+            flowEl.textContent  = 'Discharge: —';
+            padEl.textContent   = '—';
             document.getElementById('flood-status').textContent = 'No river data available';
             return;
           }
@@ -916,20 +967,30 @@
           const lastStage = stageValues[stageValues.length - 1].stage;
           const lastStageStr = `${lastStage.toFixed(2)} ft`;
 
-          const lastFlow = flowValues.length ? flowValues[flowValues.length - 1].flow : null;
+          const lastFlow = flowValues.length ? flowValues[flowValues.length - 1].flow : NaN;
           const lastFlowStr = Number.isFinite(lastFlow) ? `${Math.round(lastFlow)} cfs` : '—';
 
           // Trends
           const stageTrend = computeStageTrend(stageValues);
           const flowTrend  = computeFlowTrend(flowValues);
 
-          // Put BOTH lines below the graph, centered
-          document.getElementById('river-stage-line').textContent =
-            `Stage: ${lastStageStr} ${stageTrend.arrow} ${stageTrend.label}`;
-          document.getElementById('river-flow-line').textContent  =
-            `Discharge: ${lastFlowStr} ${flowTrend.arrow} ${flowTrend.label}`;
+          // Stats below graph
+          stageEl.textContent = `Stage: ${lastStageStr} ${stageTrend.arrow} ${stageTrend.label}`;
+          flowEl.textContent  = `Discharge: ${lastFlowStr} ${flowTrend.arrow} ${flowTrend.label}`;
 
           document.getElementById("river-timestamp").textContent = fmtDateTime();
+
+          // Classification (flow + stage)
+          const classif = classifyFlow(lastFlow, lastStage, floodThreshold);
+          padEl.textContent = classif.label;
+          // Style advisory emphasis
+          if (classif.severity === 3) {
+            padEl.style.backgroundColor = "black";
+            padEl.style.color = "white";
+          } else {
+            padEl.style.backgroundColor = "white";
+            padEl.style.color = "black";
+          }
 
           // Flood status text (updated wording)
           const statusEl = document.getElementById("flood-status");
@@ -960,6 +1021,10 @@
           document.getElementById('flood-status').textContent = 'Error fetching data';
           document.getElementById('river-stage-line').textContent = 'Stage: —';
           document.getElementById('river-flow-line').textContent  = 'Discharge: —';
+          const padEl = document.getElementById('paddle-advisory');
+          padEl.textContent = '—';
+          padEl.style.backgroundColor = "white";
+          padEl.style.color = "black";
         });
     }
 
@@ -1227,8 +1292,8 @@
         const candidates = cards
           .filter(c => c.style.display !== 'none')
           .filter(c => cardPriority(c) >= ALWAYS_KEEP_FIRST)
-          .sort((a, b) => cardPriority(b) - cardPriority(a)); // lowest priority first
-        if (!candidates.length) break; // can't hide more
+          .sort((a, b) => cardPriority(b) - cardPriority(a));
+        if (!candidates.length) break;
         candidates[0].style.display = 'none';
       }
     }
