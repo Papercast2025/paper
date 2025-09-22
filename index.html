@@ -266,7 +266,7 @@
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Rainfall Forecast Section (moved above AQI) -->
+    <!-- Rainfall Forecast Section (above AQI) -->
     <div class="section centered" id="rainfall-forecast">
       <div class="card-title">Rainfall Forecast</div>
       <div class="section-content">
@@ -315,10 +315,10 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
 
-    // We'll cache the last *good* AQI value + metadata (source, time, breakdown) to display if a fetch fails
+    // Cache last *good* AQI payload
     let LAST_AQI = null;
 
-    // NEW: force all times to a specific zone (fallback)
+    // Force all times to a specific zone (fallback)
     let TIME_ZONE = 'America/New_York';
     const fmtDateTime = (d = new Date()) =>
       new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short', timeZone: TIME_ZONE }).format(d);
@@ -521,7 +521,7 @@
       }
     }
 
-    /* ============== AQI HELPERS/FETCH (WITH SOURCE + GUIDANCE + BREAKDOWN) ============== */
+    /* ============== AQI HELPERS/FETCH (SOURCE + GUIDANCE + BREAKDOWN) ============== */
     function aqiCategoryFromValue(n) {
       if (n <= 50) return "Good";
       if (n <= 100) return "Moderate";
@@ -812,14 +812,39 @@
         .catch(err => console.error('NWS points data error:', err));
     }
 
-    /* ============== RIVER DATA (Stage ft + Discharge cfs) ============== */
+    /* ============== FLOW TREND (▲ rising / ▼ falling / → steady) ============== */
+    function computeFlowTrend(flowValues) {
+      try {
+        if (!Array.isArray(flowValues) || flowValues.length < 2) {
+          return { arrow: '→', label: 'steady' };
+        }
+        const lastTime = new Date(flowValues[flowValues.length - 1].dateTime).getTime();
+        const windowStart = lastTime - 3 * 3600 * 1000; // last ~3 hours
+        let subset = flowValues.filter(p => new Date(p.dateTime).getTime() >= windowStart);
+        if (subset.length < 2) subset = flowValues.slice(-6); // fallback to ~ last few readings
+
+        const first = subset[0].flow;
+        const last  = subset[subset.length - 1].flow;
+        const diff  = last - first;
+        const pct   = Math.abs(diff) / Math.max(1, first);
+        const THRESH_CFS = 30;   // ignore tiny absolute wiggles
+        const THRESH_PCT = 0.05; // 5% change
+
+        if (Math.abs(diff) < THRESH_CFS && pct < THRESH_PCT) return { arrow: '→', label: 'steady' };
+        if (diff > 0) return { arrow: '▲', label: 'rising' };
+        return { arrow: '▼', label: 'falling' };
+      } catch {
+        return { arrow: '→', label: 'steady' };
+      }
+    }
+
+    /* ============== RIVER DATA (Stage ft + Discharge cfs + Trend) ============== */
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
       start.setDate(end.getDate() - 4);
       const format = d => d.toISOString().split('.')[0];
 
-      // Request both gage height (00065, ft) and discharge (00060, cfs)
       const url =
         `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960` +
         `&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
@@ -834,7 +859,7 @@
           const stageSeries = findSeries("00065");
           const flowSeries  = findSeries("00060");
 
-          // Flood threshold (if available in site properties)
+          // Flood threshold
           const siteProps = stageSeries?.sourceInfo?.siteProperty || flowSeries?.sourceInfo?.siteProperty;
           if (siteProps) {
             siteProps.forEach(prop => {
@@ -845,7 +870,6 @@
             });
           }
 
-          // Build arrays
           const stageValuesRaw = stageSeries?.values?.[0]?.value || [];
           const stageValues = stageValuesRaw
             .map(v => ({ dateTime: v.dateTime, stage: parseFloat(v.value) }))
@@ -867,6 +891,9 @@
 
           const lastFlow = flowValues.length ? flowValues[flowValues.length - 1].flow : null;
           const lastFlowStr = Number.isFinite(lastFlow) ? `${Math.round(lastFlow)} cfs` : '—';
+          const trend = computeFlowTrend(flowValues);
+          const flowEl = document.getElementById('river-flow');
+          flowEl.textContent = `Discharge: ${lastFlowStr} ${trend.arrow} ${trend.label}`;
 
           document.getElementById("river-timestamp").textContent = fmtDateTime();
 
@@ -889,10 +916,6 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           }
-
-          // Show discharge (cfs)
-          const flowEl = document.getElementById('river-flow');
-          flowEl.textContent = `Discharge: ${lastFlowStr}`;
 
           // Graph uses stage (ft)
           const groupedValues = groupBy3HourBlocks(stageValues);
@@ -965,7 +988,7 @@
 
       function scaleX(dateObj) {
         const currentMillis = dateObj - minDate;
-        return graphOffsetX + (currentMillis / totalMillis) * graphWidth - 20; // left shift for padding
+        return graphOffsetX + (currentMillis / totalMillis) * graphWidth - 20;
       }
       function scaleY(stage) {
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
@@ -1115,7 +1138,7 @@
     const CARD_PRIORITY = [
       'alerts-section',
       'weather-section',
-      'rainfall-forecast',   // moved up
+      'rainfall-forecast',
       'river-section',
       'aqi-section',
       'swim-us64',
