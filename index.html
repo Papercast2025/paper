@@ -30,9 +30,7 @@
       justify-content: center;
     }
     /* Force AQI children inline and prevent wrapping */
-    #aqi-content {
-      white-space: nowrap;
-    }
+    #aqi-content { white-space: nowrap; }
     #aqi-content > div {
       display: inline-block;
       vertical-align: middle;
@@ -257,11 +255,14 @@
     <!-- River & Water Levels Section -->
     <div class="section" id="river-section">
       <div class="river-header">River & Water Levels</div>
-      <div class="section-content" style="margin-top: 56px; padding: 0 16px; text-align: center;">
+      <div class="section-content" style="margin-top: 16px; padding: 0 16px; text-align: center;">
         <div class="label" id="flood-status"></div>
-        <div class="label" id="river-flow" style="margin-top:8px;"></div>
       </div>
       <div id="river-graph"></div>
+      <!-- NEW: Centered stats BELOW the graph -->
+      <div id="river-stats" class="label" style="text-align:center; margin-top:8px;">
+        <span id="river-stage-line"></span> &nbsp;•&nbsp; <span id="river-flow-line"></span>
+      </div>
       <div id="usgs-site-info">USGS Site #02096960 (Live)</div>
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
@@ -812,7 +813,7 @@
         .catch(err => console.error('NWS points data error:', err));
     }
 
-    /* ============== FLOW TREND (▲ rising / ▼ falling / → steady) ============== */
+    /* ============== TREND HELPERS (▲ rising / ▼ falling / → steady) ============== */
     function computeFlowTrend(flowValues) {
       try {
         if (!Array.isArray(flowValues) || flowValues.length < 2) {
@@ -821,14 +822,14 @@
         const lastTime = new Date(flowValues[flowValues.length - 1].dateTime).getTime();
         const windowStart = lastTime - 3 * 3600 * 1000; // last ~3 hours
         let subset = flowValues.filter(p => new Date(p.dateTime).getTime() >= windowStart);
-        if (subset.length < 2) subset = flowValues.slice(-6); // fallback to ~ last few readings
+        if (subset.length < 2) subset = flowValues.slice(-6); // fallback to recent few
 
         const first = subset[0].flow;
         const last  = subset[subset.length - 1].flow;
         const diff  = last - first;
         const pct   = Math.abs(diff) / Math.max(1, first);
-        const THRESH_CFS = 30;   // ignore tiny absolute wiggles
-        const THRESH_PCT = 0.05; // 5% change
+        const THRESH_CFS = 30;   // ignore tiny wiggles
+        const THRESH_PCT = 0.05; // 5%
 
         if (Math.abs(diff) < THRESH_CFS && pct < THRESH_PCT) return { arrow: '→', label: 'steady' };
         if (diff > 0) return { arrow: '▲', label: 'rising' };
@@ -838,7 +839,32 @@
       }
     }
 
-    /* ============== RIVER DATA (Stage ft + Discharge cfs + Trend) ============== */
+    function computeStageTrend(stageValues) {
+      try {
+        if (!Array.isArray(stageValues) || stageValues.length < 2) {
+          return { arrow: '→', label: 'steady' };
+        }
+        const lastTime = new Date(stageValues[stageValues.length - 1].dateTime).getTime();
+        const windowStart = lastTime - 3 * 3600 * 1000; // last ~3 hours
+        let subset = stageValues.filter(p => new Date(p.dateTime).getTime() >= windowStart);
+        if (subset.length < 2) subset = stageValues.slice(-6); // fallback
+
+        const first = subset[0].stage;
+        const last  = subset[subset.length - 1].stage;
+        const diff  = last - first;
+        const pct   = Math.abs(diff) / Math.max(0.01, first);
+        const THRESH_FT  = 0.20; // ~2.4 inches
+        const THRESH_PCT = 0.02; // 2%
+
+        if (Math.abs(diff) < THRESH_FT && pct < THRESH_PCT) return { arrow: '→', label: 'steady' };
+        if (diff > 0) return { arrow: '▲', label: 'rising' };
+        return { arrow: '▼', label: 'falling' };
+      } catch {
+        return { arrow: '→', label: 'steady' };
+      }
+    }
+
+    /* ============== RIVER DATA (Stage ft + Discharge cfs + Trends) ============== */
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
@@ -881,7 +907,8 @@
             .filter(pt => Number.isFinite(pt.flow));
 
           if (stageValues.length === 0) {
-            document.getElementById('river-flow').textContent = '';
+            document.getElementById('river-stage-line').textContent = 'Stage: —';
+            document.getElementById('river-flow-line').textContent  = 'Discharge: —';
             document.getElementById('flood-status').textContent = 'No river data available';
             return;
           }
@@ -891,9 +918,16 @@
 
           const lastFlow = flowValues.length ? flowValues[flowValues.length - 1].flow : null;
           const lastFlowStr = Number.isFinite(lastFlow) ? `${Math.round(lastFlow)} cfs` : '—';
-          const trend = computeFlowTrend(flowValues);
-          const flowEl = document.getElementById('river-flow');
-          flowEl.textContent = `Discharge: ${lastFlowStr} ${trend.arrow} ${trend.label}`;
+
+          // Trends
+          const stageTrend = computeStageTrend(stageValues);
+          const flowTrend  = computeFlowTrend(flowValues);
+
+          // Put BOTH lines below the graph, centered
+          document.getElementById('river-stage-line').textContent =
+            `Stage: ${lastStageStr} ${stageTrend.arrow} ${stageTrend.label}`;
+          document.getElementById('river-flow-line').textContent  =
+            `Discharge: ${lastFlowStr} ${flowTrend.arrow} ${flowTrend.label}`;
 
           document.getElementById("river-timestamp").textContent = fmtDateTime();
 
@@ -924,7 +958,8 @@
         .catch(err => {
           console.error('River Data fetch error:', err);
           document.getElementById('flood-status').textContent = 'Error fetching data';
-          document.getElementById('river-flow').textContent = '';
+          document.getElementById('river-stage-line').textContent = 'Stage: —';
+          document.getElementById('river-flow-line').textContent  = 'Discharge: —';
         });
     }
 
