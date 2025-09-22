@@ -48,6 +48,11 @@
       line-height: 1.2;
       font-weight: 600;
     }
+    #aqi-breakdown {
+      font-size: 24px;
+      color: #222;
+      margin-top: 2px;
+    }
     #aqi-source {
       font-size: 24px;
       color: #444;
@@ -135,14 +140,6 @@
       margin-top: 8px;
       display: inline-block;
       text-align: center;
-    }
-    /* Y-axis label styling */
-    #y-axis-label {
-      font-size: 18px;
-      font-weight: bold;
-      fill: black;
-      text-anchor: start;
-      transform: rotate(-90 25,170);
     }
     /* Header styling */
     #header {
@@ -262,10 +259,22 @@
       <div class="river-header">River & Water Levels</div>
       <div class="section-content" style="margin-top: 56px; padding: 0 16px; text-align: center;">
         <div class="label" id="flood-status"></div>
+        <div class="label" id="river-flow" style="margin-top:8px;"></div>
       </div>
       <div id="river-graph"></div>
       <div id="usgs-site-info">USGS Site #02096960 (Live)</div>
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
+    </div>
+
+    <!-- Rainfall Forecast Section (moved above AQI) -->
+    <div class="section centered" id="rainfall-forecast">
+      <div class="card-title">Rainfall Forecast</div>
+      <div class="section-content">
+        <div class="label" id="rainfall-forecast-1">--</div>
+        <div class="label" id="rainfall-forecast-2">--</div>
+        <div class="label" id="rainfall-forecast-3">--</div>
+      </div>
+      <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
 
     <!-- AQI Section -->
@@ -278,20 +287,10 @@
       </div>
       <div id="aqi-extra">
         <div id="aqi-guidance">—</div>
+        <div id="aqi-breakdown">—</div>
         <div id="aqi-source">Source: —</div>
       </div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
-    </div>
-
-    <!-- Rainfall Forecast Section -->
-    <div class="section centered" id="rainfall-forecast">
-      <div class="card-title">Rainfall Forecast</div>
-      <div class="section-content">
-        <div class="label" id="rainfall-forecast-1">--</div>
-        <div class="label" id="rainfall-forecast-2">--</div>
-        <div class="label" id="rainfall-forecast-3">--</div>
-      </div>
-      <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
 
     <!-- Swim Guide -->
@@ -316,7 +315,7 @@
     const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
     let floodThreshold = 5.0;
 
-    // We'll cache the last *good* AQI value + metadata (source, time) to display if a fetch fails
+    // We'll cache the last *good* AQI value + metadata (source, time, breakdown) to display if a fetch fails
     let LAST_AQI = null;
 
     // NEW: force all times to a specific zone (fallback)
@@ -460,7 +459,6 @@
       svg.setAttribute("height", height);
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-      /* FIXED: no accidental global vars */
       for (let i = 0; i < 5; i++) {
         const startAngle = 180 - i * segmentAngle;
         const endAngle = 180 - (i + 1) * segmentAngle;
@@ -523,7 +521,7 @@
       }
     }
 
-    /* ============== AQI HELPERS/FETCH (WITH SOURCE + GUIDANCE) ============== */
+    /* ============== AQI HELPERS/FETCH (WITH SOURCE + GUIDANCE + BREAKDOWN) ============== */
     function aqiCategoryFromValue(n) {
       if (n <= 50) return "Good";
       if (n <= 100) return "Moderate";
@@ -559,14 +557,16 @@
         centerDiv.appendChild(generateAirNowArcGauge(0, "Unknown"));
         rightDiv.textContent = "AQI: —";
         document.getElementById("aqi-guidance").textContent = "—";
+        document.getElementById("aqi-breakdown").textContent = "—";
         document.getElementById("aqi-source").textContent = "Source: —";
       } else {
-        const { aqiValue, category, source, asOf } = state;
+        const { aqiValue, category, source, asOf, breakdown } = state;
         leftDiv.textContent = category.toUpperCase() + (isCached ? " (CACHED)" : "");
         centerDiv.appendChild(generateAirNowArcGauge(aqiValue, category));
         rightDiv.textContent = "AQI: " + aqiValue;
 
         document.getElementById("aqi-guidance").textContent = aqiGuidanceForCategory(category);
+        document.getElementById("aqi-breakdown").textContent = breakdown || "—";
         const sourceLabel = `Source: ${source || "—"} • As of ${fmtDateTime(asOf ? new Date(asOf) : new Date())}`;
         document.getElementById("aqi-source").textContent = sourceLabel;
       }
@@ -588,8 +588,8 @@
       const data = await res.json();
 
       const times = data?.hourly?.time || [];
-      const values = data?.hourly?.us_aqi || [];
-      if (!times.length || !values.length) throw new Error("Open-Meteo missing hourly/us_aqi");
+      const aqiSeries = data?.hourly?.us_aqi || [];
+      if (!times.length || !aqiSeries.length) throw new Error("Open-Meteo missing hourly/us_aqi");
 
       // Use latest available hour <= now; else last entry
       const now = new Date();
@@ -598,15 +598,23 @@
         if (new Date(times[i]) <= now) { idx = i; break; }
       }
 
-      const aqiValue = Math.round(Number(values[idx]));
+      const aqiValue = Math.round(Number(aqiSeries[idx]));
       if (!Number.isFinite(aqiValue)) throw new Error("Open-Meteo AQI not finite");
+
+      // Build a concentration breakdown if available
+      const fmt = (n) => Number.isFinite(n) ? Math.round(n) : "—";
+      const p25 = data?.hourly?.pm2_5 ? Number(data.hourly.pm2_5[idx]) : NaN;
+      const p10 = data?.hourly?.pm10 ? Number(data.hourly.pm10[idx]) : NaN;
+      const o3  = data?.hourly?.ozone ? Number(data.hourly.ozone[idx]) : NaN;
+      const breakdown = `PM2.5 ${fmt(p25)} µg/m³ • PM10 ${fmt(p10)} µg/m³ • O₃ ${fmt(o3)} µg/m³`;
 
       const category = aqiCategoryFromValue(aqiValue);
       LAST_AQI = {
         aqiValue,
         category,
         source: "Open-Meteo (US AQI)",
-        asOf: times[idx]
+        asOf: times[idx],
+        breakdown
       };
       renderAQI(LAST_AQI);
     }
@@ -640,17 +648,31 @@
           return (Number(b.AQI) || 0) - (Number(a.AQI) || 0);   // then higher AQI
         });
 
+        // Gauge/topline
         const best = rows[0];
         const aqiValue = Math.round(Number(best.AQI));
         const category = best?.Category?.Name || aqiCategoryFromValue(aqiValue);
         const param = norm(best.ParameterName) || "AQI";
         const area = best?.ReportingArea ? ` — ${best.ReportingArea}` : "";
 
+        // Pollutant AQI breakdown
+        const byPollutant = {};
+        rows.forEach(r => {
+          const p = norm(r.ParameterName);
+          if (p) byPollutant[p] = Math.round(Number(r.AQI));
+        });
+        const parts = [];
+        if (byPollutant["PM2.5"] != null) parts.push(`PM2.5 ${byPollutant["PM2.5"]} (${aqiCategoryFromValue(byPollutant["PM2.5"])})`);
+        if (byPollutant["PM10"]  != null) parts.push(`PM10 ${byPollutant["PM10"]} (${aqiCategoryFromValue(byPollutant["PM10"])})`);
+        if (byPollutant["O3"]    != null) parts.push(`O₃ ${byPollutant["O3"]} (${aqiCategoryFromValue(byPollutant["O3"])})`);
+        const breakdown = parts.length ? parts.join(" • ") : "—";
+
         LAST_AQI = {
           aqiValue,
           category,
           source: `AirNow (${param}${area})`,
-          asOf: new Date()  // using fetch time for consistency
+          asOf: new Date(),
+          breakdown
         };
         renderAQI(LAST_AQI);
       } catch (err) {
@@ -696,7 +718,6 @@
             c4 = -0.22475541, c5 = -0.00683783, c6 = -0.05481717,
             c7 = 0.00122874, c8 = 0.00085282, c9 = -0.00000199;
       let HI = c1 + c2*T + c3*R + c4*T*R + c5*T*T + c6*R*R + c7*T*T*R + c8*T*R*R + c9*T*T*R*R;
-      // adjustments
       if (R < 13 && T >= 80 && T <= 112) HI -= ((13 - R)/4) * Math.sqrt((17 - Math.abs(T - 95))/17);
       if (R > 85 && T >= 80 && T <= 87) HI += ((R - 85)/10) * ((87 - T)/5);
       return HI;
@@ -791,38 +812,68 @@
         .catch(err => console.error('NWS points data error:', err));
     }
 
-    /* ============== RIVER DATA ============== */
+    /* ============== RIVER DATA (Stage ft + Discharge cfs) ============== */
     function fetchRiverData() {
       const end = new Date();
       const start = new Date();
       start.setDate(end.getDate() - 4);
       const format = d => d.toISOString().split('.')[0];
-      const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
+
+      // Request both gage height (00065, ft) and discharge (00060, cfs)
+      const url =
+        `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960` +
+        `&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
+
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          const siteProps = data.value.timeSeries[0]?.sourceInfo?.siteProperty;
+          const series = data?.value?.timeSeries || [];
+          const findSeries = (code) =>
+            series.find(s => (s?.variable?.variableCode?.[0]?.value) === code);
+
+          const stageSeries = findSeries("00065");
+          const flowSeries  = findSeries("00060");
+
+          // Flood threshold (if available in site properties)
+          const siteProps = stageSeries?.sourceInfo?.siteProperty || flowSeries?.sourceInfo?.siteProperty;
           if (siteProps) {
             siteProps.forEach(prop => {
               if (prop.propertyName === "floodStage") {
-                floodThreshold = parseFloat(prop.value);
+                const n = parseFloat(prop.value);
+                if (Number.isFinite(n)) floodThreshold = n;
               }
             });
           }
-          const rawValues = data.value.timeSeries[0].values[0].value || [];
-          const floatValues = rawValues
+
+          // Build arrays
+          const stageValuesRaw = stageSeries?.values?.[0]?.value || [];
+          const stageValues = stageValuesRaw
             .map(v => ({ dateTime: v.dateTime, stage: parseFloat(v.value) }))
-            .filter(pt => !isNaN(pt.stage));
-          if (floatValues.length === 0) {
-            document.getElementById('river-stage').textContent = 'No data available';
+            .filter(pt => Number.isFinite(pt.stage));
+
+          const flowValuesRaw = flowSeries?.values?.[0]?.value || [];
+          const flowValues = flowValuesRaw
+            .map(v => ({ dateTime: v.dateTime, flow: parseFloat(v.value) }))
+            .filter(pt => Number.isFinite(pt.flow));
+
+          if (stageValues.length === 0) {
+            document.getElementById('river-flow').textContent = '';
+            document.getElementById('flood-status').textContent = 'No river data available';
             return;
           }
-          const lastReading = floatValues[floatValues.length - 1].stage;
-          const lastReadingStr = `${lastReading.toFixed(2)} ft`;
+
+          const lastStage = stageValues[stageValues.length - 1].stage;
+          const lastStageStr = `${lastStage.toFixed(2)} ft`;
+
+          const lastFlow = flowValues.length ? flowValues[flowValues.length - 1].flow : null;
+          const lastFlowStr = Number.isFinite(lastFlow) ? `${Math.round(lastFlow)} cfs` : '—';
+
           document.getElementById("river-timestamp").textContent = fmtDateTime();
+
+          // Flood status text (updated wording)
           const statusEl = document.getElementById("flood-status");
-          if (lastReading >= floodThreshold) {
-            statusEl.textContent = "WARNING - RIVER AT OR ABOVE FLOOD STAGE";
+          if (lastStage >= floodThreshold) {
+            statusEl.textContent = "FLOOD LEVELS UNSAFE, ACCESS CLOSED";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "black";
             statusEl.style.color = "white";
@@ -830,7 +881,7 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           } else {
-            statusEl.innerHTML = "BELOW FLOOD STAGE";
+            statusEl.textContent = "BELOW FLOOD STAGE";
             statusEl.style.fontSize = "48px";
             statusEl.style.backgroundColor = "white";
             statusEl.style.color = "black";
@@ -838,17 +889,25 @@
             statusEl.style.padding = "5px";
             statusEl.style.margin = "0 auto";
           }
-          const groupedValues = groupBy3HourBlocks(floatValues);
-          renderRiverGraph(groupedValues, floodThreshold, lastReadingStr);
+
+          // Show discharge (cfs)
+          const flowEl = document.getElementById('river-flow');
+          flowEl.textContent = `Discharge: ${lastFlowStr}`;
+
+          // Graph uses stage (ft)
+          const groupedValues = groupBy3HourBlocks(stageValues);
+          renderRiverGraph(groupedValues, floodThreshold, lastStageStr);
         })
         .catch(err => {
           console.error('River Data fetch error:', err);
-          document.getElementById('river-stage').textContent = 'Error fetching data';
+          document.getElementById('flood-status').textContent = 'Error fetching data';
+          document.getElementById('river-flow').textContent = '';
         });
     }
-    function groupBy3HourBlocks(dataArray) {
+
+    function groupBy3HourBlocks(stageArray) {
       const blockMap = {};
-      dataArray.forEach(pt => {
+      stageArray.forEach(pt => {
         const date = new Date(pt.dateTime);
         const y = date.getFullYear();
         const m = date.getMonth();
@@ -866,10 +925,12 @@
         .map(item => ({ dateObj: item.dateObj, stage: item.sum / item.count }))
         .sort((a, b) => a.dateObj - b.dateObj);
     }
+
     function renderRiverGraph(dataPoints, floodThreshold, lastReadingStr) {
       const container = document.getElementById("river-graph");
       container.innerHTML = "";
       if (!dataPoints.length) return;
+
       let minStage = Math.min(...dataPoints.map(d => d.stage));
       let maxStage = Math.max(...dataPoints.map(d => d.stage));
       maxStage = Math.max(maxStage, 6);
@@ -904,8 +965,7 @@
 
       function scaleX(dateObj) {
         const currentMillis = dateObj - minDate;
-        // Shift x coordinate left by 20 px
-        return graphOffsetX + (currentMillis / totalMillis) * graphWidth - 20;
+        return graphOffsetX + (currentMillis / totalMillis) * graphWidth - 20; // left shift for padding
       }
       function scaleY(stage) {
         return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
@@ -972,7 +1032,7 @@
       floodLabel.textContent = "Flood Stage";
       svg.appendChild(floodLabel);
 
-      // Date labels and circles
+      // Dots + last-reading tag
       const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       let lastDay = "";
       dataPoints.forEach((pt, i) => {
@@ -998,7 +1058,6 @@
           svg.appendChild(label);
         }
         if (i === dataPoints.length - 1) {
-          // Shift measurement text left by 10% of graph width
           const measurement = document.createElementNS(svgNS, "text");
           measurement.setAttribute("x", x - 0.1 * graphWidth);
           measurement.setAttribute("y", y + 45);
@@ -1056,7 +1115,7 @@
     const CARD_PRIORITY = [
       'alerts-section',
       'weather-section',
-      'rainfall-forecast',
+      'rainfall-forecast',   // moved up
       'river-section',
       'aqi-section',
       'swim-us64',
@@ -1074,7 +1133,6 @@
     }
     function outerHeight(el) {
       const cs = getComputedStyle(el);
-      // height + vertical margins
       return el.getBoundingClientRect().height +
              (parseFloat(cs.marginTop) || 0) +
              (parseFloat(cs.marginBottom) || 0);
