@@ -895,19 +895,19 @@
       }
       const t = FLOW_CLASS_THRESHOLDS;
       if (cfs < t.too_low_max) {
-        return { label: "Flow too low to paddle", severity: 0 };
+        return { label: "FLOW TOO LOW TO PADDLE", severity: 0 };
       }
       if (cfs <= t.novice_max) {
-        return { label: "Beginner to Novice Paddlers", severity: 1 };
+        return { label: "BEGINNER TO NOVICE PADDLERS", severity: 1 };
       }
       if (cfs <= t.expert_max) {
-        return { label: "Expert Paddlers", severity: 2 };
+        return { label: "EXPERT PADDLERS ONLY", severity: 2 };
       }
       if (cfs >= t.closed_min) {
         return { label: "ACCESS CLOSED, STAY OFF THE RIVER!", severity: 3 };
       }
       // If between expert_max and closed_min, treat as expert
-      return { label: "Expert Paddlers", severity: 2 };
+      return { label: "EXPERT PADDLERS ONLY", severity: 2 };
     }
 
     /* ============== RIVER DATA (Stage ft + Discharge cfs + Trends + Classification) ============== */
