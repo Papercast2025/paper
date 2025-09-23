@@ -893,7 +893,7 @@
       }
       const t = FLOW_CLASS_THRESHOLDS;
       if (cfs < t.too_low_max) {
-        return { label: "FLOW TOO LOW TO PADDLE!", severity: 0 };
+        return { label: "RIVER FLOW TOO LOW TO PADDLE (TAKE A HIKE INSTEAD)", severity: 0 };
       }
       if (cfs <= t.novice_max) {
         return { label: "BEGINNER TO NOVICE PADDLERS", severity: 1 };
