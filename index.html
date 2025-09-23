@@ -165,7 +165,7 @@
     #weather-temp-F { font-size: 100px; font-weight: bold; }
     #weather-temp-C { font-size: 50px; font-weight: bold; }
     #weather-details { text-align: right; }
-    #weather-details div { font-size: 25px; font-weight: bold; }
+    #weather-details div { font-size: 30px; font-weight: bold; }
     /* Sunrise/Sunset container: margin-left = 80px */
     #sunrise-sunset {
       display: inline-block;
@@ -895,7 +895,7 @@
       }
       const t = FLOW_CLASS_THRESHOLDS;
       if (cfs < t.too_low_max) {
-        return { label: "FLOW TOO LOW TO PADDLE", severity: 0 };
+        return { label: "FLOW TOO LOW TO PADDLE!", severity: 0 };
       }
       if (cfs <= t.novice_max) {
         return { label: "BEGINNER TO NOVICE PADDLERS", severity: 1 };
