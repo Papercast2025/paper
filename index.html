@@ -254,7 +254,7 @@
       <div class="card-title">Park Status</div>
       <div id="park-status-bar">OPEN / ABIERTO</div>
       <div id="park-status-subrow">
-        <div id="park-hours-today">Today: —</div>
+        <div id="park-hours-today">Hours today: —</div>
         <div id="park-hours-next" style="text-align:right;">Next: —</div>
       </div>
       <div class="card-timestamp" id="park-timestamp">Last updated: --</div>
@@ -431,7 +431,7 @@
 
     const bar = document.getElementById('park-status-bar');
     bar.textContent = isOpen ? 'OPEN / ABIERTO' : 'CLOSED / CERRADO';
-    bar.style.backgroundColor = '#000';
+    bar.style.backgroundColor = '#ccc';
     bar.style.color = '#fff';
 
     const fmtHM = (d) => new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute:'2-digit', hour12: true, timeZone: TIME_ZONE }).format(d);
