@@ -5,230 +5,263 @@
   <!-- @import must be at the very top -->
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
-    
-    body {
-      background-color: #f0f0f0;
-      color: #000;
-      font-family: 'Roboto', Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      width: 1440px;
-      height: 2560px;
-      overflow: hidden;
-      -webkit-text-size-adjust: none;
-    }
-    .container {
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    /* Utility class for row layout */
-    .row {
-      flex-direction: row !important;
-      align-items: center;
-      justify-content: center;
-    }
-    /* Force AQI children inline and prevent wrapping */
-    #aqi-content { white-space: nowrap; }
-    #aqi-content > div {
-      display: inline-block;
-      vertical-align: middle;
-      padding: 10px;
-      margin-top: 0;
-      position: relative;
-    }
-    /* Extra AQI info lines */
-    #aqi-extra { margin-top: 6px; text-align: center; }
-    #aqi-guidance {
-      font-size: 36px;
-      color: #222;
-      line-height: 1.2;
-      font-weight: 600;
-    }
-    #aqi-breakdown {
-      font-size: 28px;
-      color: #222;
-      margin-top: 2px;
-    }
-    #aqi-source {
-      font-size: 20px;
-      color: #444;
-    }
-    /* Card frame */
-    .section {
-      border: 4px solid #000;
-      padding: 16px;
-      box-sizing: border-box;
-      border-radius: 8px;
-      background-color: #fff;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-    /* Card header */
-    .card-title {
-      font-size: 36px;
-      font-weight: bold;
-      background-color: #000;
-      color: #fff;
-      padding: 4px 8px;
-      margin-bottom: 8px;
-      text-align: left;
-    }
-    /* River header: left aligned */
-    .river-header {
-      background-color: black;
-      color: white;
-      font-size: 36px;
-      font-weight: bold;
-      padding: 10px 8px;
-      text-align: left;
-      margin-bottom: 8px;
-    }
-    /* Centered sections */
-    .centered .section-content {
-      align-items: center;
-      text-align: center;
-    }
-    .section-content {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      text-align: right;
-    }
-    .value {
-      font-size: 100px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-    .label {
-      font-size: 32px;
-      color: #444;
-    }
-    .timestamp, .card-timestamp {
-      font-size: 24px;
-      color: #222;
-      margin-top: 8px;
-      text-align: right;
-    }
-    /* Hide old river measurement element */
-    #river-stage { display: none; }
-    /* River graph container */
-    #river-graph {
-      background-color: #cccccc;
-      display: block;
-      margin: 12px auto 0 auto;
-      position: relative;
-      width: 1080px;
-      padding-left: calc(5% - 4px);
-    }
-    /* USGS site info: full black */
-    #usgs-site-info {
-      width: 100%;
-      text-align: right;
-      font-size: 20px;
-      color: #000;
-      margin-top: 2px;
-    }
-    /* Flood status styling */
-    #flood-status {
-      font-weight: bold;
-      font-size: 48px;
-      margin-top: 8px;
-      display: inline-block;
-      text-align: center;
-    }
-    /* Header styling */
-    #header {
-      background-color: black;
-      color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 43px;
-      font-weight: bold;
-    }
-    #header a { color: white; text-decoration: underline; }
-    /* Weather Conditions: two-column layout */
-    #weather-section .section-content {
-      flex-direction: row;
-      justify-content: space-between;
-      width: 100%;
-    }
-    #weather-temp-container {
-      display: flex;
-      align-items: center;
-      text-align: left;
-    }
-    /* Increase weather icon size by 20% (to 126×126) */
-    #weather-icon { width: 126px; height: 126px; }
-    #weather-temp-F { font-size: 100px; font-weight: bold; }
-    #weather-temp-C { font-size: 50px; font-weight: bold; }
-    #weather-details { text-align: right; }
-    #weather-details div { font-size: 30px; font-weight: bold; }
-    /* Sunrise/Sunset container: margin-left = 80px */
-    #sunrise-sunset {
-      display: inline-block;
-      vertical-align: middle;
-      margin-left: 90px;
-      font-size: 35px;
-      font-weight: bold;
-      color: #000;
-    }
-    /* Alerts text */
-    #alert-message {
-      font-weight: bold;
-      white-space: pre-wrap;
-    }
-    /* AQI Section – children inline */
-    #aqi-classification, #aqi-measurement {
-      font-size: 38px;
-      font-weight: bold;
-      color: black;
-      margin-top: 0;
-    }
-    /* Hydration message */
-    #hydration-message {
-      font-size: 32px;
-      text-align: center;
-      margin-top: 10px;
-      color: #000;
-    }
-    /* Water Bottle icon */
-    #water-bottle {
-      display: inline-block;
-      vertical-align: middle;
-      margin-right: 5px;
-    }
-    /* Paddle advisory line */
-    #paddle-advisory {
-      text-align: center;
-      font-size: 36px;
-      font-weight: bold;
-      margin-top: 8px;
-      padding: 4px 8px;
-    }
+
+  /* ====== Base ====== */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 1440px;   /* fixed ePaper canvas */
+    height: 2560px; /* fixed ePaper canvas */
+    overflow: hidden;
+    -webkit-text-size-adjust: none;
+    background: #f0f0f0;
+    color: #000;
+    font-family: 'Roboto', Arial, sans-serif;
+  }
+
+  .container {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .section {
+    border: 4px solid #000;
+    padding: 16px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .card-title {
+    font-size: 36px;
+    font-weight: bold;
+    background: #000;
+    color: #fff;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    text-align: left;
+  }
+
+  .timestamp, .card-timestamp {
+    font-size: 24px;
+    color: #222;
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  .label { font-size: 32px; color: #444; }
+  .value { font-size: 100px; font-weight: bold; margin: 10px 0; }
+
+  /* ====== Header ====== */
+  #header {
+    background: #000;
+    color: #fff;
+    padding: 10px 16px;
+  }
+  #header-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-left, .header-right {
+    width: 120px; /* reserves space so the title stays perfectly centered */
+    min-width: 120px;
+  }
+  .header-left img {
+    width: 120px;
+    height: auto;
+    display: block;
+  }
+  .header-title {
+    flex: 1;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .header-title .main {
+    font-size: 43px;
+    font-weight: 800;
+  }
+  .header-title .coords {
+    font-size: 20px;
+    opacity: 0.9;
+  }
+
+  /* ====== Park Status ====== */
+  #park-status-bar {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    text-align: center;
+    font-size: 40px;
+    font-weight: 800;
+    padding: 8px 10px;
+    border-radius: 6px;
+    box-sizing: border-box;
+  }
+  #park-status-subrow {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  /* ====== Alerts ====== */
+  #alert-message {
+    font-weight: bold;
+    white-space: pre-wrap;
+    text-align: center;  /* keep centered */
+  }
+
+  /* ====== Weather ====== */
+  #weather-section .section-content {
+    display: flex;
+    gap: 18px;
+    width: 100%;
+  }
+  #weather-left {
+    flex: 0 0 33%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #weather-icon { width: 126px; height: 126px; }
+  #weather-temp-F { font-size: 100px; font-weight: bold; line-height: 1; }
+  #weather-temp-C { font-size: 50px; font-weight: bold; line-height: 1; }
+
+  #weather-right {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 26px;
+    row-gap: 4px;
+    align-content: start;
+  }
+  .weather-line {
+    font-size: 28px;
+    font-weight: normal;        /* not bolded */
+    text-align: left;           /* left aligned */
+  }
+  #weather-source {
+    font-size: 18px;
+    text-align: right;          /* right aligned above timestamp */
+    margin-top: 6px;
+    padding-right: 6px;         /* keep away from card edge */
+    color: #333;
+  }
+
+  /* ====== River ====== */
+  .river-header { background: #000; color:#fff; font-size: 36px; font-weight: bold; padding: 10px 8px; margin-bottom: 8px; }
+  #flood-status-row {
+    text-align: center;
+    margin: 6px 0 2px 0;
+  }
+  .river-topline, .river-class-banner {
+    display: inline-block;
+    font-size: 32px;
+    font-weight: 800;
+    padding: 4px 8px;
+    margin: 2px 6px;
+    vertical-align: middle;
+  }
+  .river-class-banner {
+    background:#000;
+    color:#fff;                 /* white on black */
+    border-radius: 4px;
+  }
+  #river-graph {
+    background: #ccc;
+    display: block;
+    margin: 12px auto 0 auto;
+    position: relative;
+    width: 1080px;
+    padding-left: calc(5% - 4px);
+  }
+  #usgs-site-info {
+    width: 100%;
+    text-align: right;
+    font-size: 20px;
+    color: #000;
+    margin-top: 2px;
+  }
+  #river-stats {
+    text-align:center;
+    margin-top:12px;
+    font-size: 30px;
+    font-weight: bold;          /* bold Stage / Discharge lines */
+  }
+
+  /* ====== Forecast ====== */
+  #forecast-lines {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;           /* bolded as requested */
+    line-height: 1.4;
+  }
+
+  /* ====== AQI ====== */
+  #aqi-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;        /* keep all centered */
+    gap: 6px;
+  }
+  #aqi-classification {
+    font-size: 32px;
+    font-weight: 800;
+  }
+  #aqi-gauge-container { margin-top: 4px; }
+  #aqi-measurement {
+    font-size: 30px;
+    font-weight: 800;
+  }
+  #aqi-extra { margin-top: 6px; text-align: center; }
+  #aqi-guidance { font-size: 26px; color: #222; font-weight: 600; }
+  #aqi-breakdown { font-size: 22px; color: #222; }
+  #aqi-source { font-size: 18px; color: #444; }
+
+  /* ====== Fit logic helpers ====== */
+  .centered .section-content { align-items: center; text-align: center; }
+
+  /* Fixed canvas constraints */
+  :root { --vw: 1440px; --vh: 2560px; }
   </style>
 </head>
 <body>
   <!-- Header -->
   <div id="header">
-    US 64 Haw River Access, 348 River Access Rd (<span id="header-lat">35.730995</span> / <span id="header-lon">-79.107109</span>)
-  </div>
-  <div class="container">
-    <!-- Heat Risk Section -->
-    <div class="section centered" id="heat-risk-section">
-      <div class="card-title">Heat Risk</div>
-      <div class="section-content row" id="heat-risk-content">
-        <div id="water-bottle"></div>
-        <div class="value" id="heat-risk-level">--</div>
+    <div id="header-inner">
+      <div class="header-left">
+        <img id="county-logo" src="catham-logo.jpg" alt="Chatham County"
+             onerror="this.style.display='none'">
       </div>
-      <div id="hydration-message">Remember to hydrate and take breaks in the shade!</div>
-      <div class="card-timestamp" id="heat-risk-timestamp">Last updated: --</div>
+      <div class="header-title">
+        <div class="main">US 64 Haw River Access, 348 River Access Rd</div>
+        <div class="coords">(<span id="header-lat">35.730995</span> / <span id="header-lon">-79.107109</span>)</div>
+      </div>
+      <div class="header-right" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Park Status -->
+    <div class="section" id="park-section">
+      <div class="card-title">Park Status</div>
+      <div id="park-status-bar">OPEN / ABIERTO</div>
+      <div id="park-status-subrow">
+        <div id="park-hours-today">Today: —</div>
+        <div id="park-hours-next" style="text-align:right;">Next: —</div>
+      </div>
+      <div class="card-timestamp" id="park-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Alerts Section -->
-    <div class="section centered" id="alerts-section">
+    <!-- Alerts -->
+    <div class="section" id="alerts-section">
       <div class="card-title">Alerts</div>
       <div class="section-content">
         <div class="label" id="alert-message">No alerts at this time / Sin alertas en este momento</div>
@@ -236,60 +269,72 @@
       <div class="card-timestamp" id="alerts-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Current Weather Conditions Section -->
-    <div class="section centered" id="weather-section">
+    <!-- Current Weather Conditions -->
+    <div class="section" id="weather-section">
       <div class="card-title">Current Weather Conditions</div>
       <div class="section-content">
-        <div id="weather-temp-container">
-          <div id="weather-icon" style="margin-right: 10px;"></div>
+        <div id="weather-left">
+          <div id="weather-icon" aria-hidden="true"></div>
           <div>
             <div id="weather-temp-F">--°F</div>
             <div id="weather-temp-C">--°C</div>
           </div>
-          <div id="sunrise-sunset"></div>
         </div>
-        <div id="weather-details">
-          <div id="weather-forecast">--</div>
-          <div id="weather-wind">Wind: --</div>
-          <div id="weather-humidity">Humidity: --%</div>
-          <div id="weather-feelslike">Feels like: --°F</div>
-          <div id="weather-dewpoint">Dew point: --°F</div>
+        <div id="weather-right">
+          <!-- left column -->
+          <div class="weather-line" id="sunrise-line">Sunrise: --</div>
+          <!-- right column -->
+          <div class="weather-line" id="forecast-line">--</div>
+
+          <div class="weather-line" id="sunset-line">Sunset: --</div>
+          <div class="weather-line" id="uv-line">UV Index (Open-Meteo): --</div>
+
+          <div class="weather-line" id="wind-line">Wind: --</div>
+          <div class="weather-line" id="humidity-line">Humidity: --%</div>
+
+          <div class="weather-line" id="feelslike-line">Feels like: --°F</div>
+          <div class="weather-line" id="dewpoint-line">Dew point: --°F</div>
         </div>
       </div>
+      <div id="weather-source">Source: —</div>
       <div class="card-timestamp" id="weather-timestamp">Last updated: --</div>
     </div>
 
-    <!-- River & Water Levels Section -->
+    <!-- River -->
     <div class="section" id="river-section">
       <div class="river-header">River Water Level & Flow</div>
-      <div class="section-content" style="margin-top: 16px; padding: 0 16px; text-align: center;">
-        <div class="label" id="flood-status"></div>
+
+      <div id="flood-status-row">
+        <span class="river-topline" id="flood-status">RIVER BELOW FLOOD STAGE 👍</span>
+        <span class="river-class-banner" id="paddle-advisory">—</span>
       </div>
+
       <div id="river-graph"></div>
-      <!-- Centered stats BELOW the graph -->
-      <div id="river-stats" class="label" style="text-align:center; margin-top:12px;">
-        <span id="river-stage-line"></span> &nbsp;•&nbsp; <span id="river-flow-line"></span>
+
+      <div id="river-stats">
+        <span id="river-stage-line"><strong>Stage:</strong> —</span>
+        &nbsp;•&nbsp;
+        <span id="river-flow-line"><strong>Discharge:</strong> —</span>
       </div>
-      <!-- NEW: Paddling advisory based on CFS -->
-      <div id="paddle-advisory" class="label">—</div>
+
       <div id="usgs-site-info">USGS Site #02096960</div>
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Current Forecast (above AQI) -->
-    <div class="section centered" id="rainfall-forecast">
-      <div class="card-title">Current Forecast</div>
-      <div class="section-content">
-        <div class="label" id="rainfall-forecast-1">--</div>
-        <div class="label" id="rainfall-forecast-2">--</div>
+    <!-- Forecast (two items) -->
+    <div class="section" id="rainfall-forecast">
+      <div class="card-title">Forecast</div>
+      <div id="forecast-lines">
+        <div id="rainfall-forecast-1">—</div>
+        <div id="rainfall-forecast-2">—</div>
       </div>
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
 
-    <!-- AQI Section -->
-    <div class="section centered" id="aqi-section">
+    <!-- AQI -->
+    <div class="section" id="aqi-section">
       <div class="card-title">Air Quality Index</div>
-      <div class="section-content" id="aqi-content">
+      <div id="aqi-content">
         <div id="aqi-classification">--</div>
         <div id="aqi-gauge-container"></div>
         <div id="aqi-measurement">AQI: --</div>
@@ -301,1025 +346,795 @@
       </div>
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
     </div>
-
-    <!-- Swim Guide -->
-    <div class="section centered" id="swim-us64">
-      <div class="card-title">Swim Guide: US&nbsp;64 Access</div>
-      <div class="section-content">
-        <div class="value" id="swim-status">✔ SAFE TO SWIM</div>
-        <div class="label" id="swim-sampled">Sampled: June&nbsp;27,&nbsp;2025 at&nbsp;13:45</div>
-        <div class="label">Via Swim&nbsp;Guide / Haw&nbsp;River Assembly</div>
-      </div>
-      <div class="card-timestamp" id="swim-timestamp">Last updated: --</div>
-    </div>
   </div>
 
-    
   <script>
-    /* ============== GLOBALS ============== */
-    let LAT = 35.77659;
-    let LON = -79.14597;
-    document.getElementById('header-lat').textContent = LAT;
-    document.getElementById('header-lon').textContent = LON;
-    const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
-    let floodThreshold = 5.0;
+  /* ===================== GLOBALS ===================== */
 
-    // Cache last *good* AQI payload
-    let LAST_AQI = null;
+  // Site coordinates (US 64 access). Change for the other site as needed.
+  let LAT = 35.730995;
+  let LON = -79.107109;
+  document.getElementById('header-lat').textContent = LAT;
+  document.getElementById('header-lon').textContent = LON;
 
-    // Force all times to a specific zone (fallback)
-    let TIME_ZONE = 'America/New_York';
-    const fmtDateTime = (d = new Date()) =>
-      new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short', timeZone: TIME_ZONE }).format(d);
-    const fmtTime = (d) =>
-      new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', timeZone: TIME_ZONE }).format(d);
+  // Time / formatting
+  const TIME_ZONE = 'America/New_York';
+  const fmtDateTime = (d = new Date()) =>
+    new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short', timeZone: TIME_ZONE }).format(d);
+  const fmtTime = (d) =>
+    new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', timeZone: TIME_ZONE }).format(d);
 
-    /* ======= CFS→Paddling classification (tunable) =======
-       Adjust these thresholds to match local guidance.
-       Categories are evaluated in order; flood stage always closes access. */
-    const FLOW_CLASS_THRESHOLDS = {
-      too_low_max: 200,   // <200 cfs → too low
-      novice_max: 700,    // 200–700 → beginner/novice
-      expert_max: 1600,   // 701–1600 → expert paddlers
-      closed_min: 2500    // ≥2500 → ACCESS CLOSED (even if stage below flood)
-    };
+  // Data keys
+  const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
 
-    /* ============== HYDRATION TIPS ============== */
-    const hydrationMessages = [
-      "Remember to hydrate and take breaks in the shade!",
-      "Bebe agua regularmente y camina con precaución.",
-      "Drink water regularly and hike safely.",
-      "Mantente fresco: bebe agua con frecuencia.",
-      "Stay cool—sip water frequently.",
-      "Lleva contigo una botella de agua y toma sorbos con frecuencia.",
-      "Keep a water bottle handy and sip often."
-    ];
+  // Park hours — easy to edit per weekday (0=Sun ... 6=Sat)
+  // Default: 8:00 AM – 7:00 PM
+  const PARK_HOURS = {
+    0: { open: "08:00", close: "19:00" },
+    1: { open: "08:00", close: "19:00" },
+    2: { open: "08:00", close: "19:00" },
+    3: { open: "08:00", close: "19:00" },
+    4: { open: "08:00", close: "19:00" },
+    5: { open: "08:00", close: "19:00" },
+    6: { open: "08:00", close: "19:00" }
+  };
 
-    function updateAllTimestamps() {
-      const nowStr = fmtDateTime();
-      const ids = ['heat-risk-timestamp','alerts-timestamp','weather-timestamp','rainfall-timestamp','aqi-timestamp','swim-timestamp'];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = "Last updated: " + nowStr;
-      });
-      document.getElementById("hydration-message").textContent =
-        hydrationMessages[Math.floor(Math.random() * hydrationMessages.length)];
-    }
+  // River guidance thresholds (CFS)
+  const FLOW_CLASS_THRESHOLDS = {
+    too_low_max: 200,   // <200 cfs → too low
+    novice_max: 700,    // 200–700 → beginner/novice
+    expert_max: 1600,   // 701–1600 → expert paddlers
+    closed_min: 2500    // ≥2500 → ACCESS CLOSED (even if stage below flood)
+  };
 
-    /* ============== GET WEATHER ICON ============== */
-    function getWeatherIcon(forecast) {
-      forecast = (forecast || '').toLowerCase();
-      let iconSVG = "";
-      if (forecast.includes("sunny") || forecast.includes("clear")) {
-        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
-          <circle cx="32" cy="32" r="12" fill="black" stroke="black" stroke-width="3"/>
-          <g stroke="black" stroke-width="3">
-            <line x1="32" y1="4" x2="32" y2="14"/>
-            <line x1="32" y1="50" x2="32" y2="60"/>
-            <line x1="4" y1="32" x2="14" y2="32"/>
-            <line x1="50" y1="32" x2="60" y2="32"/>
-            <line x1="12" y1="12" x2="18" y2="18"/>
-            <line x1="46" y1="46" x2="52" y2="52"/>
-            <line x1="12" y1="52" x2="18" y2="46"/>
-            <line x1="46" y1="18" x2="52" y2="12"/>
-          </g>
-        </svg>`;
-      } else if (forecast.includes("cloud")) {
-        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
-          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
-        </svg>`;
-      } else if (forecast.includes("rain")) {
-        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
-          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
-          <g stroke="black" stroke-width="3">
-            <line x1="22" y1="48" x2="22" y2="58"/>
-            <line x1="32" y1="48" x2="32" y2="58"/>
-            <line x1="42" y1="48" x2="42" y2="58"/>
-          </g>
-        </svg>`;
-      } else if (forecast.includes("snow")) {
-        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
-          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
-          <g stroke="black" stroke-width="3">
-            <line x1="32" y1="48" x2="32" y2="60"/>
-            <line x1="26" y1="52" x2="38" y2="52"/>
-          </g>
-        </svg>`;
-      } else {
-        iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
-          <circle cx="22" cy="22" r="10" fill="black" stroke="black" stroke-width="3"/>
-          <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
-        </svg>`;
+  let floodThreshold = 5.0; // default; replaced by USGS site property if present
+  let LAST_AQI = null;
+
+  function updateAllTimestamps() {
+    const nowStr = "Last updated: " + fmtDateTime();
+    [
+      'park-timestamp','alerts-timestamp','weather-timestamp',
+      'rainfall-timestamp','aqi-timestamp','river-timestamp'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = nowStr;
+    });
+  }
+
+  /* ===================== PARK STATUS ===================== */
+
+  function toLocalTodayTime(hhmm) {
+    const [H, M] = hhmm.split(':').map(n => parseInt(n, 10));
+    const d = new Date();
+    d.setHours(H, M, 0, 0);
+    return d;
+  }
+  function diffHM(later, earlier) {
+    let ms = later - earlier;
+    if (ms < 0) ms = 0;
+    const mins = Math.round(ms / 60000);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0 && m > 0) return `${h}h ${m}m`;
+    if (h > 0) return `${h}h`;
+    return `${m}m`;
+  }
+
+  function updateParkStatus() {
+    const now = new Date();
+    const dow = now.getDay();
+    const today = PARK_HOURS[dow];
+    const open = toLocalTodayTime(today.open);
+    const close = toLocalTodayTime(today.close);
+
+    const isOpen = now >= open && now < close;
+
+    const bar = document.getElementById('park-status-bar');
+    bar.textContent = isOpen ? 'OPEN / ABIERTO' : 'CLOSED / CERRADO';
+    bar.style.backgroundColor = '#000';
+    bar.style.color = '#fff';
+
+    const fmtHM = (d) => new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute:'2-digit', hour12: true, timeZone: TIME_ZONE }).format(d);
+
+    // Today line
+    document.getElementById('park-hours-today').textContent =
+      `Today: ${fmtHM(open)}–${fmtHM(close)}`;
+
+    // Next: if open -> closes today; else -> opens tomorrow
+    let nextLabel, nextTime, labelPrefix;
+    if (isOpen) {
+      nextTime = close;
+      labelPrefix = 'Next: Park closes at';
+    } else {
+      // find next open
+      let d = new Date(now);
+      let tries = 0;
+      while (tries < 8) {
+        d.setDate(d.getDate() + 1);
+        const idx = d.getDay();
+        const hrs = PARK_HOURS[idx];
+        const nOpen = new Date(d); nOpen.setHours(parseInt(hrs.open), parseInt(hrs.open.split(':')[1]), 0, 0);
+        nextTime = nOpen;
+        labelPrefix = 'Next: Park opens at';
+        break;
       }
-      return iconSVG;
     }
+    nextLabel = `${labelPrefix} ${fmtHM(nextTime)} (${isOpen ? 'in ' + diffHM(nextTime, now) : 'in ' + diffHM(nextTime, now)})`;
+    document.getElementById('park-hours-next').textContent = nextLabel;
+  }
 
-    /* ============== SUNRISE/SUNSET ============== */
-    function fetchSunriseSunset() {
-      const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === "OK") {
-            const sunriseLocal = new Date(data.results.sunrise);
-            const sunsetLocal = new Date(data.results.sunset);
-            const sunriseStr = fmtTime(sunriseLocal);
-            const sunsetStr  = fmtTime(sunsetLocal);
-            const now = new Date();
-            const isDay = now >= sunriseLocal && now < sunsetLocal;
-            const icon = getSunriseSunsetIcon(isDay);
-            document.getElementById("sunrise-sunset").innerHTML = `
-              <div style="display:inline-block; vertical-align:middle;">${icon}</div>
-              <div style="display:inline-block; vertical-align:middle; margin-left:10px; text-align:left;">
-                Sunrise: ${sunriseStr}<br/>Sunset: ${sunsetStr}
-              </div>
-            `;
-            setTimeout(fitCardsToViewport, 0);
+  /* ===================== ICONS ===================== */
+
+  function getWeatherIcon(forecast) {
+    forecast = (forecast || '').toLowerCase();
+    let iconSVG = "";
+    if (forecast.includes("sunny") || forecast.includes("clear")) {
+      iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="12" fill="black" stroke="black" stroke-width="3"/>
+        <g stroke="black" stroke-width="3">
+          <line x1="32" y1="4" x2="32" y2="14"/>
+          <line x1="32" y1="50" x2="32" y2="60"/>
+          <line x1="4" y1="32" x2="14" y2="32"/>
+          <line x1="50" y1="32" x2="60" y2="32"/>
+          <line x1="12" y1="12" x2="18" y2="18"/>
+          <line x1="46" y1="46" x2="52" y2="52"/>
+          <line x1="12" y1="52" x2="18" y2="46"/>
+          <line x1="46" y1="18" x2="52" y2="12"/>
+        </g>
+      </svg>`;
+    } else if (forecast.includes("cloud")) {
+      iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
+        <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
+      </svg>`;
+    } else if (forecast.includes("rain")) {
+      iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
+        <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
+        <g stroke="black" stroke-width="3">
+          <line x1="22" y1="48" x2="22" y2="58"/>
+          <line x1="32" y1="48" x2="32" y2="58"/>
+          <line x1="42" y1="48" x2="42" y2="58"/>
+        </g>
+      </svg>`;
+    } else {
+      iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
+        <circle cx="22" cy="22" r="10" fill="black" stroke="black" stroke-width="3"/>
+        <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
+      </svg>`;
+    }
+    return iconSVG;
+  }
+
+  /* ===================== SUN + UV ===================== */
+
+  function fetchSunriseSunset() {
+    const url = `https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "OK") {
+          const sunriseLocal = new Date(data.results.sunrise);
+          const sunsetLocal  = new Date(data.results.sunset);
+          document.getElementById("sunrise-line").textContent = `Sunrise: ${fmtTime(sunriseLocal)}`;
+          document.getElementById("sunset-line").textContent  = `Sunset: ${fmtTime(sunsetLocal)}`;
+        }
+      })
+      .catch(()=>{});
+  }
+
+  // Open-Meteo UV (hourly uv_index)
+  function fetchUV() {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=uv_index&timezone=auto&_=${Date.now()}`;
+    fetch(url)
+      .then(r => r.json())
+      .then(d => {
+        const t = d?.hourly?.time || [];
+        const u = d?.hourly?.uv_index || [];
+        if (t.length && u.length) {
+          const now = new Date();
+          let idx = t.length - 1;
+          for (let i = t.length - 1; i >= 0; i--) {
+            if (new Date(t[i]) <= now) { idx = i; break; }
           }
-        })
-        .catch(err => console.error("Sunrise/Sunset fetch error:", err));
+          const val = Math.round(u[idx] ?? 0);
+          document.getElementById('uv-line').textContent = `UV Index (Open-Meteo): ${val}`;
+        }
+      })
+      .catch(()=>{ document.getElementById('uv-line').textContent = 'UV Index (Open-Meteo): —'; });
+  }
+
+  /* ===================== WEATHER (NWS) ===================== */
+
+  function parseWindMph(windStr) {
+    const m = String(windStr || "").match(/[\d.]+/);
+    return m ? parseFloat(m[0]) : 0;
+  }
+  function fToC(f){ return (f - 32) * 5/9; }
+  function cToF(c){ return (c*9/5)+32; }
+
+  function dewPointF(tempF, rh) {
+    const T = fToC(tempF);
+    const R = Math.max(1e-6, Math.min(100, rh)) / 100;
+    const b = 17.62, c = 243.12;
+    const gamma = Math.log(R) + (b*T)/(c+T);
+    const TdC = (c*gamma)/(b - gamma);
+    return cToF(TdC);
+  }
+  function windChillF(T,V){ return 35.74 + 0.6215*T - 35.75*Math.pow(V,0.16) + 0.4275*T*Math.pow(V,0.16); }
+  function heatIndexF(T,R){
+    const c1=-42.379,c2=2.04901523,c3=10.14333127,c4=-0.22475541,c5=-0.00683783,c6=-0.05481717,c7=0.00122874,c8=0.00085282,c9=-0.00000199;
+    let HI=c1+c2*T+c3*R+c4*T*R+c5*T*T+c6*R*R+c7*T*T*R+c8*T*R*R+c9*T*T*R*R;
+    if(R<13&&T>=80&&T<=112) HI-=((13-R)/4)*Math.sqrt((17-Math.abs(T-95))/17);
+    if(R>85&&T>=80&&T<=87) HI+=((R-85)/10)*((87-T)/5);
+    return HI;
+  }
+  function feelsLikeF(T,R,V){
+    if(T<=50 && V>=3) return windChillF(T,V);
+    if(T>=80 && R>=40) return heatIndexF(T,R);
+    return T;
+  }
+
+  function fetchNWSData() {
+    updateAllTimestamps();
+    const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
+    fetch(pointUrl)
+      .then(res => res.json())
+      .then(pointData => {
+        const obsUrl   = pointData.properties.forecastHourly;
+        const gridUrl  = pointData.properties.forecast;
+        const alertZone= pointData.properties.forecastZone;
+        const relLoc   = pointData.properties.relativeLocation?.properties;
+        const city     = relLoc?.city || "";
+        const state    = relLoc?.state || "";
+        const sourceLine = (city || state) ? `Source: ${city}${city&&state?', ':''}${state}` : 'Source: —';
+        document.getElementById('weather-source').textContent = sourceLine;
+
+        // Hourly (now)
+        fetch(obsUrl).then(r=>r.json()).then(obs=>{
+          const now = obs.properties?.periods?.[0];
+          if (now) {
+            const tempF = Number(now.temperature);
+            const tempC = Number.isFinite(tempF) ? ((tempF-32)*5/9).toFixed(1) : '--';
+            const rhVal = (now.relativeHumidity && now.relativeHumidity.value) ? Number(now.relativeHumidity.value) : NaN;
+            const windStr = now.windSpeed || "0 mph";
+            const windMph = parseWindMph(windStr);
+
+            document.getElementById('weather-temp-F').textContent = `${Number.isFinite(tempF)?tempF:'--'}°F`;
+            document.getElementById('weather-temp-C').textContent = `${Number.isFinite(tempF)?tempC:'--'}°C`;
+            document.getElementById('forecast-line').textContent = now.shortForecast || '—';
+            document.getElementById('wind-line').textContent = `Wind: ${windStr || '--'}`;
+            document.getElementById('humidity-line').textContent = `Humidity: ${Number.isFinite(rhVal)?Math.round(rhVal):'--'}%`;
+            document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
+
+            if (Number.isFinite(tempF) && Number.isFinite(rhVal)) {
+              const feels = Math.round(feelsLikeF(tempF, rhVal, windMph));
+              const dew = Math.round(dewPointF(tempF, rhVal));
+              document.getElementById('feelslike-line').textContent = `Feels like: ${feels}°F`;
+              document.getElementById('dewpoint-line').textContent = `Dew point: ${dew}°F`;
+            } else {
+              document.getElementById('feelslike-line').textContent = `Feels like: —`;
+              document.getElementById('dewpoint-line').textContent = `Dew point: —`;
+            }
+            fetchSunriseSunset();
+            fetchUV();
+          }
+        }).catch(()=>{});
+
+        // Grid – next two forecast lines
+        fetch(gridUrl).then(r=>r.json()).then(grid=>{
+          const p = grid.properties?.periods || [];
+          const a = p.slice(0,2).map(pp => `${pp.name}: ${pp.shortForecast || '—'}`);
+          document.getElementById('rainfall-forecast-1').textContent = a[0] || '—';
+          document.getElementById('rainfall-forecast-2').textContent = a[1] || '—';
+        }).catch(()=>{});
+
+        // Alerts
+        if (alertZone) {
+          const zoneId = alertZone.split('/').pop();
+          const alertUrl = `https://api.weather.gov/alerts/active/zone/${zoneId}`;
+          fetch(alertUrl)
+            .then(res => res.json())
+            .then(alertData => {
+              const msg = (alertData.features && alertData.features.length)
+                ? alertData.features.map(a => a.properties.headline).join('\n')
+                : 'No alerts at this time / Sin alertas en este momento';
+              document.getElementById('alert-message').textContent = msg;
+            }).catch(()=>{});
+        }
+      }).catch(()=>{});
+  }
+
+  /* ===================== AQI ===================== */
+
+  function aqiCategoryFromValue(n){
+    if (n <= 50) return "Good";
+    if (n <= 100) return "Moderate";
+    if (n <= 150) return "Unhealthy for Sensitive Groups";
+    if (n <= 200) return "Unhealthy";
+    if (n <= 300) return "Very Unhealthy";
+    return "Hazardous";
+  }
+  function aqiGuidanceForCategory(cat) {
+    const c = String(cat||"").toLowerCase();
+    if (c==="good") return "Air quality is satisfactory; great for outdoor activities.";
+    if (c==="moderate") return "Okay for most; unusually sensitive people may shorten outdoor exertion.";
+    if (c.includes("sensitive")) return "Sensitive groups should reduce prolonged or heavy outdoor exertion.";
+    if (c==="unhealthy") return "Everyone may feel effects; sensitive groups should avoid prolonged exertion.";
+    if (c.includes("very")) return "Health alert: consider limiting outdoor activity; sensitive groups should avoid it.";
+    return "Emergency conditions: everyone should avoid all outdoor exertion.";
+  }
+
+  // Semicircle wedge gauge that fills from left to the AQI angle
+  function generateAQIWedgeGauge(aqi) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const width = 360, height = 180;
+    const cx = width/2, cy = height-6;
+    const R = Math.min(width/2 - 10, height - 20);
+
+    // map 0..300 -> 0..180 deg
+    const clamped = Math.max(0, Math.min(300, Number(aqi)||0));
+    const phi = (clamped / 300) * Math.PI; // 0..π
+
+    const startAng = Math.PI;       // 180°
+    const endAng   = Math.PI - phi; // move toward right as AQI grows
+
+    function polar(theta){ return [cx + R*Math.cos(theta), cy - R*Math.sin(theta)]; }
+    const [x0,y0] = polar(startAng);
+    const [x1,y1] = polar(endAng);
+
+    // SVG
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    // background semicircle outline
+    const arcBG = document.createElementNS(svgNS,'path');
+    const bg_d = `M ${cx-R} ${cy} A ${R} ${R} 0 0 1 ${cx+R} ${cy}`;
+    arcBG.setAttribute('d', bg_d);
+    arcBG.setAttribute('fill','none');
+    arcBG.setAttribute('stroke','black');
+    arcBG.setAttribute('stroke-width','6');
+    svg.appendChild(arcBG);
+
+    // filled wedge
+    if (phi > 0.0001) {
+      const largeArc = phi > Math.PI ? 1 : 0; // never true here, but safe
+      const d = `M ${cx} ${cy} L ${x0} ${y0} A ${R} ${R} 0 ${largeArc} 1 ${x1} ${y1} Z`;
+      const wedge = document.createElementNS(svgNS,'path');
+      wedge.setAttribute('d', d);
+      wedge.setAttribute('fill', '#777');
+      wedge.setAttribute('stroke','black');
+      wedge.setAttribute('stroke-width','2');
+      svg.appendChild(wedge);
     }
-    function getSunriseSunsetIcon(isDay) {
-      const svgNS = "http://www.w3.org/2000/svg";
-      let svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", "88");
-      svg.setAttribute("height", "88");
-      svg.setAttribute("viewBox", "0 0 64 64");
-      if (isDay) {
-        svg.innerHTML = `
-          <circle cx="32" cy="32" r="12" fill="#e0e0e0" stroke="black" stroke-width="3"/>
-          <line x1="32" y1="2" x2="32" y2="12" stroke="black" stroke-width="3"/>
-          <line x1="32" y1="52" x2="32" y2="62" stroke="black" stroke-width="3"/>
-          <line x1="2" y1="32" x2="12" y2="32" stroke="black" stroke-width="3"/>
-          <line x1="52" y1="32" x2="62" y2="32" stroke="black" stroke-width="3"/>
-        `;
-      } else {
-        svg.innerHTML = `
-          <path d="M40,32 A12,12 0 1,1 28,20 A10,10 0 1,0 40,32"
-                fill="#e0e0e0" stroke="black" stroke-width="3"/>
-        `;
-      }
-      return svg.outerHTML;
+
+    // outline again on top for crispness
+    const arcFG = document.createElementNS(svgNS,'path');
+    arcFG.setAttribute('d', bg_d);
+    arcFG.setAttribute('fill','none');
+    arcFG.setAttribute('stroke','black');
+    arcFG.setAttribute('stroke-width','6');
+    svg.appendChild(arcFG);
+
+    return svg;
+  }
+
+  async function fetchAQIFromOpenMeteo() {
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi,pm2_5,pm10,ozone&timezone=auto&_=${Date.now()}`;
+    const res = await fetch(url, { cache:"no-store" });
+    if (!res.ok) throw new Error('Open-Meteo AQI HTTP '+res.status);
+    const data = await res.json();
+
+    const times = data?.hourly?.time || [];
+    const aqiSeries = data?.hourly?.us_aqi || [];
+    if (!times.length || !aqiSeries.length) throw new Error("Open-Meteo missing data");
+
+    const now = new Date();
+    let idx = times.length - 1;
+    for (let i = times.length - 1; i >= 0; i--) {
+      if (new Date(times[i]) <= now) { idx = i; break; }
     }
 
-    /* ============== AQI GAUGE ============== */
-    function generateAirNowArcGauge(aqi, category) {
-      const svgNS = "http://www.w3.org/2000/svg";
-      const width = 280;
-      const height = 140;
-      const centerX = width / 2;
-      const centerY = height;
-      const radius = width / 2;
-      const segmentAngle = 36;
-      const segmentColors = ["#e0e0e0", "#cccccc", "#b8b8b8", "#a4a4a4", "#909090"];
+    const aqiValue = Math.round(Number(aqiSeries[idx]));
+    const fmt = n => Number.isFinite(n)? Math.round(n) : "—";
+    const p25 = data?.hourly?.pm2_5 ? Number(data.hourly.pm2_5[idx]) : NaN;
+    const p10 = data?.hourly?.pm10 ? Number(data.hourly.pm10[idx]) : NaN;
+    const o3  = data?.hourly?.ozone ? Number(data.hourly.ozone[idx]) : NaN;
+    const breakdown = `PM2.5 ${fmt(p25)} µg/m³ • PM10 ${fmt(p10)} µg/m³ • O₃ ${fmt(o3)} µg/m³`;
 
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", width);
-      svg.setAttribute("height", height);
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    const category = aqiCategoryFromValue(aqiValue);
+    LAST_AQI = {
+      aqiValue,
+      category,
+      source: "Open-Meteo (US AQI)",
+      asOf: times[idx],
+      breakdown
+    };
+    renderAQI(LAST_AQI);
+  }
 
-      for (let i = 0; i < 5; i++) {
-        const startAngle = 180 - i * segmentAngle;
-        const endAngle = 180 - (i + 1) * segmentAngle;
-        const startRad = startAngle * Math.PI / 180;
-        const endRad = endAngle * Math.PI / 180;
-        const startX = centerX + radius * Math.cos(startRad);
-        const startY = centerY - radius * Math.sin(startRad);
-        const endX = centerX + radius * Math.cos(endRad);
-        const endY = centerY - radius * Math.sin(endRad);
-        const d = `M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY} L ${centerX} ${centerY} Z`;
-        const path = document.createElementNS(svgNS, "path");
-        path.setAttribute("d", d);
-        path.setAttribute("fill", segmentColors[i]);
-        path.setAttribute("stroke", "black");
-        path.setAttribute("stroke-width", "8");
-        svg.appendChild(path);
-      }
-
-      const fillProportion = Math.min(Math.max(aqi, 0), 300) / 300;
-      const fillAngle = fillProportion * 180;
-      const maskStartAngle = 180 - fillAngle;
-      const maskStartRad = maskStartAngle * Math.PI / 180;
-      const maskStartX = centerX + radius * Math.cos(maskStartRad);
-      const maskStartY = centerY - radius * Math.sin(maskStartRad);
-      const dMask = `M ${maskStartX} ${maskStartY} A ${radius} ${radius} 0 0 1 ${centerX + radius} ${centerY} L ${centerX} ${centerY} Z`;
-      const maskPath = document.createElementNS(svgNS, "path");
-      maskPath.setAttribute("d", dMask);
-      maskPath.setAttribute("fill", "white");
-      svg.appendChild(maskPath);
-
-      const pointerAngle = 180 - fillAngle;
-      const pointerRad = pointerAngle * Math.PI / 180;
-      const pointerX = centerX + radius * Math.cos(pointerRad);
-      const pointerY = centerY - radius * Math.sin(pointerRad);
-      const pointerLine = document.createElementNS(svgNS, "line");
-      pointerLine.setAttribute("x1", centerX);
-      pointerLine.setAttribute("y1", centerY);
-      pointerLine.setAttribute("x2", pointerX);
-      pointerLine.setAttribute("y2", pointerY);
-      pointerLine.setAttribute("stroke", "black");
-      pointerLine.setAttribute("stroke-width", "8");
-      pointerLine.setAttribute("stroke-linecap", "round");
-      svg.appendChild(pointerLine);
-
-      return svg;
-    }
-
-    /* ============== HEAT RISK ============== */
-    function generateGauge(value, min, max, label, color, hideLabel = false, scale = 3.0) {
-      return `<svg>...</svg>`;
-    }
-    function updateHeatRisk(tempF, RH) {
-      const elem = document.getElementById('heat-risk-level');
-      if (tempF >= 80) {
-        elem.textContent = "Moderate Heat Risk / Calor: Riesgo moderado";
-        elem.style.fontSize = "50px";
-      } else {
-        elem.textContent = "Minimal Heat Risk / Calor: Riesgo mínimo";
-        elem.style.fontSize = "50px";
-      }
-    }
-
-    /* ============== AQI HELPERS/FETCH (SOURCE + GUIDANCE + BREAKDOWN) ============== */
-    function aqiCategoryFromValue(n) {
-      if (n <= 50) return "Good";
-      if (n <= 100) return "Moderate";
-      if (n <= 150) return "Unhealthy for Sensitive Groups";
-      if (n <= 200) return "Unhealthy";
-      if (n <= 300) return "Very Unhealthy";
-      return "Hazardous";
-    }
-
-    function aqiGuidanceForCategory(cat) {
-      const c = String(cat || "").toLowerCase();
-      if (c === "good") return "Air quality is satisfactory; great for outdoor activities.";
-      if (c === "moderate") return "Okay for most; unusually sensitive people may shorten outdoor exertion.";
-      if (c.includes("sensitive")) return "Sensitive groups should reduce prolonged or heavy outdoor exertion.";
-      if (c === "unhealthy") return "Everyone may feel effects; sensitive groups should avoid prolonged exertion.";
-      if (c.includes("very")) return "Health alert: consider limiting outdoor activity; sensitive groups should avoid it.";
-      return "Emergency conditions: everyone should avoid all outdoor exertion.";
-    }
-
-    function renderAQI(state, isCached = false) {
-      const content = document.getElementById("aqi-content");
-      content.innerHTML = "";
-
-      const leftDiv = document.createElement("div");
-      leftDiv.id = "aqi-classification";
-      const centerDiv = document.createElement("div");
-      centerDiv.id = "aqi-gauge-container";
-      const rightDiv = document.createElement("div");
-      rightDiv.id = "aqi-measurement";
-
-      if (!state) {
-        leftDiv.textContent = "DATA UNAVAILABLE";
-        centerDiv.appendChild(generateAirNowArcGauge(0, "Unknown"));
-        rightDiv.textContent = "AQI: —";
-        document.getElementById("aqi-guidance").textContent = "—";
-        document.getElementById("aqi-breakdown").textContent = "—";
-        document.getElementById("aqi-source").textContent = "Source: —";
-      } else {
-        const { aqiValue, category, source, asOf, breakdown } = state;
-        leftDiv.textContent = category.toUpperCase() + (isCached ? " (CACHED)" : "");
-        centerDiv.appendChild(generateAirNowArcGauge(aqiValue, category));
-        rightDiv.textContent = "AQI: " + aqiValue;
-
-        document.getElementById("aqi-guidance").textContent = aqiGuidanceForCategory(category);
-        document.getElementById("aqi-breakdown").textContent = breakdown || "—";
-        const sourceLabel = `Source: ${source || "—"} • As of ${fmtDateTime(asOf ? new Date(asOf) : new Date())}`;
-        document.getElementById("aqi-source").textContent = sourceLabel;
-      }
-
-      content.appendChild(leftDiv);
-      content.appendChild(centerDiv);
-      content.appendChild(rightDiv);
-
-      document.getElementById("aqi-timestamp").textContent = "Last updated: " + fmtDateTime();
-      setTimeout(fitCardsToViewport, 0);
-    }
-
-    // Fallback source that supports CORS in the browser
-    async function fetchAQIFromOpenMeteo() {
-      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi,pm2_5,pm10,ozone&timezone=auto&_=${Date.now()}`;
-
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+  async function fetchAQIData() {
+    const airnowUrl =
+      `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json` +
+      `&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}&_=${Date.now()}`;
+    try {
+      const res = await fetch(airnowUrl, { mode:"cors", cache:"no-store", headers:{ "Accept": "application/json" }});
+      if (!res.ok) throw new Error(`AirNow HTTP ${res.status}`);
       const data = await res.json();
 
-      const times = data?.hourly?.time || [];
-      const aqiSeries = data?.hourly?.us_aqi || [];
-      if (!times.length || !aqiSeries.length) throw new Error("Open-Meteo missing hourly/us_aqi");
+      const rows = Array.isArray(data) ? data.filter(r => Number.isFinite(Number(r?.AQI))) : [];
+      if (!rows.length) throw new Error("AirNow empty");
 
-      // Use latest available hour <= now; else last entry
-      const now = new Date();
-      let idx = times.length - 1;
-      for (let i = times.length - 1; i >= 0; i--) {
-        if (new Date(times[i]) <= now) { idx = i; break; }
-      }
+      // prefer PM2.5 -> O3 -> PM10; else highest
+      const PREFER = ["PM2.5","O3","PM10"];
+      const norm = s => {
+        const x = (s||"").toUpperCase().replace(/\s+/g,'');
+        if (x==="PM2.5"||x==="PM25") return "PM2.5";
+        return x;
+      };
+      rows.sort((a,b)=>{
+        const ai = PREFER.indexOf(norm(a.ParameterName));
+        const bi = PREFER.indexOf(norm(b.ParameterName));
+        const ap = ai===-1?999:ai;
+        const bp = bi===-1?999:bi;
+        if (ap!==bp) return ap-bp;
+        return (Number(b.AQI)||0)-(Number(a.AQI)||0);
+      });
 
-      const aqiValue = Math.round(Number(aqiSeries[idx]));
-      if (!Number.isFinite(aqiValue)) throw new Error("Open-Meteo AQI not finite");
+      const best = rows[0];
+      const aqiValue = Math.round(Number(best.AQI));
+      const category = best?.Category?.Name || aqiCategoryFromValue(aqiValue);
+      const param = norm(best.ParameterName) || "AQI";
+      const area = best?.ReportingArea ? ` — ${best.ReportingArea}` : "";
 
-      // Build a concentration breakdown if available
-      const fmt = (n) => Number.isFinite(n) ? Math.round(n) : "—";
-      const p25 = data?.hourly?.pm2_5 ? Number(data.hourly.pm2_5[idx]) : NaN;
-      const p10 = data?.hourly?.pm10 ? Number(data.hourly.pm10[idx]) : NaN;
-      const o3  = data?.hourly?.ozone ? Number(data.hourly.ozone[idx]) : NaN;
-      const breakdown = `PM2.5 ${fmt(p25)} µg/m³ • PM10 ${fmt(p10)} µg/m³ • O₃ ${fmt(o3)} µg/m³`;
+      const by = {};
+      rows.forEach(r => { const p = norm(r.ParameterName); if (p) by[p] = Math.round(Number(r.AQI)); });
+      const parts = [];
+      if (by["PM2.5"]!=null) parts.push(`PM2.5 ${by["PM2.5"]} (${aqiCategoryFromValue(by["PM2.5"])})`);
+      if (by["PM10"] !=null) parts.push(`PM10 ${by["PM10"]} (${aqiCategoryFromValue(by["PM10"])})`);
+      if (by["O3"]   !=null) parts.push(`O₃ ${by["O3"]} (${aqiCategoryFromValue(by["O3"])})`);
+      const breakdown = parts.length ? parts.join(" • ") : "—";
 
-      const category = aqiCategoryFromValue(aqiValue);
       LAST_AQI = {
         aqiValue,
         category,
-        source: "Open-Meteo (US AQI)",
-        asOf: times[idx],
+        source: `AirNow (${param}${area})`,
+        asOf: new Date(),
         breakdown
       };
       renderAQI(LAST_AQI);
-    }
-
-    async function fetchAQIData() {
-      const airnowUrl =
-        `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json` +
-        `&latitude=${LAT}&longitude=${LON}&distance=50&API_KEY=${AIRNOW_API_KEY}&_=${Date.now()}`;
-
+    } catch(err) {
       try {
-        const res = await fetch(airnowUrl, { mode: "cors", cache: "no-store", headers: { "Accept": "application/json" } });
-        if (!res.ok) throw new Error(`AirNow HTTP ${res.status}`);
-        const data = await res.json();
-
-        const rows = Array.isArray(data) ? data.filter(r => Number.isFinite(Number(r?.AQI))) : [];
-        if (rows.length === 0) throw new Error("AirNow empty/invalid");
-
-        // Prefer PM2.5, then O3, then PM10; else highest AQI
-        const PREFER = ["PM2.5", "O3", "PM10"];
-        const norm = (s) => {
-          const x = (s || "").toUpperCase().replace(/\s+/g, "");
-          if (x === "PM2.5" || x === "PM25") return "PM2.5";
-          return x;
-        };
-        rows.sort((a, b) => {
-          const ai = PREFER.indexOf(norm(a.ParameterName));
-          const bi = PREFER.indexOf(norm(b.ParameterName));
-          const ap = ai === -1 ? 999 : ai;
-          const bp = bi === -1 ? 999 : bi;
-          if (ap !== bp) return ap - bp;
-          return (Number(b.AQI) || 0) - (Number(a.AQI) || 0);
-        });
-
-        // Gauge/topline
-        const best = rows[0];
-        const aqiValue = Math.round(Number(best.AQI));
-        const category = best?.Category?.Name || aqiCategoryFromValue(aqiValue);
-        const param = norm(best.ParameterName) || "AQI";
-        const area = best?.ReportingArea ? ` — ${best.ReportingArea}` : "";
-
-        // Pollutant AQI breakdown
-        const byPollutant = {};
-        rows.forEach(r => {
-          const p = norm(r.ParameterName);
-          if (p) byPollutant[p] = Math.round(Number(r.AQI));
-        });
-        const parts = [];
-        if (byPollutant["PM2.5"] != null) parts.push(`PM2.5 ${byPollutant["PM2.5"]} (${aqiCategoryFromValue(byPollutant["PM2.5"])})`);
-        if (byPollutant["PM10"]  != null) parts.push(`PM10 ${byPollutant["PM10"]} (${aqiCategoryFromValue(byPollutant["PM10"])})`);
-        if (byPollutant["O3"]    != null) parts.push(`O₃ ${byPollutant["O3"]} (${aqiCategoryFromValue(byPollutant["O3"])})`);
-        const breakdown = parts.length ? parts.join(" • ") : "—";
-
-        LAST_AQI = {
-          aqiValue,
-          category,
-          source: `AirNow (${param}${area})`,
-          asOf: new Date(),
-          breakdown
-        };
-        renderAQI(LAST_AQI);
-      } catch (err) {
-        console.warn("AirNow failed (likely CORS). Falling back to Open-Meteo →", err);
-        try {
-          await fetchAQIFromOpenMeteo();
-        } catch (fallbackErr) {
-          console.error("Open-Meteo fallback failed →", fallbackErr);
-          if (LAST_AQI) {
-            renderAQI(LAST_AQI, true);
-          } else {
-            renderAQI(null);
-          }
-        }
-      }
-    }
-
-    /* ============== WEATHER (NWS) ============== */
-    function parseWindMph(windStr) {
-      const m = String(windStr || "").match(/[\d.]+/);
-      return m ? parseFloat(m[0]) : 0;
-    }
-    function fToC(f) { return (f - 32) * 5/9; }
-    function cToF(c) { return (c * 9/5) + 32; }
-
-    // Magnus approximation for dew point
-    function dewPointF(tempF, rh) {
-      const T = fToC(tempF);
-      const R = Math.max(1e-6, Math.min(100, rh)) / 100;
-      const b = 17.62, c = 243.12; // over water
-      const gamma = Math.log(R) + (b * T) / (c + T);
-      const TdC = (c * gamma) / (b - gamma);
-      return cToF(TdC);
-    }
-
-    // NOAA wind chill (valid if T<=50F and v>=3 mph)
-    function windChillF(T, V) {
-      return 35.74 + 0.6215*T - 35.75*Math.pow(V, 0.16) + 0.4275*T*Math.pow(V, 0.16);
-    }
-    // Rothfusz heat index (approx)
-    function heatIndexF(T, R) {
-      const c1 = -42.379, c2 = 2.04901523, c3 = 10.14333127,
-            c4 = -0.22475541, c5 = -0.00683783, c6 = -0.05481717,
-            c7 = 0.00122874, c8 = 0.00085282, c9 = -0.00000199;
-      let HI = c1 + c2*T + c3*R + c4*T*R + c5*T*T + c6*R*R + c7*T*T*R + c8*T*R*R + c9*T*T*R*R;
-      if (R < 13 && T >= 80 && T <= 112) HI -= ((13 - R)/4) * Math.sqrt((17 - Math.abs(T - 95))/17);
-      if (R > 85 && T >= 80 && T <= 87) HI += ((R - 85)/10) * ((87 - T)/5);
-      return HI;
-    }
-    function feelsLikeF(T, R, V) {
-      if (T <= 50 && V >= 3) return windChillF(T, V);
-      if (T >= 80 && R >= 40) return heatIndexF(T, R);
-      return T;
-    }
-
-    function fetchNWSData() {
-      updateAllTimestamps();
-      const pointUrl = `https://api.weather.gov/points/${LAT},${LON}`;
-      fetch(pointUrl)
-        .then(res => res.json())
-        .then(pointData => {
-          const obsUrl = pointData.properties.forecastHourly;
-          const gridUrl = pointData.properties.forecast;
-          const alertZone = pointData.properties.forecastZone;
-
-          fetch(obsUrl)
-            .then(res => res.json())
-            .then(obsData => {
-              if (obsData.properties?.periods?.length > 0) {
-                const now = obsData.properties.periods[0];
-                const tempF = Number(now.temperature);
-                const tempC = ((tempF - 32) * 5/9).toFixed(1);
-                const rhVal = (now.relativeHumidity && now.relativeHumidity.value) ? Number(now.relativeHumidity.value) : NaN;
-                const windStr = now.windSpeed || "0 mph";
-                const windMph = parseWindMph(windStr);
-
-                document.getElementById('weather-temp-F').textContent = `${Number.isFinite(tempF) ? tempF : '--'}°F`;
-                document.getElementById('weather-temp-C').textContent = `${Number.isFinite(tempF) ? tempC : '--'}°C`;
-                document.getElementById('weather-forecast').textContent = now.shortForecast || 'N/A';
-                document.getElementById('weather-wind').textContent = `Wind: ${windStr || '--'}`;
-                document.getElementById('weather-humidity').textContent =
-                  `Humidity: ${Number.isFinite(rhVal) ? Math.round(rhVal) : '--'}%`;
-                document.getElementById('weather-icon').innerHTML = getWeatherIcon(now.shortForecast);
-
-                // Feels like + Dew point (computed)
-                if (Number.isFinite(tempF) && Number.isFinite(rhVal)) {
-                  const feels = feelsLikeF(tempF, rhVal, windMph);
-                  const dew = dewPointF(tempF, rhVal);
-                  document.getElementById('weather-feelslike').textContent = `Feels like: ${Math.round(feels)}°F`;
-                  document.getElementById('weather-dewpoint').textContent = `Dew point: ${Math.round(dew)}°F`;
-                  updateHeatRisk(tempF, rhVal);
-                } else {
-                  document.getElementById('weather-feelslike').textContent = `Feels like: —`;
-                  document.getElementById('weather-dewpoint').textContent = `Dew point: —`;
-                  updateHeatRisk(tempF, rhVal);
-                }
-
-                fetchSunriseSunset();
-                setTimeout(fitCardsToViewport, 0);
-              }
-            })
-            .catch(err => console.error('Weather observations error:', err));
-
-          fetch(gridUrl)
-            .then(res => res.json())
-            .then(gridData => {
-              if (gridData.properties?.periods) {
-                const days = gridData.properties.periods.slice(0, 3);
-                document.getElementById('rainfall-forecast-1').textContent =
-                  `${days[0]?.name || 'Day1'}: ${days[0]?.shortForecast || 'N/A'}`;
-                document.getElementById('rainfall-forecast-2').textContent =
-                  `${days[1]?.name || 'Day2'}: ${days[1]?.shortForecast || 'N/A'}`;
-                document.getElementById('rainfall-forecast-3').textContent =
-                  `${days[2]?.name || 'Day3'}: ${days[2]?.shortForecast || 'N/A'}`;
-                setTimeout(fitCardsToViewport, 0);
-              }
-            })
-            .catch(err => console.error('Rainfall forecast error:', err));
-
-          if (alertZone) {
-            const zoneId = alertZone.split('/').pop();
-            const alertUrl = `https://api.weather.gov/alerts/active/zone/${zoneId}`;
-            fetch(alertUrl)
-              .then(res => res.json())
-              .then(alertData => {
-                if (alertData.features && alertData.features.length > 0) {
-                  const alertMsg = alertData.features.map(a => a.properties.headline).join('\n');
-                  document.getElementById('alert-message').textContent = alertMsg;
-                } else {
-                  document.getElementById('alert-message').textContent = 'No alerts at this time / Sin alertas en este momento';
-                }
-                setTimeout(fitCardsToViewport, 0);
-              })
-              .catch(err => console.error('Alerts fetch error:', err));
-          }
-        })
-        .catch(err => console.error('NWS points data error:', err));
-    }
-
-    /* ============== TREND HELPERS (▲ rising / ▼ falling / → steady) ============== */
-    function computeFlowTrend(flowValues) {
-      try {
-        if (!Array.isArray(flowValues) || flowValues.length < 2) {
-          return { arrow: '→', label: 'steady' };
-        }
-        const lastTime = new Date(flowValues[flowValues.length - 1].dateTime).getTime();
-        const windowStart = lastTime - 3 * 3600 * 1000; // last ~3 hours
-        let subset = flowValues.filter(p => new Date(p.dateTime).getTime() >= windowStart);
-        if (subset.length < 2) subset = flowValues.slice(-6);
-
-        const first = subset[0].flow;
-        const last  = subset[subset.length - 1].flow;
-        const diff  = last - first;
-        const pct   = Math.abs(diff) / Math.max(1, first);
-        const THRESH_CFS = 30;
-        const THRESH_PCT = 0.05;
-
-        if (Math.abs(diff) < THRESH_CFS && pct < THRESH_PCT) return { arrow: '→', label: 'steady' };
-        if (diff > 0) return { arrow: '▲', label: 'rising' };
-        return { arrow: '▼', label: 'falling' };
+        await fetchAQIFromOpenMeteo();
       } catch {
-        return { arrow: '→', label: 'steady' };
+        if (LAST_AQI) renderAQI(LAST_AQI, true);
+        else renderAQI(null);
       }
     }
+  }
 
-    function computeStageTrend(stageValues) {
-      try {
-        if (!Array.isArray(stageValues) || stageValues.length < 2) {
-          return { arrow: '→', label: 'steady' };
-        }
-        const lastTime = new Date(stageValues[stageValues.length - 1].dateTime).getTime();
-        const windowStart = lastTime - 3 * 3600 * 1000;
-        let subset = stageValues.filter(p => new Date(p.dateTime).getTime() >= windowStart);
-        if (subset.length < 2) subset = stageValues.slice(-6);
+  function renderAQI(state, isCached=false) {
+    const cont = document.getElementById('aqi-gauge-container');
+    cont.innerHTML = "";
+    if (!state) {
+      cont.appendChild(generateAQIWedgeGauge(0));
+      document.getElementById('aqi-classification').textContent = 'DATA UNAVAILABLE';
+      document.getElementById('aqi-measurement').textContent = 'AQI: —';
+      document.getElementById('aqi-guidance').textContent = '—';
+      document.getElementById('aqi-breakdown').textContent = '—';
+      document.getElementById('aqi-source').textContent = 'Source: —';
+    } else {
+      const { aqiValue, category, source, asOf, breakdown } = state;
+      document.getElementById('aqi-classification').textContent =
+        category.toUpperCase() + (isCached ? " (CACHED)" : "");
+      cont.appendChild(generateAQIWedgeGauge(aqiValue));
+      document.getElementById('aqi-measurement').textContent = `AQI: ${aqiValue}`;
+      document.getElementById('aqi-guidance').textContent = aqiGuidanceForCategory(category);
+      document.getElementById('aqi-breakdown').textContent = breakdown || "—";
+      const src = `Source: ${source || "—"} • As of ${fmtDateTime(asOf ? new Date(asOf) : new Date())}`;
+      document.getElementById('aqi-source').textContent = src;
+    }
+    document.getElementById('aqi-timestamp').textContent = "Last updated: " + fmtDateTime();
+  }
 
-        const first = subset[0].stage;
-        const last  = subset[subset.length - 1].stage;
-        const diff  = last - first;
-        const pct   = Math.abs(diff) / Math.max(0.01, first);
-        const THRESH_FT  = 0.20;
-        const THRESH_PCT = 0.02;
+  /* ===================== RIVER (USGS) ===================== */
 
-        if (Math.abs(diff) < THRESH_FT && pct < THRESH_PCT) return { arrow: '→', label: 'steady' };
-        if (diff > 0) return { arrow: '▲', label: 'rising' };
-        return { arrow: '▼', label: 'falling' };
-      } catch {
-        return { arrow: '→', label: 'steady' };
-      }
+  function computeFlowTrend(flowValues) {
+    try {
+      if (!Array.isArray(flowValues) || flowValues.length < 2) return {arrow:'→',label:'steady'};
+      const lastTime = new Date(flowValues[flowValues.length-1].dateTime).getTime();
+      const windowStart = lastTime - 3*3600*1000;
+      let subset = flowValues.filter(p=>new Date(p.dateTime).getTime()>=windowStart);
+      if (subset.length<2) subset = flowValues.slice(-6);
+      const first = subset[0].flow, last = subset[subset.length-1].flow;
+      const diff = last-first;
+      const pct = Math.abs(diff)/Math.max(1,first);
+      if (Math.abs(diff)<30 && pct<0.05) return {arrow:'→',label:'steady'};
+      if (diff>0) return {arrow:'▲',label:'rising'};
+      return {arrow:'▼',label:'falling'};
+    } catch { return {arrow:'→',label:'steady'} }
+  }
+  function computeStageTrend(stageValues) {
+    try {
+      if (!Array.isArray(stageValues) || stageValues.length < 2) return {arrow:'→',label:'steady'};
+      const lastTime = new Date(stageValues[stageValues.length-1].dateTime).getTime();
+      const windowStart = lastTime - 3*3600*1000;
+      let subset = stageValues.filter(p=>new Date(p.dateTime).getTime()>=windowStart);
+      if (subset.length<2) subset = stageValues.slice(-6);
+      const first = subset[0].stage, last = subset[subset.length-1].stage;
+      const diff = last-first;
+      const pct = Math.abs(diff)/Math.max(0.01,first);
+      if (Math.abs(diff)<0.20 && pct<0.02) return {arrow:'→',label:'steady'};
+      if (diff>0) return {arrow:'▲',label:'rising'};
+      return {arrow:'▼',label:'falling'};
+    } catch { return {arrow:'→',label:'steady'} }
+  }
+
+  function classifyFlow(cfs, stage, floodStage) {
+    if (Number.isFinite(stage) && Number.isFinite(floodStage) && stage >= floodStage) {
+      return { label: "ACCESS CLOSED, STAY OFF THE RIVER!", severity: 3 };
+    }
+    if (!Number.isFinite(cfs)) return { label: "—", severity: -1 };
+    const t = FLOW_CLASS_THRESHOLDS;
+    if (cfs < t.too_low_max)  return { label: "RIVER FLOW TOO LOW TO PADDLE", severity: 1 };
+    if (cfs <= t.novice_max)  return { label: "LOW-MODERATE RIVER FLOW - BEGINNER TO NOVICE PADDLERS", severity: 1 };
+    if (cfs <= t.expert_max)  return { label: "MODERATE-HIGH RIVER FLOW - EXPERT PADDLERS ONLY", severity: 2 };
+    if (cfs >= t.closed_min)  return { label: "UNSAFE RIVER FLOW - ACCESS CLOSED, STAY OFF THE RIVER!", severity: 3 };
+    return { label: "EXPERT PADDLERS ONLY", severity: 2 };
+  }
+
+  function groupBy3HourBlocks(stageArray) {
+    const blockMap = {};
+    stageArray.forEach(pt => {
+      const date = new Date(pt.dateTime);
+      const y = date.getFullYear(), m = date.getMonth(), d = date.getDate();
+      const hBlock = Math.floor(date.getHours()/3)*3;
+      const blockDate = new Date(y,m,d,hBlock,0,0,0);
+      const key = blockDate.toISOString();
+      if (!blockMap[key]) blockMap[key] = { dateObj:blockDate, sum:0, count:0 };
+      blockMap[key].sum += pt.stage;
+      blockMap[key].count += 1;
+    });
+    return Object.values(blockMap).map(it => ({ dateObj: it.dateObj, stage: it.sum/it.count }))
+                                  .sort((a,b)=>a.dateObj-b.dateObj);
+  }
+
+  function renderRiverGraph(dataPoints, floodThreshold, lastReadingStr) {
+    const container = document.getElementById("river-graph");
+    container.innerHTML = "";
+    if (!dataPoints.length) return;
+
+    let minStage = Math.min(...dataPoints.map(d=>d.stage));
+    let maxStage = Math.max(...dataPoints.map(d=>d.stage));
+    maxStage = Math.max(maxStage, 6);
+    minStage = Math.min(minStage, floodThreshold);
+    maxStage = Math.max(maxStage, floodThreshold);
+    const stageRange = (maxStage - minStage) || 1;
+    const minDate = dataPoints[0].dateObj;
+    const maxDate = dataPoints[dataPoints.length - 1].dateObj;
+    const totalMillis = maxDate - minDate;
+    const svgWidth = 1001, svgHeight = 280;
+    const graphHeight = 180;
+    const graphOffsetX = 60;
+    const graphWidth = svgWidth - graphOffsetX - 20;
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS,"svg");
+    svg.setAttribute("width", svgWidth);
+    svg.setAttribute("height", svgHeight);
+    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+
+    const yLabel = document.createElementNS(svgNS,"text");
+    yLabel.setAttribute("x", 25);
+    yLabel.setAttribute("y", svgHeight/2 + 30);
+    yLabel.setAttribute("font-size","18");
+    yLabel.setAttribute("font-weight","bold");
+    yLabel.setAttribute("fill","black");
+    yLabel.setAttribute("text-anchor","start");
+    yLabel.setAttribute("transform",`rotate(-90 25,${svgHeight/2 + 30})`);
+    yLabel.textContent = "Water Level (ft)";
+    svg.appendChild(yLabel);
+
+    function scaleX(dateObj){ const cur = dateObj - minDate; return graphOffsetX + (cur/totalMillis)*graphWidth - 20; }
+    function scaleY(stage){ return graphHeight - ((stage - minStage)/stageRange)*graphHeight + 20; }
+
+    const startTick = Math.floor(minStage);
+    const endTick = Math.ceil(maxStage);
+    for (let tickVal=startTick; tickVal<=endTick; tickVal+=1) {
+      const fraction = (maxStage - tickVal) / stageRange;
+      const tickY = 20 + fraction * graphHeight;
+      const tickLine = document.createElementNS(svgNS,"line");
+      tickLine.setAttribute("x1", graphOffsetX-5);
+      tickLine.setAttribute("x2", graphOffsetX);
+      tickLine.setAttribute("y1", tickY);
+      tickLine.setAttribute("y2", tickY);
+      tickLine.setAttribute("stroke","black");
+      tickLine.setAttribute("stroke-width","1");
+      svg.appendChild(tickLine);
+
+      const tickLabel = document.createElementNS(svgNS,"text");
+      tickLabel.setAttribute("x", graphOffsetX-10);
+      tickLabel.setAttribute("y", tickY+4);
+      tickLabel.setAttribute("font-size","21");
+      tickLabel.setAttribute("fill","black");
+      tickLabel.setAttribute("text-anchor","end");
+      tickLabel.textContent = tickVal.toFixed(0);
+      svg.appendChild(tickLabel);
     }
 
-    /* ====== FLOW CLASSIFIER ====== */
-    function classifyFlow(cfs, stage, floodStage) {
-      // Stage-based automatic closure
-      if (Number.isFinite(stage) && Number.isFinite(floodStage) && stage >= floodStage) {
-        return { label: "ACCESS CLOSED, STAY OFF THE RIVER!", severity: 3 };
-      }
-      if (!Number.isFinite(cfs)) {
-        return { label: "—", severity: -1 };
-      }
-      const t = FLOW_CLASS_THRESHOLDS;
-      if (cfs < t.too_low_max) {
-        return { label: "RIVER FLOW TOO LOW TO PADDLE", severity: 0 };
-      }
-      if (cfs <= t.novice_max) {
-        return { label: "LOW-MODERATE RIVER FLOW - BEGINNER TO NOVICE PADDLERS", severity: 1 };
-      }
-      if (cfs <= t.expert_max) {
-        return { label: "MODERATE-HIGH RIVER FLOW - EXPERT PADDLERS ONLY", severity: 2 };
-      }
-      if (cfs >= t.closed_min) {
-        return { label: "UNSAFE RIVER FLOW - ACCESS CLOSED, STAY OFF THE RIVER!", severity: 3 };
-      }
-      // If between expert_max and closed_min, treat as expert
-      return { label: "EXPERT PADDLERS ONLY", severity: 2 };
-    }
+    const pathData = dataPoints.map((pt,i)=>{
+      const x = scaleX(pt.dateObj), y = scaleY(pt.stage);
+      return (i===0?'M':'L') + x + ',' + y;
+    }).join(' ');
+    const poly = document.createElementNS(svgNS,"path");
+    poly.setAttribute("d", pathData);
+    poly.setAttribute("stroke","black");
+    poly.setAttribute("fill","none");
+    poly.setAttribute("stroke-width","6.6");
+    svg.appendChild(poly);
 
-    /* ============== RIVER DATA (Stage ft + Discharge cfs + Trends + Classification) ============== */
-    function fetchRiverData() {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - 4);
-      const format = d => d.toISOString().split('.')[0];
+    const floodY = scaleY(floodThreshold);
+    const floodLine = document.createElementNS(svgNS,"line");
+    floodLine.setAttribute("x1", graphOffsetX);
+    floodLine.setAttribute("x2", graphOffsetX + graphWidth);
+    floodLine.setAttribute("y1", floodY);
+    floodLine.setAttribute("y2", floodY);
+    floodLine.setAttribute("stroke","black");
+    floodLine.setAttribute("stroke-dasharray","6,3");
+    floodLine.setAttribute("stroke-width","4");
+    svg.appendChild(floodLine);
 
-      const url =
-        `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960` +
-        `&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
+    const floodLabel = document.createElementNS(svgNS,"text");
+    floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
+    floodLabel.setAttribute("y", floodY - 10);
+    floodLabel.setAttribute("font-size","32");
+    floodLabel.setAttribute("font-weight","bold");
+    floodLabel.setAttribute("fill","black");
+    floodLabel.setAttribute("text-anchor","end");
+    floodLabel.textContent = "Flood Stage";
+    svg.appendChild(floodLabel);
 
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          const series = data?.value?.timeSeries || [];
-          const findSeries = (code) =>
-            series.find(s => (s?.variable?.variableCode?.[0]?.value) === code);
+    const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    let lastDay = "";
+    dataPoints.forEach((pt,i)=>{
+      const x = scaleX(pt.dateObj), y = scaleY(pt.stage);
+      const circle = document.createElementNS(svgNS,"circle");
+      circle.setAttribute("cx", x); circle.setAttribute("cy", y);
+      circle.setAttribute("r", 3);  circle.setAttribute("fill","black");
+      svg.appendChild(circle);
 
-          const stageSeries = findSeries("00065");
-          const flowSeries  = findSeries("00060");
+      const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+      if (dayLabel !== minDateLabel && dayLabel !== lastDay) {
+        lastDay = dayLabel;
+        const label = document.createElementNS(svgNS,"text");
+        label.setAttribute("x", x); label.setAttribute("y", 240);
+        label.setAttribute("font-size","30"); label.setAttribute("fill","black");
+        label.setAttribute("text-anchor","middle");
+        label.textContent = dayLabel;
+        svg.appendChild(label);
+      }
+      if (i === dataPoints.length - 1) {
+        const measurement = document.createElementNS(svgNS,"text");
+        measurement.setAttribute("x", x - 0.1*graphWidth);
+        measurement.setAttribute("y", y + 45);
+        measurement.setAttribute("font-size","35");
+        measurement.setAttribute("font-weight","bold");
+        measurement.setAttribute("fill","white");
+        measurement.setAttribute("text-anchor","middle");
+        measurement.textContent = ` ${lastReadingStr} `;
+        const rect = document.createElementNS(svgNS,"rect");
+        setTimeout(()=>{
+          const bbox = measurement.getBBox();
+          rect.setAttribute("x", bbox.x - 5);
+          rect.setAttribute("y", bbox.y);
+          rect.setAttribute("width", bbox.width + 10);
+          rect.setAttribute("height", bbox.height);
+          rect.setAttribute("fill","black");
+          svg.insertBefore(rect, measurement);
+        },0);
+        svg.appendChild(measurement);
+      }
+    });
 
-          // Flood threshold
-          const siteProps = stageSeries?.sourceInfo?.siteProperty || flowSeries?.sourceInfo?.siteProperty;
-          if (siteProps) {
-            siteProps.forEach(prop => {
-              if (prop.propertyName === "floodStage") {
-                const n = parseFloat(prop.value);
-                if (Number.isFinite(n)) floodThreshold = n;
-              }
-            });
+    container.appendChild(svg);
+  }
+
+  function fetchRiverData() {
+    const end = new Date();
+    const start = new Date(); start.setDate(end.getDate()-4);
+    const format = d => d.toISOString().split('.')[0];
+    const url =
+      `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960` +
+      `&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
+
+    fetch(url).then(r=>r.json()).then(data=>{
+      const series = data?.value?.timeSeries || [];
+      const findSeries = code => series.find(s => (s?.variable?.variableCode?.[0]?.value)===code);
+      const stageSeries = findSeries("00065");
+      const flowSeries  = findSeries("00060");
+
+      // Flood stage from site props
+      const siteProps = stageSeries?.sourceInfo?.siteProperty || flowSeries?.sourceInfo?.siteProperty;
+      if (siteProps) {
+        siteProps.forEach(p=>{
+          if (p.propertyName === "floodStage") {
+            const n = parseFloat(p.value); if (Number.isFinite(n)) floodThreshold = n;
           }
-
-          const stageValuesRaw = stageSeries?.values?.[0]?.value || [];
-          const stageValues = stageValuesRaw
-            .map(v => ({ dateTime: v.dateTime, stage: parseFloat(v.value) }))
-            .filter(pt => Number.isFinite(pt.stage));
-
-          const flowValuesRaw = flowSeries?.values?.[0]?.value || [];
-          const flowValues = flowValuesRaw
-            .map(v => ({ dateTime: v.dateTime, flow: parseFloat(v.value) }))
-            .filter(pt => Number.isFinite(pt.flow));
-
-          const stageEl = document.getElementById('river-stage-line');
-          const flowEl  = document.getElementById('river-flow-line');
-          const padEl   = document.getElementById('paddle-advisory');
-
-          if (stageValues.length === 0) {
-            stageEl.textContent = 'Stage: —';
-            flowEl.textContent  = 'Discharge: —';
-            padEl.textContent   = '—';
-            document.getElementById('flood-status').textContent = 'No river data available';
-            return;
-          }
-
-          const lastStage = stageValues[stageValues.length - 1].stage;
-          const lastStageStr = `${lastStage.toFixed(2)} ft`;
-
-          const lastFlow = flowValues.length ? flowValues[flowValues.length - 1].flow : NaN;
-          const lastFlowStr = Number.isFinite(lastFlow) ? `${Math.round(lastFlow)} cfs` : '—';
-
-          // Trends
-          const stageTrend = computeStageTrend(stageValues);
-          const flowTrend  = computeFlowTrend(flowValues);
-
-          // Stats below graph
-          stageEl.textContent = `Stage: ${lastStageStr} ${stageTrend.arrow} ${stageTrend.label}`;
-          flowEl.textContent  = `Discharge: ${lastFlowStr} ${flowTrend.arrow} ${flowTrend.label}`;
-
-          document.getElementById("river-timestamp").textContent = fmtDateTime();
-
-          // Classification (flow + stage)
-          const classif = classifyFlow(lastFlow, lastStage, floodThreshold);
-          padEl.textContent = classif.label;
-          // Style advisory emphasis
-          if (classif.severity === 3) {
-            padEl.style.backgroundColor = "black";
-            padEl.style.color = "white";
-          } else {
-            padEl.style.backgroundColor = "white";
-            padEl.style.color = "black";
-          }
-
-          // Flood status text (updated wording)
-          const statusEl = document.getElementById("flood-status");
-          if (lastStage >= floodThreshold) {
-            statusEl.textContent = "FLOOD LEVELS UNSAFE, ACCESS CLOSED";
-            statusEl.style.fontSize = "48px";
-            statusEl.style.backgroundColor = "black";
-            statusEl.style.color = "white";
-            statusEl.style.textTransform = "uppercase";
-            statusEl.style.padding = "5px";
-            statusEl.style.margin = "0 auto";
-          } else {
-            statusEl.textContent = "RIVER BELOW FLOOD STAGE";
-            statusEl.style.fontSize = "30px";
-            statusEl.style.backgroundColor = "white";
-            statusEl.style.color = "black";
-            statusEl.style.textTransform = "uppercase";
-            statusEl.style.padding = "3px";
-            statusEl.style.margin = "0 auto";
-          }
-
-          // Graph uses stage (ft)
-          const groupedValues = groupBy3HourBlocks(stageValues);
-          renderRiverGraph(groupedValues, floodThreshold, lastStageStr);
-        })
-        .catch(err => {
-          console.error('River Data fetch error:', err);
-          document.getElementById('flood-status').textContent = 'Error fetching data';
-          document.getElementById('river-stage-line').textContent = 'Stage: —';
-          document.getElementById('river-flow-line').textContent  = 'Discharge: —';
-          const padEl = document.getElementById('paddle-advisory');
-          padEl.textContent = '—';
-          padEl.style.backgroundColor = "white";
-          padEl.style.color = "black";
         });
-    }
-
-    function groupBy3HourBlocks(stageArray) {
-      const blockMap = {};
-      stageArray.forEach(pt => {
-        const date = new Date(pt.dateTime);
-        const y = date.getFullYear();
-        const m = date.getMonth();
-        const d = date.getDate();
-        const hBlock = Math.floor(date.getHours() / 3) * 3;
-        const blockDate = new Date(y, m, d, hBlock, 0, 0, 0);
-        const key = blockDate.toISOString();
-        if (!blockMap[key]) {
-          blockMap[key] = { dateObj: blockDate, sum: 0, count: 0 };
-        }
-        blockMap[key].sum += pt.stage;
-        blockMap[key].count += 1;
-      });
-      return Object.values(blockMap)
-        .map(item => ({ dateObj: item.dateObj, stage: item.sum / item.count }))
-        .sort((a, b) => a.dateObj - b.dateObj);
-    }
-
-    function renderRiverGraph(dataPoints, floodThreshold, lastReadingStr) {
-      const container = document.getElementById("river-graph");
-      container.innerHTML = "";
-      if (!dataPoints.length) return;
-
-      let minStage = Math.min(...dataPoints.map(d => d.stage));
-      let maxStage = Math.max(...dataPoints.map(d => d.stage));
-      maxStage = Math.max(maxStage, 6);
-      minStage = Math.min(minStage, floodThreshold);
-      maxStage = Math.max(maxStage, floodThreshold);
-      const stageRange = (maxStage - minStage) || 1;
-      const minDate = dataPoints[0].dateObj;
-      const maxDate = dataPoints[dataPoints.length - 1].dateObj;
-      const totalMillis = maxDate - minDate;
-      const svgWidth = 1001;
-      const svgHeight = 280;
-      const graphHeight = 180;
-      const graphOffsetX = 60;
-      const graphWidth = svgWidth - graphOffsetX - 20;
-      const svgNS = "http://www.w3.org/2000/svg";
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", svgWidth);
-      svg.setAttribute("height", svgHeight);
-      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-
-      // Y-axis label
-      const yLabel = document.createElementNS(svgNS, "text");
-      yLabel.setAttribute("x", 25);
-      yLabel.setAttribute("y", svgHeight / 2 + 30);
-      yLabel.setAttribute("font-size", "18");
-      yLabel.setAttribute("font-weight", "bold");
-      yLabel.setAttribute("fill", "black");
-      yLabel.setAttribute("text-anchor", "start");
-      yLabel.setAttribute("transform", `rotate(-90 25,${svgHeight / 2 + 30})`);
-      yLabel.textContent = "Water Level (ft)";
-      svg.appendChild(yLabel);
-
-      function scaleX(dateObj) {
-        const currentMillis = dateObj - minDate;
-        return graphOffsetX + (currentMillis / totalMillis) * graphWidth - 20;
-      }
-      function scaleY(stage) {
-        return graphHeight - ((stage - minStage) / stageRange) * graphHeight + 20;
       }
 
-      // Y-axis ticks
-      const startTick = Math.floor(minStage);
-      const endTick = Math.ceil(maxStage);
-      for (let tickVal = startTick; tickVal <= endTick; tickVal += 1) {
-        const fraction = (maxStage - tickVal) / stageRange;
-        const tickY = 20 + fraction * graphHeight;
-        const tickLine = document.createElementNS(svgNS, "line");
-        tickLine.setAttribute("x1", graphOffsetX - 5);
-        tickLine.setAttribute("x2", graphOffsetX);
-        tickLine.setAttribute("y1", tickY);
-        tickLine.setAttribute("y2", tickY);
-        tickLine.setAttribute("stroke", "black");
-        tickLine.setAttribute("stroke-width", "1");
-        svg.appendChild(tickLine);
+      const stageValues = (stageSeries?.values?.[0]?.value || [])
+        .map(v=>({ dateTime:v.dateTime, stage: parseFloat(v.value) }))
+        .filter(pt=>Number.isFinite(pt.stage));
+      const flowValues  = (flowSeries?.values?.[0]?.value || [])
+        .map(v=>({ dateTime:v.dateTime, flow: parseFloat(v.value) }))
+        .filter(pt=>Number.isFinite(pt.flow));
 
-        const tickLabel = document.createElementNS(svgNS, "text");
-        tickLabel.setAttribute("x", graphOffsetX - 10);
-        tickLabel.setAttribute("y", tickY + 4);
-        tickLabel.setAttribute("font-size", "21");
-        tickLabel.setAttribute("fill", "black");
-        tickLabel.setAttribute("text-anchor", "end");
-        tickLabel.textContent = tickVal.toFixed(0);
-        svg.appendChild(tickLabel);
+      const stageEl = document.getElementById('river-stage-line');
+      const flowEl  = document.getElementById('river-flow-line');
+      const padEl   = document.getElementById('paddle-advisory');
+
+      if (!stageValues.length) {
+        stageEl.innerHTML = '<strong>Stage:</strong> —';
+        flowEl.innerHTML  = '<strong>Discharge:</strong> —';
+        padEl.textContent = '—';
+        document.getElementById('flood-status').textContent = 'No river data available';
+        return;
       }
 
-      // Data path
-      const pathData = dataPoints.map((pt, i) => {
-        const x = scaleX(pt.dateObj);
-        const y = scaleY(pt.stage);
-        return (i === 0 ? 'M' : 'L') + x + ',' + y;
-      }).join(' ');
-      const polyline = document.createElementNS(svgNS, "path");
-      polyline.setAttribute("d", pathData);
-      polyline.setAttribute("stroke", "black");
-      polyline.setAttribute("fill", "none");
-      polyline.setAttribute("stroke-width", "6.6");
-      svg.appendChild(polyline);
+      const lastStage = stageValues[stageValues.length-1].stage;
+      const lastStageStr = `${lastStage.toFixed(2)} ft`;
+      const lastFlow  = flowValues.length ? flowValues[flowValues.length-1].flow : NaN;
+      const lastFlowStr = Number.isFinite(lastFlow) ? `${Math.round(lastFlow)} cfs` : '—';
 
-      // Flood line
-      const floodY = scaleY(floodThreshold);
-      const floodLine = document.createElementNS(svgNS, "line");
-      floodLine.setAttribute("x1", graphOffsetX);
-      floodLine.setAttribute("x2", graphOffsetX + graphWidth);
-      floodLine.setAttribute("y1", floodY);
-      floodLine.setAttribute("y2", floodY);
-      floodLine.setAttribute("stroke", "black");
-      floodLine.setAttribute("stroke-dasharray", "6,3");
-      floodLine.setAttribute("stroke-width", "4");
-      svg.appendChild(floodLine);
+      const stageTrend = computeStageTrend(stageValues);
+      const flowTrend  = computeFlowTrend(flowValues);
 
-      // Flood Stage label
-      const floodLabel = document.createElementNS(svgNS, "text");
-      floodLabel.setAttribute("x", graphOffsetX + graphWidth - 10);
-      floodLabel.setAttribute("y", floodY - 10);
-      floodLabel.setAttribute("font-size", "32");
-      floodLabel.setAttribute("font-weight", "bold");
-      floodLabel.setAttribute("fill", "black");
-      floodLabel.setAttribute("text-anchor", "end");
-      floodLabel.textContent = "Flood Stage";
-      svg.appendChild(floodLabel);
+      stageEl.innerHTML = `<strong>Stage:</strong> ${lastStageStr} ${stageTrend.arrow} ${stageTrend.label}`;
+      flowEl.innerHTML  = `<strong>Discharge:</strong> ${lastFlowStr} ${flowTrend.arrow} ${flowTrend.label}`;
 
-      // Dots + last-reading tag
-      const minDateLabel = minDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      let lastDay = "";
-      dataPoints.forEach((pt, i) => {
-        const x = scaleX(pt.dateObj);
-        const y = scaleY(pt.stage);
-        const circle = document.createElementNS(svgNS, "circle");
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", y);
-        circle.setAttribute("r", 3);
-        circle.setAttribute("fill", "black");
-        svg.appendChild(circle);
+      // advisory
+      const classif = classifyFlow(lastFlow, lastStage, floodThreshold);
+      padEl.textContent = classif.label;
+      padEl.className = 'river-class-banner';
 
-        const dayLabel = pt.dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        if (dayLabel !== minDateLabel && dayLabel !== lastDay) {
-          lastDay = dayLabel;
-          const label = document.createElementNS(svgNS, "text");
-          label.setAttribute("x", x);
-          label.setAttribute("y", 240);
-          label.setAttribute("font-size", "30");
-          label.setAttribute("fill", "black");
-          label.setAttribute("text-anchor", "middle");
-          label.textContent = dayLabel;
-          svg.appendChild(label);
-        }
-        if (i === dataPoints.length - 1) {
-          const measurement = document.createElementNS(svgNS, "text");
-          measurement.setAttribute("x", x - 0.1 * graphWidth);
-          measurement.setAttribute("y", y + 45);
-          measurement.setAttribute("font-size", "35");
-          measurement.setAttribute("font-weight", "bold");
-          measurement.setAttribute("fill", "white");
-          measurement.setAttribute("text-anchor", "middle");
-          measurement.textContent = ` ${lastReadingStr} `;
-          const rect = document.createElementNS(svgNS, "rect");
-          setTimeout(() => {
-            const bbox = measurement.getBBox();
-            rect.setAttribute("x", bbox.x - 5);
-            rect.setAttribute("y", bbox.y);
-            rect.setAttribute("width", bbox.width + 10);
-            rect.setAttribute("height", bbox.height);
-            rect.setAttribute("fill", "black");
-          }, 0);
-          setTimeout(() => {
-            const bbox = measurement.getBBox();
-            rect.setAttribute("x", bbox.x - 5);
-            rect.setAttribute("y", bbox.y);
-            rect.setAttribute("width", bbox.width + 10);
-            rect.setAttribute("height", bbox.height);
-            svg.insertBefore(rect, measurement);
-          }, 0);
-          svg.appendChild(measurement);
-        }
-      });
-
-      container.appendChild(svg);
-      setTimeout(fitCardsToViewport, 0);
-    }
-
-    /* ============== WARNING ICON ============== */
-    function getWarningIcon() {
-      const svgNS = "http://www.w3.org/2000/svg";
-      let svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("width", "48");
-      svg.setAttribute("height", "48");
-      svg.setAttribute("viewBox", "0 0 64 64");
-      svg.innerHTML = `
-        <polygon points="32,2 2,62 62,62" fill="black"/>
-        <text x="32" y="42" font-size="36" text-anchor="middle" fill="white" font-family="Arial" dy=".3em">!</text>
-      `;
-      return svg.outerHTML;
-    }
-    
-    /* ====== CARD PRIORITIZATION / FITTER ====== */
-
-    /* Fixed canvas size of the ePaper */
-    const VIEWPORT_W = 1440;
-    const VIEWPORT_H = 2560;
-
-    /* Edit this list to set priority (index 0 = highest = keep first) */
-    const CARD_PRIORITY = [
-      'alerts-section',
-      'weather-section',
-      'rainfall-forecast',
-      'river-section',
-      'aqi-section',
-      'swim-us64',
-      'heat-risk-section'
-    ];
-
-    /* How many top cards are protected (never hidden) */
-    const ALWAYS_KEEP_FIRST = 3;
-
-    /* --- helpers --- */
-    function cardPriority(el) {
-      const id = el.id || '';
-      const idx = CARD_PRIORITY.indexOf(id);
-      return idx === -1 ? 999 : idx;
-    }
-    function outerHeight(el) {
-      const cs = getComputedStyle(el);
-      return el.getBoundingClientRect().height +
-             (parseFloat(cs.marginTop) || 0) +
-             (parseFloat(cs.marginBottom) || 0);
-    }
-
-    /* Hide lowest-priority cards until everything fits in 1440x2560 */
-    function fitCardsToViewport() {
-      const header = document.getElementById('header');
-      const container = document.querySelector('.container');
-      if (!header || !container) return;
-
-      const cs = getComputedStyle(container);
-      const padTop = parseFloat(cs.paddingTop) || 0;
-      const padBottom = parseFloat(cs.paddingBottom) || 0;
-      const gap = parseFloat(cs.rowGap || cs.gap) || 0;
-
-      const cards = Array.from(container.querySelectorAll('.section'));
-
-      // Show everything first to measure true heights
-      cards.forEach(c => { c.style.display = 'flex'; });
-
-      function totalHeightIfVisible() {
-        let used = header.offsetHeight + padTop + padBottom;
-        const visible = cards.filter(c => c.style.display !== 'none');
-        visible.forEach((c, i) => {
-          used += outerHeight(c);
-          if (i > 0) used += gap; // account for flex column gap
-        });
-        return used;
+      const statusEl = document.getElementById('flood-status');
+      if (lastStage >= floodThreshold) {
+        statusEl.textContent = "FLOOD LEVELS UNSAFE, ACCESS CLOSED 👍";
+      } else {
+        statusEl.textContent = "RIVER BELOW FLOOD STAGE 👍";
       }
 
-      // Hide from the lowest priority upward until it fits
-      while (totalHeightIfVisible() > VIEWPORT_H) {
-        const candidates = cards
-          .filter(c => c.style.display !== 'none')
-          .filter(c => cardPriority(c) >= ALWAYS_KEEP_FIRST)
-          .sort((a, b) => cardPriority(b) - cardPriority(a));
-        if (!candidates.length) break;
-        candidates[0].style.display = 'none';
-      }
-    }
+      const grouped = groupBy3HourBlocks(stageValues);
+      renderRiverGraph(grouped, floodThreshold, lastStageStr);
 
-    function fitNowAndLater() {
-      [0, 80, 600, 1600].forEach(ms => setTimeout(fitCardsToViewport, ms));
-    }
+      document.getElementById("river-timestamp").textContent = "Last updated: " + fmtDateTime();
+    }).catch(()=>{
+      document.getElementById('flood-status').textContent = 'Error fetching data';
+      document.getElementById('river-stage-line').innerHTML = '<strong>Stage:</strong> —';
+      document.getElementById('river-flow-line').innerHTML  = '<strong>Discharge:</strong> —';
+      const padEl = document.getElementById('paddle-advisory');
+      padEl.textContent = '—';
+      padEl.className = 'river-class-banner';
+    });
+  }
 
-    // Re-fit once fonts are loaded (Roboto changes metrics)
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => fitNowAndLater());
-    }
+  /* ===================== MASTER REFRESH ===================== */
 
-    /* ============== MASTER REFRESH ============== */
-    function fetchAllData() {
-      updateAllTimestamps();
-      fetchRiverData();
-      fetchAQIData();
-      fetchNWSData();
-      fitNowAndLater();
-    }
+  function fetchAllData() {
+    updateAllTimestamps();
+    updateParkStatus();
+    fetchRiverData();
+    fetchAQIData();
+    fetchNWSData();
+  }
 
-    window.onload = () => {
-      fetchAllData();
-      fitNowAndLater();
-    };
+  window.onload = () => {
+    // If logo failed to load, layout still centered thanks to reserved column.
+    fetchAllData();
+  };
 
-    setInterval(fetchAllData, 10 * 60 * 1000);
+  // refresh every 10 minutes
+  setInterval(fetchAllData, 10 * 60 * 1000);
   </script>
 </body>
 </html>
