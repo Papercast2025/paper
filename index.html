@@ -199,7 +199,7 @@
   /* ====== Forecast ====== */
   #forecast-lines {
     text-align: center;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;           /* bolded as requested */
     line-height: 1.4;
   }
@@ -254,7 +254,7 @@
       <div class="card-title">Park Status</div>
       <div id="park-status-bar">OPEN / ABIERTO</div>
       <div id="park-status-subrow">
-        <div id="park-hours-today">Hours today: —</div>
+        <div id="park-hours-today">Today: —</div>
         <div id="park-hours-next" style="text-align:right;">Next: —</div>
       </div>
       <div class="card-timestamp" id="park-timestamp">Last updated: --</div>
@@ -305,7 +305,7 @@
       <div class="river-header">River Water Level & Flow</div>
 
       <div id="flood-status-row">
-        <span class="river-topline" id="flood-status">RIVER BELOW FLOOD STAGE 👍</span>
+        <span class="river-topline" id="flood-status">RIVER BELOW FLOOD STAGE</span>
         <span class="river-class-banner" id="paddle-advisory">—</span>
       </div>
 
@@ -368,15 +368,15 @@
   const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
 
   // Park hours — easy to edit per weekday (0=Sun ... 6=Sat)
-  // Default: 12:00 AM – 8:00 PM
+  // Default: 12:00 AM – 11:00 PM
   const PARK_HOURS = {
-    0: { open: "12:00", close: "20:00" },
-    1: { open: "12:00", close: "20:00" },
-    2: { open: "12:00", close: "20:00" },
-    3: { open: "12:00", close: "20:00" },
-    4: { open: "12:00", close: "20:00" },
-    5: { open: "12:00", close: "20:00" },
-    6: { open: "12:00", close: "20:00" }
+    0: { open: "12:00", close: "23:00" },
+    1: { open: "12:00", close: "23:00" },
+    2: { open: "12:00", close: "23:00" },
+    3: { open: "12:00", close: "23:00" },
+    4: { open: "12:00", close: "23:00" },
+    5: { open: "12:00", close: "23:00" },
+    6: { open: "12:00", close: "23:00" }
   };
 
   // River guidance thresholds (CFS)
