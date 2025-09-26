@@ -14,7 +14,7 @@
   --card-bg:#fff;
   --rail:#000;
   --rail-invert:#fff;
-  --soft:#cccccc;       /* same gray used behind river graph */
+  --soft:#cccccc;       /* same gray as river graph background */
   --muted:#444;
 }
 html,body{margin:0;padding:0}
@@ -65,9 +65,7 @@ body{
 #alert-message{ font-weight:700; white-space:pre-wrap; }
 
 /* ===== Weather ===== */
-#weather-section .section-content{
-  display:flex; gap:18px; width:100%;
-}
+#weather-section .section-content{ display:flex; gap:18px; width:100%; }
 #wx-left{ flex:0 0 34%; display:flex; align-items:center; gap:12px; }
 #weather-icon{ width:126px; height:126px; }
 #weather-temp-F{ font-size:100px; font-weight:700; line-height:0.9; }
@@ -104,10 +102,6 @@ body{
 #aqi-guidance{ font-size:24px; font-weight:400; }
 #aqi-breakdown{ font-size:20px; }
 #aqi-source{ font-size:18px; text-align:right; margin-top:2px; }
-
-/* ===== Misc ===== */
-.value{ font-size:100px; font-weight:700; margin:10px 0; }
-.label{ font-size:28px; color:#444; }
 </style>
 </head>
 <body>
@@ -237,31 +231,37 @@ const PARK_CLOSE_HOUR = 19;  // 7:00 PM ET
 let floodThreshold = 5.0;
 let LAST_AQI = null;
 
-/* Formatters */
+/* ---------- Formatters ---------- */
 const fmtDateTime = (d=new Date()) =>
   new Intl.DateTimeFormat('en-US',{dateStyle:'short',timeStyle:'short',timeZone:TIME_ZONE}).format(d);
 const fmtTime = (d) =>
   new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'numeric',timeZone:TIME_ZONE}).format(d);
 
-/* TZ-safe helpers for Park Status */
-function nowInTZ(){ return new Date(new Date().toLocaleString('en-US',{timeZone:TIME_ZONE})); }
-function atTZHour(base,hour,minute=0){ const d=new Date(base); d.setHours(hour,minute,0,0); return d; }
-function durString(ms){
-  const mins=Math.max(0,Math.round(ms/60000));
-  const h=Math.floor(mins/60), m=mins%60;
-  if(h>0 && m>0) return `${h}h ${m}m`;
-  if(h>0) return `${h}h`;
-  return `${m}m`;
+/* ---------- Robust timezone math (no DST bugs) ---------- */
+function getTZParts(date, timeZone){
+  const dtf = new Intl.DateTimeFormat('en-US',{
+    timeZone, year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'
+  });
+  const parts = Object.fromEntries(dtf.formatToParts(date).map(p=>[p.type,p.value]));
+  const asUTC = Date.UTC(parts.year, parts.month-1, parts.day, parts.hour, parts.minute, parts.second);
+  const offsetMin = (asUTC - date.getTime())/60000; // minutes east of UTC
+  return { y:+parts.year, m:+parts.month, d:+parts.day, H:+parts.hour, M:+parts.minute, S:+parts.second, offsetMin };
 }
+function zonedDate(parts, hour=0, minute=0){
+  // Convert ET wall time to a real UTC timestamp Date
+  return new Date(Date.UTC(parts.y, parts.m-1, parts.d, hour, minute, 0) - parts.offsetMin*60000);
+}
+function addDays(date, days){ return new Date(date.getTime()+days*24*3600*1000); }
 
-/* Card timestamps refresher */
+/* ---------- Card timestamps ---------- */
 function updateAllTimestamps(){
   const nowStr=fmtDateTime();
   ['park-timestamp','alerts-timestamp','weather-timestamp','river-timestamp','rainfall-timestamp','aqi-timestamp']
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='Last updated: '+nowStr; });
 }
 
-/* ============== Icons ============== */
+/* ---------- Icons ---------- */
 function getWeatherIcon(forecast){
   forecast=(forecast||'').toLowerCase();
   let svg="";
@@ -297,7 +297,7 @@ function thumbSVG(){
     <path d="M24 52h-8c-2 0-4-2-4-4V30c0-2 2-4 4-4h8v26zM28 26l10-18c3-5 12-2 11 4l-2 14h8c5 0 8 6 4 10L44 52H28V26z" fill="#000"/></svg>`;
 }
 
-/* ============== AQI Gauge (robust, no masks) ============== */
+/* ---------- AQI Gauge (robust, no masks) ---------- */
 function generateAQISemiGauge(aqi){
   const svgNS='http://www.w3.org/2000/svg';
   const W=380,H=200,cx=W/2,cy=180,r=140;
@@ -337,29 +337,41 @@ function generateAQISemiGauge(aqi){
   return svg;
 }
 
-/* ============== Park Status (TZ safe) ============== */
+/* ---------- Park Status (ET wall time, DST-safe) ---------- */
 function updateParkStatus(){
-  const nowTZ=nowInTZ();
-  const openTZ=atTZHour(nowTZ,PARK_OPEN_HOUR);
-  const closeTZ=atTZHour(nowTZ,PARK_CLOSE_HOUR);
+  const now = new Date();
+  const partsToday = getTZParts(now, TIME_ZONE);
+
+  const openToday  = zonedDate(partsToday, PARK_OPEN_HOUR, 0);
+  const closeToday = zonedDate(partsToday, PARK_CLOSE_HOUR, 0);
 
   const banner=document.getElementById('park-banner');
   const todayEl=document.getElementById('park-today');
   const nextEl=document.getElementById('park-next');
 
-  const isOpen = nowTZ >= openTZ && nowTZ < closeTZ;
+  const isOpen = now >= openToday && now < closeToday;
   banner.textContent = isOpen ? 'OPEN / ABIERTO' : 'CLOSED / CERRADO';
-  todayEl.textContent = `Today: ${fmtTime(openTZ)} – ${fmtTime(closeTZ)}`;
+  todayEl.textContent = `Today: ${fmtTime(openToday)} – ${fmtTime(closeToday)}`;
 
   if(isOpen){
-    nextEl.textContent = `Next: Closes at ${fmtTime(closeTZ)} (${durString(closeTZ-nowTZ)} left)`;
+    nextEl.textContent = `Next: Closes at ${fmtTime(closeToday)} (${prettyDur(closeToday - now)} left)`;
   }else{
-    const nextOpen = (nowTZ < openTZ) ? openTZ : new Date(openTZ.getTime()+24*3600*1000);
-    nextEl.textContent = `Next: Opens at ${fmtTime(nextOpen)} (${durString(nextOpen-nowTZ)})`;
+    // before open => today 8am, after close => tomorrow 8am
+    let base = (now < openToday) ? now : addDays(now, 1);
+    const partsNext = getTZParts(base, TIME_ZONE);
+    const nextOpen  = zonedDate(partsNext, PARK_OPEN_HOUR, 0);
+    nextEl.textContent = `Next: Opens at ${fmtTime(nextOpen)} (${prettyDur(nextOpen - now)})`;
   }
 }
+function prettyDur(ms){
+  const mins=Math.max(0,Math.round(ms/60000));
+  const h=Math.floor(mins/60), m=mins%60;
+  if(h>0 && m>0) return `${h}h ${m}m`;
+  if(h>0) return `${h}h`;
+  return `${m}m`;
+}
 
-/* ============== AQI helpers ============== */
+/* ---------- AQI helpers ---------- */
 function aqiCategoryFromValue(n){
   if(n<=50) return 'Good';
   if(n<=100) return 'Moderate';
@@ -397,8 +409,8 @@ function renderAQI(state){
     right.textContent='AQI: '+aqiValue;
     document.getElementById('aqi-guidance').textContent=aqiGuidanceForCategory(category);
     document.getElementById('aqi-breakdown').textContent=breakdown || '—';
-    const label=`Source: ${source || '—'} • As of ${fmtDateTime(asOf?new Date(asOf):new Date())}`;
-    document.getElementById('aqi-source').textContent=label;
+    document.getElementById('aqi-source').textContent =
+      `Source: ${source || '—'} • As of ${fmtDateTime(asOf?new Date(asOf):new Date())}`;
   }
   content.appendChild(left); content.appendChild(center); content.appendChild(right);
   document.getElementById('aqi-timestamp').textContent='Last updated: '+fmtDateTime();
@@ -413,8 +425,8 @@ async function fetchAQIFromOpenMeteo(){
   if(!times.length||!series.length) throw new Error('no aqi');
   const now=new Date(); let idx=series.length-1;
   for(let i=series.length-1;i>=0;i--){ if(new Date(times[i])<=now){ idx=i; break; } }
-  const aqi=Math.round(Number(series[idx])); const fmt=n=>Number.isFinite(n)?Math.round(n):'—';
-  const p25=fmt(data?.hourly?.pm2_5?.[idx]); const p10=fmt(data?.hourly?.pm10?.[idx]); const o3=fmt(data?.hourly?.ozone?.[idx]);
+  const aqi=Math.round(Number(series[idx])); const fmtN=n=>Number.isFinite(n)?Math.round(n):'—';
+  const p25=fmtN(data?.hourly?.pm2_5?.[idx]); const p10=fmtN(data?.hourly?.pm10?.[idx]); const o3=fmtN(data?.hourly?.ozone?.[idx]);
   LAST_AQI={aqiValue:aqi,category:aqiCategoryFromValue(aqi),source:'Open-Meteo (US AQI)',asOf:times[idx],
             breakdown:`PM2.5 ${p25} μg/m³ • PM10 ${p10} μg/m³ • O₃ ${o3} μg/m³`};
   renderAQI(LAST_AQI);
@@ -449,7 +461,7 @@ async function fetchAQIData(){
   }
 }
 
-/* ============== Weather (NWS) + UV from Open-Meteo ============== */
+/* ---------- Weather (NWS) + UV + Sunrise/Sunset ---------- */
 function parseWindMph(s){ const m=String(s||'').match(/[\d.]+/); return m?parseFloat(m[0]):0; }
 function fToC(f){ return (f-32)*5/9; } function cToF(c){ return (c*9/5)+32; }
 function dewPointF(Tf,RH){
@@ -469,20 +481,26 @@ function feelsLikeF(T,R,V){ if(T<=50&&V>=3) return windChillF(T,V); if(T>=80&&R>
 async function fetchUVFromOpenMeteo(){
   try{
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=uv_index&timezone=auto&_=${Date.now()}`;
-    const res=await fetch(url,{cache:'no-store'});
-    const data=await res.json();
+    const res=await fetch(url,{cache:'no-store'}); const data=await res.json();
     const times=data?.hourly?.time||[], uvs=data?.hourly?.uv_index||[];
     if(times.length && uvs.length){
       const now=new Date(); let idx=uvs.length-1;
       for(let i=uvs.length-1;i>=0;i--){ if(new Date(times[i])<=now){ idx=i; break; } }
       const uv=uvs[idx]; document.getElementById('wx-uv').textContent='UV Index: '+(uv!=null?Math.round(uv):'—');
-      // keep the combined source line
-      const src=`Source: NWS + Open-Meteo (${LAT.toFixed(3)}, ${LON.toFixed(3)})`;
-      document.getElementById('weather-source').textContent=src;
+      document.getElementById('weather-source').textContent = `Source: NWS + Open-Meteo (${LAT.toFixed(3)}, ${LON.toFixed(3)})`;
     }
-  }catch{
-    document.getElementById('wx-uv').textContent='UV Index: —';
-  }
+  }catch{ document.getElementById('wx-uv').textContent='UV Index: —'; }
+}
+
+function fetchSunriseSunset(){
+  const url=`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0&_=${Date.now()}`;
+  fetch(url).then(r=>r.json()).then(d=>{
+    if(d.status==='OK'){
+      const sr=new Date(d.results.sunrise), ss=new Date(d.results.sunset);
+      document.getElementById('wx-sunrise').textContent = 'Sunrise: '+fmtTime(sr);
+      document.getElementById('wx-sunset').textContent  = 'Sunset: '+fmtTime(ss);
+    }
+  }).catch(()=>{});
 }
 
 function fetchNWSData(){
@@ -539,18 +557,16 @@ function fetchNWSData(){
           .then(r=>r.json()).then(z=>{
             const msg=(z.features&&z.features.length)? z.features.map(a=>a.properties.headline).join('\n') :
               'No alerts at this time / Sin alertas en este momento';
-            const el=document.getElementById('alert-message');
-            el.textContent=msg;
-            el.style.textAlign='center';
+            const el=document.getElementById('alert-message'); el.textContent=msg; el.style.textAlign='center';
           });
       }
     });
 
-  // UV comes from Open-Meteo
   fetchUVFromOpenMeteo();
+  fetchSunriseSunset();
 }
 
-/* ============== River data ============== */
+/* ---------- River data ---------- */
 function computeFlowTrend(flow){
   try{
     if(!Array.isArray(flow)||flow.length<2) return {arrow:'→',label:'steady'};
@@ -662,10 +678,16 @@ function renderRiverGraph(points,flood,lastReadingStr){
 }
 
 function fetchRiverData(){
-  const end=new Date(), start=new Date(); start.setDate(end.getDate()-4);
-  const format=d=>d.toISOString().split('.')[0];
-  const url=`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all&_=${Date.now()}`;
-  fetch(url).then(r=>r.json()).then(data=>{
+  // Try period=P4D (simpler & reliable); falls back to explicit range if needed.
+  const url1=`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065,00060&period=P4D&siteStatus=all&_=${Date.now()}`;
+  fetch(url1).then(r=>r.json()).then(processUSGS).catch(()=>{
+    const end=new Date(), start=new Date(); start.setDate(end.getDate()-4);
+    const format=d=>d.toISOString().split('.')[0];
+    const url2=`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all&_=${Date.now()}`;
+    fetch(url2).then(r=>r.json()).then(processUSGS).catch(()=>{});
+  });
+
+  function processUSGS(data){
     const series=data?.value?.timeSeries||[];
     const find=(code)=>series.find(s=>s?.variable?.variableCode?.[0]?.value===code);
     const stageSeries=find("00065"), flowSeries=find("00060");
@@ -691,20 +713,16 @@ function fetchRiverData(){
     flowEl.textContent  = `Discharge: ${Number.isFinite(lastFlow)?Math.round(lastFlow):'—'} cfs ${flowTrend.arrow} ${flowTrend.label}`;
     document.getElementById('river-timestamp').textContent='Last updated: '+fmtDateTime();
 
-    // headline + pill
     document.getElementById('thumb').innerHTML = thumbSVG();
     const classif=classifyFlow(lastFlow,lastStage,floodThreshold);
-    const pill=document.getElementById('flow-pill'); pill.textContent=classif.label;
+    document.getElementById('flow-pill').textContent=classif.label;
 
     const grouped=groupBy3HourBlocks(stageValues);
     renderRiverGraph(grouped,floodThreshold,`${lastStage.toFixed(2)} ft`);
-  }).catch(()=>{
-    document.getElementById('river-stage-line').textContent='Stage: —';
-    document.getElementById('river-flow-line').textContent='Discharge: —';
-  });
+  }
 }
 
-/* ============== Master refresh ============== */
+/* ---------- Master refresh ---------- */
 function fetchAllData(){
   updateAllTimestamps();
   updateParkStatus();
