@@ -6,123 +6,121 @@
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
-  :root{
-    --panel-bg:#f0f0f0;
-    --ink:#000;
-    --card-border:#000;
-    --card-bg:#fff;
-    --accent-dark:#000;
-    --accent-gray:#cccccc; /* same as river graph background */
-  }
+:root{
+  --panel-bg:#f0f0f0;
+  --ink:#000;
+  --card-border:#000;
+  --card-bg:#fff;
+  --accent-dark:#000;
+  --accent-gray:#cccccc; /* same gray used behind river graph */
+}
 
-  body{
-    background-color:var(--panel-bg);
-    color:var(--ink);
-    font-family:'Roboto',Arial,sans-serif;
-    margin:0; padding:0;
-    width:1440px; height:2560px; overflow:hidden;
-    -webkit-text-size-adjust:none;
-  }
+body{
+  background-color:var(--panel-bg);
+  color:var(--ink);
+  font-family:'Roboto',Arial,sans-serif;
+  margin:0; padding:0;
+  width:1440px; height:2560px; overflow:hidden;
+  -webkit-text-size-adjust:none;
+}
 
-  .container{ padding:32px; display:flex; flex-direction:column; gap:14px; }
+.container{ padding:32px; display:flex; flex-direction:column; gap:14px; }
 
-  .section{
-    border:4px solid var(--card-border);
-    padding:16px; box-sizing:border-box;
-    border-radius:8px; background-color:var(--card-bg);
-    display:flex; flex-direction:column; position:relative;
-  }
+.section{
+  border:4px solid var(--card-border);
+  padding:16px; box-sizing:border-box;
+  border-radius:8px; background-color:var(--card-bg);
+  display:flex; flex-direction:column; position:relative;
+}
 
-  .card-title{
-    font-size:36px; font-weight:bold;
-    background-color:var(--accent-dark); color:#fff;
-    padding:4px 8px; margin-bottom:8px; text-align:left;
-  }
+.card-title{
+  font-size:36px; font-weight:bold;
+  background-color:var(--accent-dark); color:#fff;
+  padding:4px 8px; margin-bottom:8px; text-align:left;
+}
 
-  .section-content{ display:flex; flex-direction:column; align-items:flex-end; text-align:right; }
-  .centered .section-content{ align-items:center; text-align:center; }
+.section-content{ display:flex; flex-direction:column; align-items:flex-end; text-align:right; }
+.centered .section-content{ align-items:center; text-align:center; }
 
-  .value{ font-size:100px; font-weight:bold; margin:10px 0; }
-  .label{ font-size:32px; color:#444; }
+.value{ font-size:100px; font-weight:bold; margin:10px 0; }
+.label{ font-size:32px; color:#444; }
 
-  .timestamp,.card-timestamp{ font-size:24px; color:#222; margin-top:8px; text-align:right; }
+.timestamp,.card-timestamp{ font-size:24px; color:#222; margin-top:8px; text-align:right; }
 
-  /* Header with centered title + bold lat/lon; logo pinned left */
-  #header{
-    background-color:var(--accent-dark); color:#fff;
-    padding:16px 20px; font-size:40px; font-weight:bold;
-    display:flex; align-items:center; justify-content:center;
-    position:relative; text-align:center;
-  }
-  #header .logo{
-    position:absolute; left:16px; top:50%; transform:translateY(-50%);
-    height:64px; width:auto; object-fit:contain;
-  }
-  #header .title{ line-height:1.15; }
-  #header-lat,#header-lon{ font-weight:900; } /* bold lat/lon */
+/* Header (two lines; logo at left; centered text) */
+#header{
+  background-color:var(--accent-dark); color:#fff;
+  padding:16px 20px;
+  display:flex; align-items:center; justify-content:center;
+  position:relative; text-align:center;
+}
+#header .logo{
+  position:absolute; left:16px; top:50%; transform:translateY(-50%);
+  height:64px; width:auto; object-fit:contain;
+}
+#header .title{ display:flex; flex-direction:column; gap:2px; line-height:1.2; }
+#site-name{ font-size:40px; font-weight:bold; }
+#coords{ font-size:24px; font-weight:900; } /* bold lat/long */
 
-  /* Alerts */
-  #alert-message{ font-weight:bold; white-space:pre-wrap; text-align:center; }
+/* Alerts */
+#alert-message{ font-weight:bold; white-space:pre-wrap; text-align:center; }
 
-  /* Weather layout */
-  #weather-section .section-content{
-    flex-direction:row; justify-content:space-between; width:100%;
-  }
-  #weather-left{ display:flex; align-items:center; text-align:left; }
-  #weather-icon{ width:126px; height:126px; margin-right:12px; }
-  #weather-temp-F{ font-size:100px; font-weight:bold; line-height:0.9; }
-  #weather-temp-C{ font-size:50px; font-weight:bold; }
-  #weather-right{
-    display:flex; flex-direction:row; gap:32px; align-items:flex-start;
-    width:66%; justify-content:space-between;
-  }
-  .wx-col{ display:flex; flex-direction:column; align-items:flex-start; text-align:left; }
-  .wx-line{ font-size:30px; font-weight:normal; } /* not bolded per request */
-  #wx-source{ font-size:22px; font-weight:normal; align-self:flex-end; margin-top:6px; }
+/* Weather layout */
+#weather-section .section-content{
+  flex-direction:row; justify-content:space-between; width:100%;
+}
+#weather-left{ display:flex; align-items:center; text-align:left; }
+#weather-icon{ width:126px; height:126px; margin-right:12px; }
+#weather-temp-F{ font-size:100px; font-weight:bold; line-height:0.9; }
+#weather-temp-C{ font-size:50px; font-weight:bold; }
+#weather-right{
+  display:flex; flex-direction:row; gap:32px; align-items:flex-start;
+  width:66%; justify-content:space-between;
+}
+.wx-col{ display:flex; flex-direction:column; align-items:flex-start; text-align:left; }
+.wx-line{ font-size:30px; font-weight:normal; } /* not bolded */
+#wx-source{ font-size:22px; font-weight:normal; align-self:flex-end; margin-top:6px; }
 
-  /* AQI */
-  #aqi-content{ white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:16px; }
-  #aqi-classification,#aqi-measurement{ font-size:38px; font-weight:bold; color:#000; margin-top:0; }
-  #aqi-extra{ margin-top:6px; text-align:center; }
-  #aqi-guidance{ font-size:36px; color:#222; line-height:1.2; font-weight:600; }
-  #aqi-breakdown{ font-size:28px; color:#222; margin-top:2px; }
-  #aqi-source{ font-size:20px; color:#444; }
+/* AQI */
+#aqi-content{ white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:16px; }
+#aqi-classification,#aqi-measurement{ font-size:38px; font-weight:bold; color:#000; margin-top:0; }
+#aqi-extra{ margin-top:6px; text-align:center; }
+#aqi-guidance{ font-size:36px; color:#222; line-height:1.2; font-weight:600; }
+#aqi-breakdown{ font-size:28px; color:#222; margin-top:2px; }
+#aqi-source{ font-size:20px; color:#444; }
 
-  /* River */
-  .river-header{
-    background-color:var(--accent-dark); color:#fff; font-size:36px; font-weight:bold;
-    padding:10px 8px; text-align:left; margin-bottom:8px;
-  }
-  #river-graph{ background-color:var(--accent-gray); display:block; margin:12px auto 0 auto; position:relative; width:1080px; padding-left:calc(5% - 4px); }
-  #usgs-site-info{ width:100%; text-align:right; font-size:20px; color:#000; margin-top:2px; }
-  #flood-status{ font-weight:bold; font-size:48px; margin-top:8px; display:inline-flex; align-items:center; gap:10px; }
-  #paddle-advisory{ text-align:center; font-size:36px; font-weight:bold; margin-top:8px; padding:4px 8px; color:#fff; background:#000; display:inline-block; }
-  #river-stats{ text-align:center; margin-top:12px; font-weight:900; } /* bold Stage/Discharge line */
+/* River */
+.river-header{
+  background-color:var(--accent-dark); color:#fff; font-size:36px; font-weight:bold;
+  padding:10px 8px; text-align:left; margin-bottom:8px;
+}
+#river-graph{ background-color:var(--accent-gray); display:block; margin:12px auto 0 auto; position:relative; width:1080px; padding-left:calc(5% - 4px); }
+#usgs-site-info{ width:100%; text-align:right; font-size:20px; color:#000; margin-top:2px; }
+#flood-status{ font-weight:bold; font-size:48px; margin-top:8px; display:inline-flex; align-items:center; gap:10px; }
+#paddle-advisory{ text-align:center; font-size:36px; font-weight:bold; margin-top:8px; padding:4px 8px; color:#fff; background:#000; display:inline-block; }
+#river-stats{ text-align:center; margin-top:12px; font-weight:900; } /* bold Stage/Discharge */
 
-  /* Park Status */
-  #park-status-banner{
-    width:100%; box-sizing:border-box;
-    background:var(--accent-gray); color:#fff; border-radius:6px;
-    display:flex; align-items:center; justify-content:center;
-    padding:10px 12px;
-    /* roughly 2× bigger without overflowing the card */
-    font-weight:900; letter-spacing:1px; text-transform:uppercase;
-    font-size: clamp(56px, 6.8vw, 100px);
-  }
-  #park-status-lines{
-    display:flex; flex-direction:row; gap:18px; justify-content:center; margin-top:8px;
-    flex-wrap:wrap;
-  }
-  #park-status-lines .line{ font-size:28px; font-weight:600; }
+/* Park Status */
+#park-status-banner{
+  width:100%; box-sizing:border-box;
+  background:var(--accent-gray); color:#000; border-radius:6px; /* black text on gray */
+  display:flex; align-items:center; justify-content:center;
+  padding:10px 12px;
+  font-weight:900; letter-spacing:1px; text-transform:uppercase;
+  font-size: clamp(56px, 6.8vw, 100px);
+}
+#park-status-lines{
+  display:flex; flex-direction:row; gap:18px; justify-content:center; margin-top:8px;
+  flex-wrap:wrap;
+}
+#park-status-lines .line{ font-size:28px; font-weight:600; }
 
-  /* Forecast */
-  #rainfall-forecast .label{ font-weight:900; } /* bolded */
+/* Forecast */
+#rainfall-forecast .label{ font-weight:900; } /* bolded */
 
-  /* Misc */
-  #sunrise-sunset{ font-size:30px; font-weight:normal; color:#000; } /* now not bolded */
-  #hydration-message{ font-size:32px; text-align:center; margin-top:10px; color:#000; }
-
-  /* Fitting logic constants (viewport) */
+/* Misc */
+#sunrise-sunset{ font-size:30px; font-weight:normal; color:#000; }
+#hydration-message{ font-size:32px; text-align:center; margin-top:10px; color:#000; }
   </style>
 </head>
 <body>
@@ -130,7 +128,8 @@
   <div id="header">
     <img class="logo" src="catham-logo.jpg" alt="Project logo" />
     <div class="title">
-      US 64 Haw River Access, 348 River Access Rd (<span id="header-lat">35.730995</span> / <span id="header-lon">-79.107109</span>)
+      <div id="site-name">US 64 Haw River Access, 348 River Access Rd</div>
+      <div id="coords"><span id="header-lat">35.730995</span> / <span id="header-lon">-79.107109</span></div>
     </div>
   </div>
 
@@ -244,7 +243,7 @@
       <div class="card-timestamp" id="aqi-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Swim Guide -->
+    <!-- Swim Guide (placeholder; unchanged) -->
     <div class="section centered" id="swim-us64">
       <div class="card-title">Swim Guide: US&nbsp;64 Access</div>
       <div class="section-content">
@@ -268,9 +267,9 @@ const TIME_ZONE = 'America/New_York';
 const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
 let floodThreshold = 5.0;
 
-// Park hours (easy to edit)
-// Use 24h "HH:MM" local time. Same hours every day for now.
-const PARK_HOURS = { open: "08:00", close: "19:00" }; // 8am–7pm local
+// Park hours (edit here)
+// 24h "HH:MM" in local New York time.
+const PARK_HOURS = { open: "08:00", close: "19:00" }; // 8am–7pm ET
 
 // Cache last *good* AQI payload
 let LAST_AQI = null;
@@ -281,13 +280,34 @@ const fmtDateTime = (d = new Date()) =>
 const fmtTime = (d) =>
   new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', timeZone: TIME_ZONE }).format(d);
 
-function parseHHMM(s){ const [h,m]=s.split(':').map(n=>parseInt(n,10)); return {h:h||0,m:m||0}; }
-function within(now, start, end){ return now >= start && now < end; }
-function diffHM(from, to){
-  const ms = Math.max(0, to - from);
-  const mins = Math.round(ms/60000);
-  const h = Math.floor(mins/60);
+function getNowPartsInZone(tz){
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  });
+  const parts = dtf.formatToParts(new Date());
+  const map = {};
+  parts.forEach(p => { if (p.type !== 'literal') map[p.type] = p.value; });
+  return {
+    year:+map.year, month:+map.month, day:+map.day,
+    hour:+map.hour, minute:+map.minute, second:+map.second
+  };
+}
+function minutesOfDay(hhmm){
+  const [h,m] = hhmm.split(':').map(n=>parseInt(n,10));
+  return (h*60 + m) % 1440;
+}
+function formatMinutes12(mins){
+  const h24 = Math.floor(mins/60) % 24;
   const m = mins % 60;
+  const ampm = h24>=12 ? 'PM':'AM';
+  const h12 = h24%12 || 12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+function diffHMMinutes(fromMins, toMins){
+  // positive difference forward in time within [0, 24h)
+  let diff = (toMins - fromMins + 1440) % 1440;
+  const h = Math.floor(diff/60), m = diff % 60;
   if (h>0 && m>0) return `${h}h ${m}m`;
   if (h>0) return `${h}h`;
   return `${m} min`;
@@ -309,7 +329,7 @@ function getWeatherIcon(forecast) {
   if (forecast.includes("sunny") || forecast.includes("clear")) {
     return `<svg width="126" height="126" viewBox="0 0 64 64"><circle cx="32" cy="32" r="12" fill="black" stroke="black" stroke-width="3"/><g stroke="black" stroke-width="3"><line x1="32" y1="4" x2="32" y2="14"/><line x1="32" y1="50" x2="32" y2="60"/><line x1="4" y1="32" x2="14" y2="32"/><line x1="50" y1="32" x2="60" y2="32"/><line x1="12" y1="12" x2="18" y2="18"/><line x1="46" y1="46" x2="52" y2="52"/><line x1="12" y1="52" x2="18" y2="46"/><line x1="46" y1="18" x2="52" y2="12"/></g></svg>`;
   } else if (forecast.includes("cloud")) {
-    return `<svg width="126" height="126" viewBox="0 0 64 64"><path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/></svg>`;
+    return `<svg width="126" height="126" viewBox="0 0 64 64"><path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0  0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/></svg>`;
   } else if (forecast.includes("rain")) {
     return `<svg width="126" height="126" viewBox="0 0 64 64"><path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/><g stroke="black" stroke-width="3"><line x1="22" y1="48" x2="22" y2="58"/><line x1="32" y1="48" x2="32" y2="58"/><line x1="42" y1="48" x2="42" y2="58"/></g></svg>`;
   } else if (forecast.includes("snow")) {
@@ -330,13 +350,11 @@ function fetchSunriseSunsetAndUV(){
     }
   }).catch(()=>{});
 
-  // Simple UV from Open-Meteo (supports CORS) — index + station distance approximation
   const uvUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=uv_index&timezone=auto&_=${Date.now()}`;
   fetch(uvUrl).then(r=>r.json()).then(d=>{
     const t = d?.hourly?.time || [];
     const v = d?.hourly?.uv_index || [];
     if(t.length && v.length){
-      // choose current or most recent hour
       const now = new Date();
       let idx = t.length-1;
       for(let i=t.length-1;i>=0;i--){ if(new Date(t[i])<=now){ idx=i; break; } }
@@ -351,8 +369,8 @@ function fetchSunriseSunsetAndUV(){
   });
 }
 
-/* =================== AQI GAUGE =================== */
-function generateAirNowArcGauge(aqi, category){
+/* =================== AQI GAUGE (segments + shaded wedge + needle) =================== */
+function generateAirNowArcGauge(aqi){
   const svgNS = "http://www.w3.org/2000/svg";
   const width = 280, height = 140;
   const cx = width/2, cy = height, r = width/2;
@@ -363,6 +381,7 @@ function generateAirNowArcGauge(aqi, category){
   svg.setAttribute("width",width); svg.setAttribute("height",height);
   svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
 
+  // segments
   for(let i=0;i<5;i++){
     const a1=(180 - i*segAngle) * Math.PI/180;
     const a2=(180 - (i+1)*segAngle) * Math.PI/180;
@@ -376,15 +395,28 @@ function generateAirNowArcGauge(aqi, category){
     svg.appendChild(p);
   }
 
-  // needle
+  // shaded wedge around the needle (visual "slice")
   const clamp = (n,min,max)=>Math.max(min,Math.min(max,n));
-  const fillProp = clamp(aqi,0,300)/300;
-  const angle = 180 - (fillProp*180);
-  const rad = angle*Math.PI/180;
-  const px = cx + r*Math.cos(rad), py = cy - r*Math.sin(rad);
+  const prop = clamp(aqi,0,300)/300;
+  const needleDeg = 180 - (prop*180);
+  const WEDGE = 22; // +/- degrees around needle
+  const aL = (needleDeg - WEDGE) * Math.PI/180;
+  const aR = (needleDeg + WEDGE) * Math.PI/180;
+  const xL = cx + r*Math.cos(aL), yL = cy - r*Math.sin(aL);
+  const xR = cx + r*Math.cos(aR), yR = cy - r*Math.sin(aR);
+  const wedge = document.createElementNS(svgNS,"path");
+  wedge.setAttribute("d", `M ${cx} ${cy} L ${xL} ${yL} L ${xR} ${yR} Z`);
+  wedge.setAttribute("fill", "#777");    // fill slice
+  wedge.setAttribute("stroke", "black"); // keep stroke so it "reads" on ePaper
+  wedge.setAttribute("stroke-width", "2");
+  svg.appendChild(wedge);
+
+  // needle on top
+  const nr = needleDeg * Math.PI/180;
+  const nx = cx + r*Math.cos(nr), ny = cy - r*Math.sin(nr);
   const needle = document.createElementNS(svgNS,"line");
   needle.setAttribute("x1",cx); needle.setAttribute("y1",cy);
-  needle.setAttribute("x2",px); needle.setAttribute("y2",py);
+  needle.setAttribute("x2",nx); needle.setAttribute("y2",ny);
   needle.setAttribute("stroke","black"); needle.setAttribute("stroke-width","8"); needle.setAttribute("stroke-linecap","round");
   svg.appendChild(needle);
 
@@ -419,7 +451,7 @@ function renderAQI(state, cached=false){
 
   if(!state){
     L.textContent = "DATA UNAVAILABLE";
-    C.appendChild(generateAirNowArcGauge(0,"Unknown"));
+    C.appendChild(generateAirNowArcGauge(0));
     R.textContent = "AQI: —";
     document.getElementById("aqi-guidance").textContent = "—";
     document.getElementById("aqi-breakdown").textContent = "—";
@@ -427,7 +459,7 @@ function renderAQI(state, cached=false){
   }else{
     const { aqiValue, category, source, asOf, breakdown } = state;
     L.textContent = category.toUpperCase() + (cached ? " (CACHED)" : "");
-    C.appendChild(generateAirNowArcGauge(aqiValue, category));
+    C.appendChild(generateAirNowArcGauge(aqiValue));
     R.textContent = "AQI: " + aqiValue;
 
     document.getElementById("aqi-guidance").textContent = aqiGuidanceForCategory(category);
@@ -718,7 +750,6 @@ function fetchRiverData(){
 
     const classif = classifyFlow(lastFlow, lastStage, floodThreshold);
     padEl.textContent = classif.label;
-    padEl.style.display = "inline-block";
 
     const statusEl=document.getElementById("flood-status");
     if(lastStage>=floodThreshold){
@@ -735,41 +766,40 @@ function fetchRiverData(){
 
     const grouped=groupBy3HourBlocks(stageValues);
     renderRiverGraph(grouped, floodThreshold, lastStageStr);
-  }).catch(err=>{
+  }).catch(()=>{
     document.getElementById('flood-status').textContent='Error fetching data';
     document.getElementById('river-stage-line').textContent='Stage: —';
     document.getElementById('river-flow-line').textContent='Discharge: —';
-    const padEl=document.getElementById('paddle-advisory'); padEl.textContent='—'; padEl.style.backgroundColor="#000"; padEl.style.color="#fff";
+    const padEl=document.getElementById('paddle-advisory'); padEl.textContent='—';
   });
 }
 
 /* =================== PARK STATUS (OPEN/CLOSED) =================== */
 function updateParkStatus(){
-  const now=new Date();
-  const {h:oh,m:om} = parseHHMM(PARK_HOURS.open);
-  const {h:ch,m:cm} = parseHHMM(PARK_HOURS.close);
+  // compute "now" in New York time as minutes-of-day
+  const nowParts = getNowPartsInZone(TIME_ZONE);
+  const nowM = nowParts.hour*60 + nowParts.minute;
 
-  const todayOpen  = new Date(now); todayOpen.setHours(oh,om,0,0);
-  const todayClose = new Date(now); todayClose.setHours(ch,cm,0,0);
+  const openM  = minutesOfDay(PARK_HOURS.open);
+  const closeM = minutesOfDay(PARK_HOURS.close);
 
-  let isOpen = within(now,todayOpen,todayClose);
-  let nextLabel="—", todayLabel=`${fmtTime(todayOpen)} – ${fmtTime(todayClose)}`;
+  const isOpen = nowM >= openM && nowM < closeM;
 
-  if(isOpen){
-    nextLabel = `Closes at ${fmtTime(todayClose)} (${diffHM(now,todayClose)} left)`;
-  }else{
-    if(now < todayOpen){
-      nextLabel = `Opens at ${fmtTime(todayOpen)} (in ${diffHM(now,todayOpen)})`;
-    }else{
-      const tomorrowOpen = new Date(todayOpen); tomorrowOpen.setDate(tomorrowOpen.getDate()+1);
-      nextLabel = `Opens tomorrow at ${fmtTime(tomorrowOpen)} (in ${diffHM(now,tomorrowOpen)})`;
-    }
+  const todayLabel = `${formatMinutes12(openM)} – ${formatMinutes12(closeM)}`;
+  let nextLabel = "—";
+  if (isOpen){
+    nextLabel = `Closes at ${formatMinutes12(closeM)} (${diffHMMinutes(nowM, closeM)} left)`;
+  } else if (nowM < openM){
+    nextLabel = `Opens at ${formatMinutes12(openM)} (in ${diffHMMinutes(nowM, openM)})`;
+  } else {
+    const tomorrowOpen = openM; // minutes at next day open
+    nextLabel = `Opens tomorrow at ${formatMinutes12(tomorrowOpen)} (in ${diffHMMinutes(nowM, openM + 1440)})`;
   }
 
   const banner=document.getElementById('park-status-banner');
   banner.textContent = isOpen ? "OPEN / ABIERTO" : "CLOSED / CERRADO";
-  banner.style.background = getComputedStyle(document.documentElement).getPropertyValue('--accent-gray'); // ensure gray
-  banner.style.color = "#fff";
+  banner.style.background = getComputedStyle(document.documentElement).getPropertyValue('--accent-gray');
+  banner.style.color = "#000"; // black text on gray
 
   document.getElementById('park-today').textContent = `Today: ${todayLabel}`;
   document.getElementById('park-next').textContent  = `Next: ${nextLabel}`;
