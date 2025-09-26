@@ -450,7 +450,7 @@
       let d = new Date(now);
       let tries = 0;
       while (tries < 8) {
-        d.setDate(d.getDate() + 1);
+        d.setDate(d.getDate());
         const idx = d.getDay();
         const hrs = PARK_HOURS[idx];
         const nOpen = new Date(d); nOpen.setHours(parseInt(hrs.open), parseInt(hrs.open.split(':')[1]), 0, 0);
