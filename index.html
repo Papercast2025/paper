@@ -94,8 +94,8 @@
   /* ====== Park Status ====== */
   #park-status-bar {
     width: 100%;
-    background: #000;
-    color: #fff;
+    background: #ccc;
+    color: #000;
     text-align: center;
     font-size: 80px;
     font-weight: 800;
@@ -431,8 +431,8 @@
 
     const bar = document.getElementById('park-status-bar');
     bar.textContent = isOpen ? 'OPEN / ABIERTO' : 'CLOSED / CERRADO';
-    bar.style.backgroundColor = '#000';
-    bar.style.color = '#fff';
+    bar.style.backgroundColor = '#ccc';
+    bar.style.color = '#000';
 
     const fmtHM = (d) => new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute:'2-digit', hour12: true, timeZone: TIME_ZONE }).format(d);
 
@@ -444,7 +444,7 @@
     let nextLabel, nextTime, labelPrefix;
     if (isOpen) {
       nextTime = close;
-      labelPrefix = 'Next: Park closes at';
+      labelPrefix = 'Park closes at';
     } else {
       // find next open
       let d = new Date(now);
@@ -455,7 +455,7 @@
         const hrs = PARK_HOURS[idx];
         const nOpen = new Date(d); nOpen.setHours(parseInt(hrs.open), parseInt(hrs.open.split(':')[1]), 0, 0);
         nextTime = nOpen;
-        labelPrefix = 'Next: Park opens at';
+        labelPrefix = 'Park opens at';
         break;
       }
     }
