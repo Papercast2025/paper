@@ -230,8 +230,9 @@ document.getElementById('header-lon').textContent = LON.toFixed(6);
 const TIME_ZONE = 'America/New_York';
 const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
 
-const PARK_OPEN_HOUR  = 8;  // 8:00 AM Eastern
-const PARK_CLOSE_HOUR = 19; // 7:00 PM Eastern
+/* Park hours (Eastern) */
+const PARK_OPEN_HOUR  = 8;   // 8:00 AM ET
+const PARK_CLOSE_HOUR = 19;  // 7:00 PM ET
 
 let floodThreshold = 5.0;
 let LAST_AQI = null;
@@ -252,17 +253,6 @@ function durString(ms){
   if(h>0) return `${h}h`;
   return `${m}m`;
 }
-
-/* Random hydration line (kept for parity with earlier builds) */
-const hydrationMessages=[
-  "Remember to hydrate and take breaks in the shade!",
-  "Bebe agua regularmente y camina con precaución.",
-  "Drink water regularly and hike safely.",
-  "Mantente fresco: bebe agua con frecuencia.",
-  "Stay cool—sip water frequently.",
-  "Lleva contigo una botella de agua y toma sorbos con frecuencia.",
-  "Keep a water bottle handy and sip often."
-];
 
 /* Card timestamps refresher */
 function updateAllTimestamps(){
@@ -459,7 +449,7 @@ async function fetchAQIData(){
   }
 }
 
-/* ============== Weather (NWS) ============== */
+/* ============== Weather (NWS) + UV from Open-Meteo ============== */
 function parseWindMph(s){ const m=String(s||'').match(/[\d.]+/); return m?parseFloat(m[0]):0; }
 function fToC(f){ return (f-32)*5/9; } function cToF(c){ return (c*9/5)+32; }
 function dewPointF(Tf,RH){
@@ -476,34 +466,32 @@ function heatIndexF(T,R){
 }
 function feelsLikeF(T,R,V){ if(T<=50&&V>=3) return windChillF(T,V); if(T>=80&&R>=40) return heatIndexF(T,R); return T; }
 
-async function fetchSunriseSunset(){
+async function fetchUVFromOpenMeteo(){
   try{
-    const url=`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0&_=${Date.now()}`;
-    const r=await fetch(url); const d=await r.json();
-    if(d.status==="OK"){
-      document.getElementById('wx-sunrise').textContent='Sunrise: '+fmtTime(new Date(d.results.sunrise));
-      document.getElementById('wx-sunset').textContent ='Sunset: '+fmtTime(new Date(d.results.sunset));
-      return;
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=uv_index&timezone=auto&_=${Date.now()}`;
+    const res=await fetch(url,{cache:'no-store'});
+    const data=await res.json();
+    const times=data?.hourly?.time||[], uvs=data?.hourly?.uv_index||[];
+    if(times.length && uvs.length){
+      const now=new Date(); let idx=uvs.length-1;
+      for(let i=uvs.length-1;i>=0;i--){ if(new Date(times[i])<=now){ idx=i; break; } }
+      const uv=uvs[idx]; document.getElementById('wx-uv').textContent='UV Index: '+(uv!=null?Math.round(uv):'—');
+      // keep the combined source line
+      const src=`Source: NWS + Open-Meteo (${LAT.toFixed(3)}, ${LON.toFixed(3)})`;
+      document.getElementById('weather-source').textContent=src;
     }
-  }catch{}
-  try{
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=sunrise,sunset&timezone=auto&_=${Date.now()}`);
-    const d=await r.json();
-    const sr=d?.daily?.sunrise?.[0], ss=d?.daily?.sunset?.[0];
-    if(sr&&ss){
-      document.getElementById('wx-sunrise').textContent='Sunrise: '+fmtTime(new Date(sr));
-      document.getElementById('wx-sunset').textContent ='Sunset: '+fmtTime(new Date(ss));
-    }
-  }catch{}
+  }catch{
+    document.getElementById('wx-uv').textContent='UV Index: —';
+  }
 }
 
 function fetchNWSData(){
-  const pointUrl=`https://api.weather.gov/points/${LAT},${LON}`;
+  const pointUrl=`https://api.weather.gov/points/${LAT},${LON}?_=${Date.now()}`;
   fetch(pointUrl)
     .then(res=>res.json())
     .then(meta=>{
-      const hourly=meta.properties.forecastHourly;
-      const grid=meta.properties.forecast;
+      const hourly=meta.properties.forecastHourly + `?_=${Date.now()}`;
+      const grid=meta.properties.forecast + `?_=${Date.now()}`;
       const zone=meta.properties.forecastZone;
 
       fetch(hourly).then(r=>r.json()).then(h=>{
@@ -532,11 +520,6 @@ function fetchNWSData(){
             document.getElementById('wx-dew').textContent   = 'Dew point: —';
           }
 
-          // UV (simple: use NWS "probabilityOfThunder" is not UV; keep OM fallback for UV index)
-          document.getElementById('wx-uv').textContent = 'UV Index: ' + (now?.uvIndex ?? '—');
-
-          fetchSunriseSunset();
-          document.getElementById('weather-source').textContent = `Source: NWS + Open-Meteo (${LAT.toFixed(3)}, ${LON.toFixed(3)})`;
           document.getElementById('weather-timestamp').textContent='Last updated: '+fmtDateTime();
         }
       }).catch(()=>{});
@@ -552,7 +535,7 @@ function fetchNWSData(){
 
       if(zone){
         const zoneId=zone.split('/').pop();
-        fetch(`https://api.weather.gov/alerts/active/zone/${zoneId}`)
+        fetch(`https://api.weather.gov/alerts/active/zone/${zoneId}?_=${Date.now()}`)
           .then(r=>r.json()).then(z=>{
             const msg=(z.features&&z.features.length)? z.features.map(a=>a.properties.headline).join('\n') :
               'No alerts at this time / Sin alertas en este momento';
@@ -562,6 +545,9 @@ function fetchNWSData(){
           });
       }
     });
+
+  // UV comes from Open-Meteo
+  fetchUVFromOpenMeteo();
 }
 
 /* ============== River data ============== */
@@ -678,7 +664,7 @@ function renderRiverGraph(points,flood,lastReadingStr){
 function fetchRiverData(){
   const end=new Date(), start=new Date(); start.setDate(end.getDate()-4);
   const format=d=>d.toISOString().split('.')[0];
-  const url=`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all`;
+  const url=`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=02096960&parameterCd=00065,00060&startDT=${format(start)}&endDT=${format(end)}&siteStatus=all&_=${Date.now()}`;
   fetch(url).then(r=>r.json()).then(data=>{
     const series=data?.value?.timeSeries||[];
     const find=(code)=>series.find(s=>s?.variable?.variableCode?.[0]?.value===code);
@@ -706,7 +692,7 @@ function fetchRiverData(){
     document.getElementById('river-timestamp').textContent='Last updated: '+fmtDateTime();
 
     // headline + pill
-    document.getElementById('thumb').innerHTML = thumbSVG() || '✓';
+    document.getElementById('thumb').innerHTML = thumbSVG();
     const classif=classifyFlow(lastFlow,lastStage,floodThreshold);
     const pill=document.getElementById('flow-pill'); pill.textContent=classif.label;
 
@@ -718,19 +704,13 @@ function fetchRiverData(){
   });
 }
 
-/* ============== Alerts centering fix ============== */
-(() => {
-  const el=document.getElementById('alert-message');
-  if(el){ el.style.textAlign='center'; }
-})();
-
 /* ============== Master refresh ============== */
 function fetchAllData(){
   updateAllTimestamps();
   updateParkStatus();
   fetchRiverData();
   fetchAQIData();
-  fetchNWSData();
+  fetchNWSData();     // (includes alerts + forecast + obs)
 }
 window.onload = fetchAllData;
 setInterval(fetchAllData, 10*60*1000);
