@@ -1099,9 +1099,9 @@
 
       const statusEl = document.getElementById('flood-status');
       if (lastStage >= floodThreshold) {
-        statusEl.textContent = "FLOOD LEVELS UNSAFE, ACCESS CLOSED 👍";
+        statusEl.textContent = "FLOOD LEVELS UNSAFE, ACCESS CLOSED";
       } else {
-        statusEl.textContent = "RIVER BELOW FLOOD STAGE 👍";
+        statusEl.textContent = "RIVER BELOW FLOOD STAGE";
       }
 
       const grouped = groupBy3HourBlocks(stageValues);
