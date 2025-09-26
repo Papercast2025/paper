@@ -534,7 +534,7 @@
             if (new Date(t[i]) <= now) { idx = i; break; }
           }
           const val = Math.round(u[idx] ?? 0);
-          document.getElementById('uv-line').textContent = `UV Index (Open-Meteo): ${val}`;
+          document.getElementById('uv-line').textContent = `UV Index: ${val}`;
         }
       })
       .catch(()=>{ document.getElementById('uv-line').textContent = 'UV Index (Open-Meteo): —'; });
