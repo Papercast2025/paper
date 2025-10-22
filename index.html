@@ -87,17 +87,17 @@
     font-weight: 800;
   }
   .header-title .coords {
-    font-size: 32px;
+    font-size: 20px;
     opacity: 0.9;
   }
 
   /* ====== Park Status ====== */
   #park-status-bar {
     width: 100%;
-    background: #ccc;
-    color: #000;
+    background: #000;
+    color: #fff;
     text-align: center;
-    font-size: 80px;
+    font-size: 40px;
     font-weight: 800;
     padding: 8px 10px;
     border-radius: 6px;
@@ -143,7 +143,7 @@
     align-content: start;
   }
   .weather-line {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: normal;        /* not bolded */
     text-align: left;           /* left aligned */
   }
@@ -197,11 +197,37 @@
   }
 
   /* ====== Forecast ====== */
-  #forecast-lines {
+  #forecast-lines {  /* original fallback */
     text-align: center;
-    font-size: 32px;
-    font-weight: 700;           /* bolded as requested */
+    font-size: 28px;
+    font-weight: 700;
     line-height: 1.4;
+  }
+  /* New compact 5-period grid */
+  #forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    align-items: start;
+    justify-items: center;
+  }
+  .forecast-item {
+    text-align: center;
+    width: 100%;
+  }
+  .forecast-item .fi-name {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .forecast-item .fi-icon svg {
+    width: 72px;
+    height: 72px;
+  }
+  .forecast-item .fi-pop {
+    margin-top: 4px;
+    font-size: 24px;
+    font-weight: 700;
   }
 
   /* ====== AQI ====== */
@@ -221,8 +247,8 @@
     font-weight: 800;
   }
   #aqi-extra { margin-top: 6px; text-align: center; }
-  #aqi-guidance { font-size: 32px; color: #222; font-weight: 600; }
-  #aqi-breakdown { font-size: 32px; color: #222; }
+  #aqi-guidance { font-size: 26px; color: #222; font-weight: 600; }
+  #aqi-breakdown { font-size: 22px; color: #222; }
   #aqi-source { font-size: 18px; color: #444; }
 
   /* ====== Fit logic helpers ====== */
@@ -282,17 +308,18 @@
         </div>
         <div id="weather-right">
           <!-- left column -->
-          <div class="weather-line" id="forecast-line">--</div>
-          <div class="weather-line" id="wind-line">Wind: --</div>
-          <div class="weather-line" id="sunset-line">Sunset: --</div>
           <div class="weather-line" id="sunrise-line">Sunrise: --</div>
-          
           <!-- right column -->
+          <div class="weather-line" id="forecast-line">--</div>
+
+          <div class="weather-line" id="sunset-line">Sunset: --</div>
+          <div class="weather-line" id="uv-line">UV Index (Open-Meteo): --</div>
+
+          <div class="weather-line" id="wind-line">Wind: --</div>
           <div class="weather-line" id="humidity-line">Humidity: --%</div>
+
           <div class="weather-line" id="feelslike-line">Feels like: --°F</div>
           <div class="weather-line" id="dewpoint-line">Dew point: --°F</div>
-          <div class="weather-line" id="uv-line">UV Index: --</div>
-
         </div>
       </div>
       <div id="weather-source">Source: —</div>
@@ -304,7 +331,7 @@
       <div class="river-header">River Water Level & Flow</div>
 
       <div id="flood-status-row">
-        <span class="river-topline" id="flood-status">RIVER BELOW FLOOD STAGE</span>
+        <span class="river-topline" id="flood-status">RIVER BELOW FLOOD STAGE 👍</span>
         <span class="river-class-banner" id="paddle-advisory">—</span>
       </div>
 
@@ -320,13 +347,19 @@
       <div class="card-timestamp" id="river-timestamp">Last updated: --</div>
     </div>
 
-    <!-- Forecast (two items) -->
+    <!-- Forecast -->
     <div class="section" id="rainfall-forecast">
       <div class="card-title">Forecast</div>
-      <div id="forecast-lines">
+
+      <!-- New icon grid; we’ll hide this if we can’t build it -->
+      <div id="forecast-grid" aria-label="5-day forecast"></div>
+
+      <!-- Original fallback (kept intact) -->
+      <div id="forecast-lines" style="display:none;">
         <div id="rainfall-forecast-1">—</div>
         <div id="rainfall-forecast-2">—</div>
       </div>
+
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
 
@@ -367,15 +400,15 @@
   const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B';
 
   // Park hours — easy to edit per weekday (0=Sun ... 6=Sat)
-  // Default: 12:00 AM – 11:00 PM
+  // Default: 8:00 AM – 7:00 PM
   const PARK_HOURS = {
-    0: { open: "12:00", close: "23:00" },
-    1: { open: "12:00", close: "23:00" },
-    2: { open: "12:00", close: "23:00" },
-    3: { open: "12:00", close: "23:00" },
-    4: { open: "12:00", close: "23:00" },
-    5: { open: "12:00", close: "23:00" },
-    6: { open: "12:00", close: "23:00" }
+    0: { open: "08:00", close: "19:00" },
+    1: { open: "08:00", close: "19:00" },
+    2: { open: "08:00", close: "19:00" },
+    3: { open: "08:00", close: "19:00" },
+    4: { open: "08:00", close: "19:00" },
+    5: { open: "08:00", close: "19:00" },
+    6: { open: "08:00", close: "19:00" }
   };
 
   // River guidance thresholds (CFS)
@@ -430,35 +463,30 @@
 
     const bar = document.getElementById('park-status-bar');
     bar.textContent = isOpen ? 'OPEN / ABIERTO' : 'CLOSED / CERRADO';
-    bar.style.backgroundColor = '#ccc';
-    bar.style.color = '#000';
+    bar.style.backgroundColor = '#000';
+    bar.style.color = '#fff';
 
     const fmtHM = (d) => new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute:'2-digit', hour12: true, timeZone: TIME_ZONE }).format(d);
 
     // Today line
     document.getElementById('park-hours-today').textContent =
-      `Today's hours: ${fmtHM(open)}–${fmtHM(close)}`;
+      `Today: ${fmtHM(open)}–${fmtHM(close)}`;
 
     // Next: if open -> closes today; else -> opens tomorrow
-    let nextLabel, nextTime, labelPrefix;
+    let nextTime, labelPrefix;
     if (isOpen) {
       nextTime = close;
-      labelPrefix = 'Park closes at';
+      labelPrefix = 'Next: Park closes at';
     } else {
-      // find next open
       let d = new Date(now);
-      let tries = 0;
-      while (tries < 8) {
-        d.setDate(d.getDate());
-        const idx = d.getDay();
-        const hrs = PARK_HOURS[idx];
-        const nOpen = new Date(d); nOpen.setHours(parseInt(hrs.open), parseInt(hrs.open.split(':')[1]), 0, 0);
-        nextTime = nOpen;
-        labelPrefix = 'Park opens at';
-        break;
-      }
+      d.setDate(d.getDate() + 1);
+      const hrs = PARK_HOURS[d.getDay()];
+      const nOpen = new Date(d);
+      nOpen.setHours(parseInt(hrs.open,10), parseInt(hrs.open.split(':')[1],10), 0, 0);
+      nextTime = nOpen;
+      labelPrefix = 'Next: Park opens at';
     }
-    nextLabel = `${labelPrefix} ${fmtHM(nextTime)} (${isOpen ? 'in ' + diffHM(nextTime, now) : 'in ' + diffHM(nextTime, now)})`;
+    const nextLabel = `${labelPrefix} ${fmtHM(nextTime)} (in ${diffHM(nextTime, now)})`;
     document.getElementById('park-hours-next').textContent = nextLabel;
   }
 
@@ -485,7 +513,7 @@
       iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
         <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
       </svg>`;
-    } else if (forecast.includes("rain")) {
+    } else if (forecast.includes("rain") || forecast.includes("showers") || forecast.includes("thunder")) {
       iconSVG = `<svg width="126" height="126" viewBox="0 0 64 64">
         <path d="M20,40a12,12 0 0,1 24,0h8a8,8 0 0,0 0-16 10,10 0 0,0-19-4 12,12 0 0,0-19,4 8,8 0 0,0 0,16z" fill="black" stroke="black" stroke-width="3"/>
         <g stroke="black" stroke-width="3">
@@ -535,7 +563,7 @@
             if (new Date(t[i]) <= now) { idx = i; break; }
           }
           const val = Math.round(u[idx] ?? 0);
-          document.getElementById('uv-line').textContent = `UV Index: ${val}`;
+          document.getElementById('uv-line').textContent = `UV Index (Open-Meteo): ${val}`;
         }
       })
       .catch(()=>{ document.getElementById('uv-line').textContent = 'UV Index (Open-Meteo): —'; });
@@ -618,26 +646,81 @@
           }
         }).catch(()=>{});
 
-        // Grid – next two forecast lines
+        // Grid – five compact forecast tiles (daytime periods)
         fetch(gridUrl).then(r=>r.json()).then(grid=>{
           const p = grid.properties?.periods || [];
-          const a = p.slice(0,2).map(pp => `${pp.name}: ${pp.shortForecast || '—'}`);
-          document.getElementById('rainfall-forecast-1').textContent = a[0] || '—';
-          document.getElementById('rainfall-forecast-2').textContent = a[1] || '—';
-        }).catch(()=>{});
+          const daytime = p.filter(pp => pp.isDaytime === true).slice(0,5);
+          const gridEl = document.getElementById('forecast-grid');
+          const linesEl = document.getElementById('forecast-lines');
 
-        // Alerts
+          if (daytime.length) {
+            gridEl.innerHTML = '';
+            daytime.forEach(pp => {
+              const item = document.createElement('div');
+              item.className = 'forecast-item';
+
+              const name = document.createElement('div');
+              name.className = 'fi-name';
+              name.textContent = pp.name || '—';
+
+              const icon = document.createElement('div');
+              icon.className = 'fi-icon';
+              icon.innerHTML = getWeatherIcon(pp.shortForecast);
+
+              const popVal = (pp.probabilityOfPrecipitation && Number.isFinite(pp.probabilityOfPrecipitation.value))
+                ? `${pp.probabilityOfPrecipitation.value}%` : '—';
+              const pop = document.createElement('div');
+              pop.className = 'fi-pop';
+              pop.textContent = `PoP: ${popVal}`;
+
+              item.appendChild(name);
+              item.appendChild(icon);
+              item.appendChild(pop);
+              gridEl.appendChild(item);
+            });
+            linesEl.style.display = 'none';
+          } else {
+            // fallback to your original two-line view
+            linesEl.style.display = 'block';
+            const a = p.slice(0,2).map(pp => `${pp.name}: ${pp.shortForecast || '—'}`);
+            document.getElementById('rainfall-forecast-1').textContent = a[0] || '—';
+            document.getElementById('rainfall-forecast-2').textContent = a[1] || '—';
+          }
+        }).catch(()=>{
+          // if grid fetch fails, show original two-line block
+          document.getElementById('forecast-lines').style.display = 'block';
+        });
+
+        // Alerts (show actual alert content succinctly)
         if (alertZone) {
           const zoneId = alertZone.split('/').pop();
           const alertUrl = `https://api.weather.gov/alerts/active/zone/${zoneId}`;
           fetch(alertUrl)
             .then(res => res.json())
             .then(alertData => {
-              const msg = (alertData.features && alertData.features.length)
-                ? alertData.features.map(a => a.properties.headline).join('\n')
-                : 'No alerts at this time / Sin alertas en este momento';
-              document.getElementById('alert-message').textContent = msg;
-            }).catch(()=>{});
+              const feats = Array.isArray(alertData.features) ? alertData.features : [];
+              if (!feats.length) {
+                document.getElementById('alert-message').textContent =
+                  'No alerts at this time / Sin alertas en este momento';
+                return;
+              }
+              const summarize = (prop) => {
+                const event = prop.event || 'Alert';
+                // prefer description first sentence; fall back to headline/instruction
+                let txt = (prop.description || prop.instruction || prop.headline || '').replace(/\s+/g,' ').trim();
+                // take first sentence-ish to keep the card tidy
+                const m = txt.match(/^(.{1,180}?[\.\!\?])\s/);
+                let snippet = m ? m[1] : txt.slice(0,180);
+                if (snippet.length < txt.length) snippet = snippet.replace(/[,\s]*$/,'') + '…';
+                return `${event}: ${snippet}`;
+              };
+              const lines = feats.slice(0,2).map(f => summarize(f.properties));
+              document.getElementById('alert-message').textContent = lines.join('\n');
+            })
+            .catch(()=>{
+              document.getElementById('alert-message').textContent =
+                'No alerts at this time / Sin alertas en este momento';
+            });
         }
       }).catch(()=>{});
   }
@@ -1098,9 +1181,9 @@
 
       const statusEl = document.getElementById('flood-status');
       if (lastStage >= floodThreshold) {
-        statusEl.textContent = "FLOOD LEVELS UNSAFE, ACCESS CLOSED";
+        statusEl.textContent = "FLOOD LEVELS UNSAFE, ACCESS CLOSED 👍";
       } else {
-        statusEl.textContent = "RIVER BELOW FLOOD STAGE";
+        statusEl.textContent = "RIVER BELOW FLOOD STAGE 👍";
       }
 
       const grouped = groupBy3HourBlocks(stageValues);
