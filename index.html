@@ -71,10 +71,11 @@ html, body{
 #river-stats{text-align:center;margin-top:12px;font-size:30px;font-weight:bold}
 
 /* ===== Forecast POP ===== */
-#pop-title{margin-bottom:8px}
+#forecast { text-align:center; }                      /* center the pill */
+#pop-title{ margin-bottom:8px; display:inline-block; }
 #pop-graph{width:1080px;margin:0 auto}
 
-/* ===== AQI (unchanged visuals) ===== */
+/* ===== AQI ===== */
 #aqi-content{display:flex;flex-direction:column;align-items:center;gap:6px}
 #aqi-class{font-size:32px;font-weight:800}
 #aqi-meas{font-size:30px;font-weight:800}
@@ -177,7 +178,7 @@ html, body{
       <div class="card-timestamp" id="forecast-ts">Last updated: --</div>
     </div>
 
-    <!-- AQI (kept for completeness; remove if you don’t need it) -->
+    <!-- AQI -->
     <div class="section" id="aqi">
       <div class="card-title">Air Quality Index</div>
       <div id="aqi-content">
@@ -216,9 +217,94 @@ const AIRNOW_API_KEY = '26158E56-5836-46D3-B819-92969016332B'; // used if availa
 let floodThreshold = 5.0;
 let LAST_AQI = null;
 
-/* ===================== UTIL ===================== */
+/* ===== Paging/overflow (clock-pinned rotation) ===== */
+const VIEW_W = 1440, VIEW_H = 2560;
+const CARD_ORDER = ['access','alerts','weather','river','forecast','aqi']; // priority top→bottom
+const ALWAYS_KEEP_FIRST = 3;  // always show Access, Alerts, Weather
+const PAGE_COUNT = 2;         // two pages that alternate
+const ROTATE_MIN = 2;         // clock-pinned 2-minute slots
+
 function setTS(id){ const el = document.getElementById(id); if(el) el.textContent = "Last updated: " + fmtDT(); }
-function toLocalTime(hm){ const [H,M]=hm.split(':').map(n=>+n); const d=new Date(); d.setHours(H,M,0,0); return d; }
+
+function outerHeight(el){
+  const cs = getComputedStyle(el);
+  return el.getBoundingClientRect().height +
+    (parseFloat(cs.marginTop)||0) + (parseFloat(cs.marginBottom)||0);
+}
+
+function measureCards(){
+  const container = document.querySelector('.container');
+  const header = document.getElementById('header');
+  const footer = document.getElementById('footer');
+  const cs = getComputedStyle(container);
+  const padTop = parseFloat(cs.paddingTop)||0;
+  const padBottom = parseFloat(cs.paddingBottom)||0;
+  const gap = parseFloat(cs.rowGap || cs.gap || 0);
+
+  // show all to measure
+  const cards = CARD_ORDER.map(id=>document.getElementById(id)).filter(Boolean);
+  cards.forEach(c=>c.style.display='flex');
+
+  const heights = {};
+  cards.forEach(c=>{ heights[c.id] = outerHeight(c); });
+
+  const overhead = header.offsetHeight + padTop + padBottom;
+  const footerReserve = (footer?.offsetHeight||0) + 8;
+  const maxHeight = VIEW_H - footerReserve;
+
+  return {cards, heights, gap, overhead, maxHeight};
+}
+
+function layoutPages(){
+  const {cards, heights, gap, overhead, maxHeight} = measureCards();
+
+  // Build pages
+  const keep = CARD_ORDER.slice(0,ALWAYS_KEEP_FIRST);
+  const rest = CARD_ORDER.slice(ALWAYS_KEEP_FIRST);
+
+  const pages = Array.from({length:PAGE_COUNT}, ()=>[...keep]); // keep set on all pages
+
+  // helper to sum height (header + cards + gaps)
+  const usedHeight = ids => {
+    const n = ids.length;
+    const cardsSum = ids.reduce((s,id)=> s + (heights[id]||0), 0);
+    const gapsSum = n>0 ? gap*(n-1) : 0;
+    return overhead + cardsSum + gapsSum;
+  };
+
+  // Fill page 0 with as many "rest" cards as fit; remainder spill to subsequent pages
+  const p0 = pages[0].slice();
+  for(const id of rest){
+    const trial = p0.concat(id);
+    if (usedHeight(trial) <= maxHeight) {
+      p0.push(id);
+    } else {
+      // spill to next available page
+      let placed = false;
+      for(let pi=1; pi<PAGE_COUNT; pi++){
+        const cur = pages[pi].slice();
+        if (usedHeight(cur.concat(id)) <= maxHeight) {
+          pages[pi] = cur.concat(id);
+          placed = true; break;
+        }
+      }
+      if(!placed){
+        // if nowhere fits, leave it off (last priority loses)
+      }
+    }
+  }
+  pages[0] = p0;
+
+  // Choose page by clock (aligns with your device’s 2-minute refresh)
+  const pageIdx = Math.floor(Date.now()/(ROTATE_MIN*60*1000)) % PAGE_COUNT;
+  const showSet = new Set(pages[pageIdx]);
+
+  cards.forEach(c=>{
+    c.style.display = showSet.has(c.id) ? 'flex' : 'none';
+  });
+}
+
+/* ===================== Icons ===================== */
 function getIconSVG(summary=''){
   const s = summary.toLowerCase();
   if(s.includes('sun') || s.includes('clear')) return `
@@ -254,6 +340,7 @@ function getIconSVG(summary=''){
 }
 
 /* ===================== Access Status ===================== */
+function toLocalTime(hm){ const [H,M]=hm.split(':').map(Number); const d=new Date(); d.setHours(H,M,0,0); return d; }
 function updateAccess(){
   const now=new Date(), dow=now.getDay();
   const hrs=PARK_HOURS[dow]||{open:"08:00",close:"19:00"};
@@ -271,18 +358,15 @@ async function fetchAlerts(){
     const zone = pt?.properties?.forecastZone?.split('/').pop();
     if(!zone) throw new Error('no zone');
     const data = await fetch(`https://api.weather.gov/alerts/active/zone/${zone}`).then(r=>r.json());
-
     const list = Array.isArray(data?.features) ? data.features.map(f=>({
       title: f?.properties?.event || '',
       text:  f?.properties?.description || f?.properties?.headline || ''
     })) : [];
-
     renderAlerts(list);
   }catch{
     renderAlerts([]);
   }
 }
-
 function renderAlerts(items){
   const chips = document.getElementById('alerts-chips');
   const body  = document.getElementById('alerts-body');
@@ -292,8 +376,6 @@ function renderAlerts(items){
     body.textContent='No alerts at this time / Sin alertas en este momento';
     setTS('alerts-ts'); return;
   }
-
-  // 2-minute slot index pinned to clock
   const idx = Math.floor(Date.now()/(2*60*1000)) % items.length;
   const cur = items[idx];
 
@@ -304,7 +386,7 @@ function renderAlerts(items){
 
   chips.appendChild(chipIdx); chips.appendChild(chipTitle);
 
-  body.textContent = (cur.text||'').trim().replace(/\n{2,}/g,'\n\n'); // keep paragraphs
+  body.textContent = (cur.text||'').trim().replace(/\n{2,}/g,'\n\n'); // preserve paragraphs
   setTS('alerts-ts');
 }
 
@@ -325,7 +407,7 @@ function feelsF(T,R,V){ if(T<=50 && V>=3) return windChillF(T,V); if(T>=80 && R>
 async function fetchWeather(){
   try{
     const pt=await fetch(`https://api.weather.gov/points/${LAT},${LON}`).then(r=>r.json());
-    const hourly=pt.properties.forecastHourly, grid=pt.properties.forecast;
+    const hourly=pt.properties.forecastHourly;
     const rel=pt.properties.relativeLocation?.properties;
     document.getElementById('weather-source').textContent = 'Source: ' + ([rel?.city, rel?.state].filter(Boolean).join(', ') || '—');
 
@@ -350,7 +432,7 @@ async function fetchWeather(){
       }
     }
 
-    // Grid: sunrise/sunset via sunrise-sunset.org for precision
+    // Sunrise/Sunset
     fetch(`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`)
       .then(r=>r.json()).then(d=>{
         if(d.status==='OK'){
@@ -505,7 +587,7 @@ async function fetchPOP24(){
   }
 }
 function buildNext24POP(periods, now){
-  const start=new Date(now); start.setMinutes(0,0,0);  // next top-of-hour display
+  const start=new Date(now); start.setMinutes(0,0,0);  // align to top-of-hour
   const slots=[];
   for(let k=0;k<24;k++){
     const t=new Date(start.getTime()+k*3600000);
@@ -543,11 +625,11 @@ function renderPOPBars(slots){
     bar.setAttribute('x',x); bar.setAttribute('y',y); bar.setAttribute('width',barW); bar.setAttribute('height',h); bar.setAttribute('fill','black');
     svg.appendChild(bar);
 
-    // value label
+    // value label above bar
     const val=document.createElementNS(svgNS,'text');
     val.setAttribute('x',x+barW/2); val.setAttribute('y',Math.max(y-4,14));
     val.setAttribute('font-size','16'); val.setAttribute('text-anchor','middle');
-    val.textContent = pt.pop;  // raw number to keep labels compact
+    val.textContent = pt.pop; // compact number
     svg.appendChild(val);
 
     // hour labels every 3 hours
@@ -623,7 +705,7 @@ function renderAQI(){
   setTS('aqi-ts');
 }
 
-/* ===================== Master refresh ===================== */
+/* ===================== Master refresh + layout ===================== */
 function refreshAll(){
   updateAccess();
   fetchAlerts();
@@ -631,6 +713,12 @@ function refreshAll(){
   fetchRiver();
   fetchPOP24();
   fetchAQI();
+  // Layout after data lands (and again shortly for fonts)
+  layoutPages();
+  setTimeout(layoutPages, 200);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(()=> setTimeout(layoutPages, 0));
+  }
 }
 
 window.onload = refreshAll;
