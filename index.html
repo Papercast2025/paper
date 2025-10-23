@@ -91,12 +91,13 @@ html, body {
 /* ====== Access Status (formerly Park Status) ====== */
 #park-status-bar {
   width: 100%;
-  background: #000;   /* your stable look */
-  color: #fff;
+  background: #ccc;   /* gray to match graph gray */
+  color: #000;        /* black text for contrast */
   text-align: center;
-  font-size: 40px;
-  font-weight: 800;
-  padding: 8px 10px;
+  font-size: 80px;    /* large, as requested */
+  font-weight: 900;
+  line-height: 1.05;
+  padding: 10px 12px;
   border-radius: 6px;
   box-sizing: border-box;
 }
@@ -111,11 +112,13 @@ html, body {
 #park-hours-today { text-align: left; }
 
 /* ====== Alerts ====== */
-#alert-message {
-  white-space: pre-wrap;
-  text-align: left;
-  font-size: 28px;
-  line-height: 1.25;
+#alerts-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* center the pills */
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 .alert-pill {
   display: inline-block;
@@ -128,12 +131,11 @@ html, body {
   margin-bottom: 6px;
   font-size: 24px;
 }
-#alerts-header-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
+#alert-message {
+  white-space: pre-wrap;
+  text-align: center; /* center alert text again */
+  font-size: 28px;
+  line-height: 1.25;
 }
 
 /* ====== Weather ====== */
@@ -224,12 +226,9 @@ html, body {
   margin: 0 auto;
   background: #ccc;           /* same gray as river graph */
 }
-#forecast-caption {
+#forecast-caption-row {
   text-align: center;
-  font-size: 22px;
-  margin: 6px 0 0 0;
-  color: #222;
-  font-weight: 700;
+  margin-bottom: 8px;
 }
 
 /* ====== AQI ====== */
@@ -362,7 +361,9 @@ html, body {
     <!-- Forecast (24h PoP) -->
     <div class="section" id="rainfall-forecast">
       <div class="card-title">Forecast</div>
-      <div id="forecast-caption">Probability of Precipitation — Next 24 Hours</div>
+      <div id="forecast-caption-row">
+        <span id="forecast-caption" class="alert-pill">Probability of Precipitation — Next 24 Hours</span>
+      </div>
       <div id="forecast-graph"></div>
       <div class="card-timestamp" id="rainfall-timestamp">Last updated: --</div>
     </div>
@@ -478,8 +479,8 @@ function updateParkStatus() {
 
   const bar = document.getElementById('park-status-bar');
   bar.textContent = isOpen ? 'OPEN / ABIERTO' : 'CLOSED / CERRADO';
-  bar.style.backgroundColor = '#000';
-  bar.style.color = '#fff';
+  bar.style.backgroundColor = '#ccc';
+  bar.style.color = '#000';
 
   const fmtHM = (d) => new Intl.DateTimeFormat('en-US', {
     hour: 'numeric', minute:'2-digit', hour12: true, timeZone: TIME_ZONE
@@ -646,11 +647,6 @@ function fetchNWSData() {
         }
       }).catch(()=>{});
 
-      // Grid – still used for backup two-line text if needed (not displayed here)
-      fetch(gridUrl).then(r=>r.json()).then(grid=>{
-        // no-op for the new graph card
-      }).catch(()=>{});
-
       // Alerts
       if (alertZone) {
         const zoneId = alertZone.split('/').pop();
@@ -663,7 +659,6 @@ function fetchNWSData() {
               const title = p.event || ''; // e.g., "Special Weather Statement"
               const headline = p.headline || '';
               const desc = p.description || '';
-              // Prefer description; fall back to headline; else event.
               const msg = (desc && desc.trim()) ? desc.trim() : (headline || title || 'Alert');
               return { title, message: msg };
             });
@@ -1251,14 +1246,14 @@ function fetchRiverData() {
     }
 
     const lastStage = stageValues[stageValues.length-1].stage;
-    const lastStageStr = `${lastStage.toFixed(2)} ft`;
+    theLastStageStr = `${lastStage.toFixed(2)} ft`;
     const lastFlow  = flowValues.length ? flowValues[flowValues.length-1].flow : NaN;
     const lastFlowStr = Number.isFinite(lastFlow) ? `${Math.round(lastFlow)} cfs` : '—';
 
     const stageTrend = computeStageTrend(stageValues);
     const flowTrend  = computeFlowTrend(flowValues);
 
-    stageEl.innerHTML = `<strong>Stage:</strong> ${lastStageStr} ${stageTrend.arrow} ${stageTrend.label}`;
+    stageEl.innerHTML = `<strong>Stage:</strong> ${theLastStageStr} ${stageTrend.arrow} ${stageTrend.label}`;
     flowEl.innerHTML  = `<strong>Discharge:</strong> ${lastFlowStr} ${flowTrend.arrow} ${flowTrend.label}`;
 
     // advisory
@@ -1274,7 +1269,7 @@ function fetchRiverData() {
     }
 
     const grouped = groupBy3HourBlocks(stageValues);
-    renderRiverGraph(grouped, floodThreshold, lastStageStr);
+    renderRiverGraph(grouped, floodThreshold, theLastStageStr);
 
     document.getElementById("river-timestamp").textContent = "Last updated: " + fmtDateTime();
   }).catch(()=>{
