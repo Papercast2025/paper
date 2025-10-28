@@ -546,8 +546,8 @@ function classifyFlow(cfs, stage, flood){
   if(Number.isFinite(stage) && Number.isFinite(flood) && stage>=flood)
     return 'UNSAFE RIVER FLOW - ACCESS CLOSED, STAY OFF THE RIVER!';
   if(!Number.isFinite(cfs)) return '—';
-  if(cfs<400) return 'TOO LOW TO PADDLE';
-  if(cfs<=1000) return 'LOW FLOW';
+  if(cfs<600) return 'TOO LOW TO PADDLE';
+  if(cfs<=1200) return 'LOW FLOW';
   if(cfs<=3000) return 'MEDIUM FLOW - RAPIDS POSE SIGNIFICANT RISK - PADDLERS SHOULD BE AWARE OF CLASS RATINGS';
   if(cfs>=10000) return 'HIGH FLOW - EXPERT SKILL LEVEL ONLY';
   return 'HIGH FLOW - EXPERT SKILL LEVEL ONLY';
@@ -655,7 +655,7 @@ async function fetchRiver(){
     const sTrend=trendArrow(stageVals,'stage',0.20,0.02);
     const fTrend=trendArrow(flowVals,'flow',30,0.05);
 
-    document.getElementById('flood-status').textContent = lastStage>=floodThreshold ? 'FLOOD LEVELS UNSAFE, ACCESS CLOSED' : 'RIVER BELOW FLOOD STAGE';
+    document.getElementById('flood-status').textContent = lastStage>=floodThreshold ? 'RIVER AT FLOOD STAGE - DO NOT ENTER WATER' : 'RIVER BELOW FLOOD STAGE';
     document.getElementById('flow-class').textContent = classifyFlow(lastFlow,lastStage,floodThreshold);
     document.getElementById('stage-line').innerHTML=`<strong>Stage:</strong> ${lastStageStr} ${sTrend.arrow} ${sTrend.label}`;
     document.getElementById('flow-line').innerHTML = `<strong>Discharge:</strong> ${flowStr} ${fTrend.arrow} ${fTrend.label}`;
