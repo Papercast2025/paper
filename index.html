@@ -546,11 +546,11 @@ function classifyFlow(cfs, stage, flood){
   if(Number.isFinite(stage) && Number.isFinite(flood) && stage>=flood)
     return 'UNSAFE RIVER FLOW - ACCESS CLOSED, STAY OFF THE RIVER!';
   if(!Number.isFinite(cfs)) return '—';
-  if(cfs<200) return 'RIVER FLOW TOO LOW TO PADDLE';
-  if(cfs<=700) return 'LOW-MODERATE RIVER FLOW - BEGINNER TO NOVICE PADDLERS';
-  if(cfs<=1600) return 'MODERATE-HIGH RIVER FLOW - EXPERT PADDLERS ONLY';
-  if(cfs>=2500) return 'UNSAFE RIVER FLOW - ACCESS CLOSED, STAY OFF THE RIVER!';
-  return 'EXPERT PADDLERS ONLY';
+  if(cfs<400) return 'TOO LOW TO PADDLE';
+  if(cfs<=1000) return 'LOW FLOW';
+  if(cfs<=3000) return 'MEDIUM FLOW - RAPIDS POSE SIGNIFICANT RISK - PADDLERS SHOULD BE AWARE OF CLASS RATINGS';
+  if(cfs>=10000) return 'HIGH FLOW - EXPERT SKILL LEVEL ONLY';
+  return 'HIGH FLOW - EXPERT SKILL LEVEL ONLY';
 }
 function trendArrow(vals, field, smallDelta, pctDelta){
   try{
@@ -769,8 +769,8 @@ async function refreshAll(){
 }
 
 window.onload = refreshAll;
-// data every 10 min; layout/alert paging & rotation every 60s for consistency if device misses a beat
-setInterval(refreshAll, 10*60*1000);
+// data every 2 min; layout/alert paging & rotation every 60s for consistency if device misses a beat
+setInterval(refreshAll, 2*60*1000);
 setInterval(()=>{ renderAlert(); fitAndRotate(); }, 60*1000);
 </script>
 </body>
