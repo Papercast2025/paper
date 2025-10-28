@@ -45,7 +45,8 @@ html, body {
 .header-left img{ width:120px; height:auto; display:block; }
 .header-title{ flex:1; text-align:center; line-height:1.2; }
 .header-title .main{ font-size:43px; font-weight:800; }
-.header-title .coords{ font-size:20px; font-weight:700; opacity:.95; }
+/* Bolder coords per your request */
+.header-title .coords{ font-size:20px; font-weight:800; opacity:.95; }
 
 /* ===== Cards area + footer ===== */
 #cards-wrap{
@@ -73,22 +74,24 @@ html, body {
 }
 .card-timestamp{ font-size:24px; color:#222; margin-top:8px; text-align:right; }
 
-/* ===== Access Status ===== */
+/* ===== Access Status (BAR FIX) ===== */
 #access-bar{
   width:100%;
   background: var(--graphGray);
   color:#000;
   text-align:center;
-  font-size:80px;
+  font-size:80px;           /* lock size */
   font-weight:800;
-  line-height:1.15;
+  line-height:1.1;
   padding:12px 10px;
   border-radius:6px;
+  white-space:nowrap;       /* prevent wrapping of OPEN / CLOSED */
 }
 #access-sub{
   margin-top:8px;
   display:flex; justify-content:flex-start; gap:16px;
   font-size:24px; font-weight:700;
+  text-align:left;          /* keep "Today:" left aligned */
 }
 
 /* ===== Alerts ===== */
@@ -108,8 +111,9 @@ html, body {
   text-align:center;
   font-size:26px;
   line-height:1.45;
-  padding: 0 22px 4px 22px; /* breathing room at edges */
-  white-space:pre-line;     /* preserve our manual wraps */
+  padding: 0 22px 4px 22px;  /* breathing room at edges */
+  white-space:pre-line;      /* preserve manual wraps */
+  word-break: break-word;    /* long lines won't overflow */
 }
 
 /* ===== Weather ===== */
@@ -349,7 +353,7 @@ function renderAlert(){
     const a = latestAlerts[i];
     idxPill.textContent = `Alert ${i+1} of ${latestAlerts.length}`;
     titlePill.textContent = a.title;
-    // nicer wrapping: bullets and long dashes often present; normalize to lines
+    // normalize text for better wrapping
     const clean = a.text.replace(/\r/g,'')
                         .replace(/\n{2,}/g,'\n\n')
                         .replace(/\*\s*/g,'• ')
@@ -375,7 +379,7 @@ function svgIcon(forecast=''){
 function fToC(f){ return (f-32)*5/9; }
 function dewPointF(Tf,R){ const T=fToC(Tf), Rf=Math.max(1e-6,Math.min(100,R))/100, b=17.62,c=243.12, g=Math.log(Rf)+(b*T)/(c+T); return (c*g)/(b-g)*9/5+32; }
 function windChillF(T,V){ return 35.74+0.6215*T-35.75*Math.pow(V,0.16)+0.4275*T*Math.pow(V,0.16); }
-function heatIndexF(T,R){ const c1=-42.379,c2=2.04901523,c3=10.14333127,c4=-0.22475541,c5=-0.00683783,c6=-0.05481717,c7=0.00122874,c8=0.00085282,c9=-0.00000199; let HI=c1+c2*T+c3*R+c4*T*R+c5*T*T+c6*R*R+c7*T*T*R+c8*T*R*R+c9*T*T*R*R; if(R<13&&T>=80&&T<=112) HI-=((13-R)/4)*Math.sqrt((17-Math.abs(T-95))/17); if(R>85&&T>=80&&T<=87) HI+=((R-85)/10)*((87-T)/5); return HI; }
+function heatIndexF(T,R){ const c1=-42.379,c2=2.04901523,c3=10.14333127,c4=-0.22475541,c5=-0.00683783,c6=-0.05481717,c7=0.00122874,c8=0.00085282,c9=-0.00000199; let HI=c1+c2*T+c3R+c4*T*R+c5*T*T+c6*R*R+c7*T*T*R+c8*T*R*R+c9*T*T*R*R; if(R<13&&T>=80&&T<=112) HI-=((13-R)/4)*Math.sqrt((17-Math.abs(T-95))/17); if(R>85&&T>=80&&T<=87) HI+=((R-85)/10)*((87-T)/5); return HI; }
 function feelsLikeF(T,R,V){ if(T<=50 && V>=3) return windChillF(T,V); if(T>=80 && R>=40) return heatIndexF(T,R); return T; }
 function mphFromStr(s){ const m=String(s||'').match(/[\d.]+/); return m?parseFloat(m[0]):0; }
 
@@ -412,7 +416,7 @@ async function fetchWeather(){
       drawPoP(hourly.properties?.periods || []);
     }
 
-    // Grid for sunrise/sunset times
+    // Sunrise/sunset
     const rises = await (await fetch(`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`)).json();
     if(rises.status==="OK"){
       const sR=new Date(rises.results.sunrise), sS=new Date(rises.results.sunset);
@@ -447,7 +451,7 @@ function drawPoP(periods){
   const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('width',W); svg.setAttribute('height',H);
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
 
-  // get next ~30 periods to cover 24h (hourly)
+  // collect next 24 hourly periods starting now
   const list = [];
   const now = new Date();
   for(const p of (periods||[])){
@@ -464,10 +468,6 @@ function drawPoP(periods){
   }
 
   const innerW = W-padL-padR, innerH = H-padT-padB;
-  // axes
-  const axis = document.createElementNS(svgNS,'g');
-  const y0=padT+innerH;
-  const x0=padL;
 
   // y grid at 0,50,100
   [0,50,100].forEach(v=>{
@@ -506,7 +506,7 @@ function drawPoP(periods){
     tl.textContent = d.pop ? `${d.pop}%` : '0';
     svg.appendChild(tl);
 
-    // show hour labels every 3 hours
+    // hour labels every 3 hours
     if(i%3===0){
       const hr = d.t.toLocaleTimeString('en-US',{hour:'numeric', timeZone:TIME_ZONE});
       const tx = document.createElementNS(svgNS,'text');
@@ -649,7 +649,7 @@ async function fetchRiver(){
   }
 }
 
-/* ================== AQI (Open-Meteo primary, AirNow fallback removed for reliability) ================== */
+/* ================== AQI (Open-Meteo) ================== */
 function aqiCategory(n){ if(n<=50) return 'GOOD'; if(n<=100) return 'MODERATE'; if(n<=150) return 'UNHEALTHY FOR SENSITIVE GROUPS'; if(n<=200) return 'UNHEALTHY'; if(n<=300) return 'VERY UNHEALTHY'; return 'HAZARDOUS'; }
 function aqiAdvice(cat){
   const c=cat.toLowerCase();
@@ -688,9 +688,10 @@ async function fetchAQI(){
     const now=new Date(); let idx=t.length-1; for(let i=t.length-1;i>=0;i--){ if(new Date(t[i])<=now){ idx=i; break; } }
     const val=Math.round(a[idx]);
     drawAQIGauge(val);
-    document.getElementById('aqi-class').textContent=aqiCategory(val);
+    const cat=aqiCategory(val);
+    document.getElementById('aqi-class').textContent=cat;
     document.getElementById('aqi-value').textContent=`AQI: ${val}`;
-    document.getElementById('aqi-guidance').textContent=aqiAdvice(aqiCategory(val));
+    document.getElementById('aqi-guidance').textContent=aqiAdvice(cat);
     const fmt=n=>Number.isFinite(n)?Math.round(n):'—';
     document.getElementById('aqi-breakdown').textContent=`PM2.5 ${fmt(p25[idx])} µg/m³ • PM10 ${fmt(p10[idx])} µg/m³ • O₃ ${fmt(o3[idx])} µg/m³`;
     document.getElementById('aqi-source').textContent=`Source: Open-Meteo (US AQI) • As of ${fmtDT(new Date(t[idx]))}`;
@@ -711,7 +712,6 @@ function fitAndRotate(){
   if(optionals.length){
     const start = twoMinuteIndex(optionals.length);
     const ordered = optionals.slice(start).concat(optionals.slice(0,start));
-    // move them to end in this order to prefer earlier items when space is tight
     ordered.forEach(sec=>cont.appendChild(sec));
   }
 
@@ -723,7 +723,7 @@ function fitAndRotate(){
     sec.style.display=''; // ensure measured
     used += sec.offsetHeight + 14; // gap
     if(used > maxH){
-      // hide this and everything after
+      // hide this and everything after (only optional cards)
       let hide=false;
       for(const s of children){
         if(s===sec) hide=true;
